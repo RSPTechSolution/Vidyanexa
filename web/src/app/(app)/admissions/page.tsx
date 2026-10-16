@@ -241,7 +241,7 @@ export default function AdmissionsPage() {
           </ul>
         </div>
       )}
-      <LoadMore shown={more.rows.length} total={more.total} hasMore={more.hasMore} loading={q.isFetching && page > 1} onLoadMore={() => setPage(more.nextPage)} noun="enquiries" />
+      <LoadMore shown={more.rows.length} total={more.total} hasMore={more.hasMore} loading={q.isFetching && page === more.nextPage} fetching={q.isFetching} onLoadMore={() => setPage(more.nextPage)} noun="enquiries" />
       <NewEnquiryDialog open={creating} onOpenChange={setCreating} />
       <EnquirySheet enquiry={open} onOpenChange={(o) => !o && setOpen(null)} />
     </PermissionGate>

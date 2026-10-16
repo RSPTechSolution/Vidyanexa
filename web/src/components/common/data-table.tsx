@@ -2,7 +2,6 @@
 
 import { flexRender, tableFeatures, useTable, type ColumnDef, type RowData } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { LoadMore, useLoadMore } from "@/components/common/load-more";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PageMeta } from "@/lib/api/types";
@@ -19,6 +18,8 @@ interface DataTableProps<T extends RowData> {
   data: T[];
   /** Server-side pagination info. Omit for a single, unpaginated page. */
   meta?: PageMeta | null;
+  /** The page last asked for, with `onPageChange`: the list grows to it as it scrolls. */
+  page?: number;
   onPageChange?: (page: number) => void;
   loading?: boolean;
   /** Showing previous results while new ones load (search, filter, paging). */
@@ -33,13 +34,14 @@ interface DataTableProps<T extends RowData> {
 // Clicks on these inside a clickable row do their own thing instead of opening the row.
 const INTERACTIVE = "a, button, input, select, textarea, label, [role=menuitem], [role=checkbox], [data-no-row-click]";
 
-export function DataTable<T extends RowData>({ columns, data, meta, onPageChange, loading, refreshing, empty, caption, getRowId, rowHref }: DataTableProps<T>) {
+export function DataTable<T extends RowData>({ columns, data, meta, page = 1, onPageChange, loading, refreshing, empty, caption, getRowId, rowHref }: DataTableProps<T>) {
   const router = useRouter();
-  // Paged lists grow with "Load more" instead of flipping pages: the next page is added under the rows already shown.
+  // Paged lists grow as they scroll instead of flipping pages: the next page is added under the rows already shown.
   const list = useLoadMore(data, meta ?? undefined, (r) => (getRowId ? getRowId(r) : String((r as { id?: unknown }).id ?? JSON.stringify(r))));
   const rows = meta ? list.rows : data;
-  const [wanted, setWanted] = useState(0);
-  const loadingMore = Boolean(meta && wanted > meta.page && (refreshing || loading));
+  // Loading more only while the page asked for is the one still to come; a search or filter refetch (back to page 1)
+  // shows as a refresh.
+  const loadingMore = Boolean(meta && page > 1 && page === list.nextPage && (refreshing || loading));
   const busy = loading && rows.length === 0;
   const table = useTable<typeof features, T>({
     features,
@@ -114,7 +116,8 @@ export function DataTable<T extends RowData>({ columns, data, meta, onPageChange
           total={meta.total}
           hasMore={list.hasMore}
           loading={loadingMore}
-          onLoadMore={() => { setWanted(list.nextPage); onPageChange?.(list.nextPage); }}
+          fetching={refreshing || loading}
+          onLoadMore={() => onPageChange?.(list.nextPage)}
           noun={caption.toLowerCase()}
         />
       )}

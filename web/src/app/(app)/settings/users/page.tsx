@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ApiError, api } from "@/lib/api/client";
 import type { User } from "@/lib/api/types";
 import { SCHOOL_ROLES, formatDateTime, initials, roleLabel, timeAgo } from "@/lib/format";
+import { usePage } from "@/components/common/load-more";
 import { useDebounced } from "@/lib/hooks";
 import { useUsers } from "@/lib/queries";
 import { SetPasswordDialog, UserFormDialog } from "@/components/users/user-dialogs";
@@ -35,11 +36,11 @@ function UsersPage() {
   const manage = can("users.manage");
   const queryClient = useQueryClient();
 
-  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [role, setRole] = useState("all");
   const [status, setStatus] = useState("all");
   const q = useDebounced(search.trim());
+  const [page, setPage] = usePage(q);
 
   const users = useUsers({
     page, search: q || undefined, role: role === "all" ? undefined : role,
@@ -172,7 +173,7 @@ function UsersPage() {
         meta={users.data?.meta}
         loading={users.isLoading}
         refreshing={users.isFetching && !users.isLoading}
-        onPageChange={setPage}
+        page={page} onPageChange={setPage}
         getRowId={(u) => u.id}
         rowHref={(u) => `/settings/users/${u.id}`}
         empty={

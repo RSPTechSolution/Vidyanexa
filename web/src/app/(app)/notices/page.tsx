@@ -203,7 +203,7 @@ export default function NoticesPage() {
           {list.map((n) => <NoticeCard key={n.id} n={n} onEdit={() => setCompose({ open: true, notice: n })} onDelete={() => setRemoving(n)} />)}
         </ul>
       )}
-      <LoadMore shown={list.length} total={more.total} hasMore={more.hasMore} loading={q.isFetching && page > 1} onLoadMore={() => setPage(more.nextPage)} noun="notices" />
+      <LoadMore shown={list.length} total={more.total} hasMore={more.hasMore} loading={q.isFetching && page === more.nextPage} fetching={q.isFetching} onLoadMore={() => setPage(more.nextPage)} noun="notices" />
       <ComposeDialog open={compose.open} notice={compose.notice} onOpenChange={(o) => setCompose((c) => ({ ...c, open: o }))} />
       <ConfirmDialog open={Boolean(removing)} onOpenChange={(o) => !o && setRemoving(null)} destructive pending={del.isPending}
         title={`Remove "${removing?.title}"?`} description="It disappears for everyone." confirmLabel="Remove" onConfirm={() => removing && del.mutate(removing.id)} />

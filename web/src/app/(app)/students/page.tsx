@@ -21,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Student } from "@/lib/api/types";
 import { initials } from "@/lib/format";
+import { usePage } from "@/components/common/load-more";
 import { useDebounced } from "@/lib/hooks";
 import { useClasses, useStudents } from "@/lib/queries";
 import { cn } from "@/lib/utils";
@@ -52,13 +53,13 @@ function StudentsPage() {
   const params = useSearchParams();
   const classes = useClasses();
 
-  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [classId, setClassId] = useState(params.get("class_id") ?? "all");
   const [sectionId, setSectionId] = useState("all");
   const [status, setStatus] = useState("active");
   const [importing, setImporting] = useState(false);
   const q = useDebounced(search.trim());
+  const [page, setPage] = usePage(q);
 
   const students = useStudents({
     page, search: q || undefined, class_id: classId === "all" ? undefined : classId,
@@ -177,7 +178,7 @@ function StudentsPage() {
             meta={students.data?.meta}
             loading={students.isLoading}
             refreshing={students.isFetching && !students.isLoading}
-            onPageChange={setPage}
+            page={page} onPageChange={setPage}
             getRowId={(s) => s.id}
             empty={
               <EmptyState

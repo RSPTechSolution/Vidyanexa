@@ -101,7 +101,7 @@ function LeadsPage() {
         meta={leads.data?.meta}
         loading={leads.isLoading}
         refreshing={leads.isFetching && !leads.isLoading}
-        onPageChange={setPage}
+        page={page} onPageChange={setPage}
         getRowId={(l) => l.id}
         empty={<EmptyState icon={Inbox} title="No enquiries here" description="New enquiries from the website appear here." />}
       />

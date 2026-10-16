@@ -134,7 +134,7 @@ export default function HomeworkPage() {
           <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{items.map((h) => <StaggerItem key={h.id}><HomeworkCard h={h} /></StaggerItem>)}</Stagger>
         </section>
       ))}
-      <LoadMore shown={more.rows.length} total={more.total} hasMore={more.hasMore} loading={q.isFetching && page > 1} onLoadMore={() => setPage(more.nextPage)} noun="homework" />
+      <LoadMore shown={more.rows.length} total={more.total} hasMore={more.hasMore} loading={q.isFetching && page === more.nextPage} fetching={q.isFetching} onLoadMore={() => setPage(more.nextPage)} noun="homework" />
       <SetHomeworkDialog open={setting} onOpenChange={setSetting} />
     </PermissionGate>
   );

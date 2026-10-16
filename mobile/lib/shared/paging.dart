@@ -25,7 +25,7 @@ class PagedList<T> extends ListBase<T> {
   void operator []=(int i, T v) => throw UnsupportedError('PagedList is read-only');
 }
 
-/// How many pages of a list to show, by the list's name. "Load more" adds a page; pulling to refresh keeps them.
+/// How many pages of a list to show, by the list's name. Scrolling near the end adds a page; pulling to refresh keeps them.
 class PageCount extends Notifier<int> {
   PageCount(this.list);
   final String list;
@@ -39,7 +39,13 @@ final pagesProvider = NotifierProvider.autoDispose.family<PageCount, int, String
 const pageSize = 25;
 
 /// Fetches the first [pages] pages of [path] and joins them.
-Future<PagedList<T>> fetchPages<T>(ApiClient api, String path, int pages, T Function(Map<String, dynamic>) parse, {Map<String, dynamic>? query}) async {
+Future<PagedList<T>> fetchPages<T>(
+  ApiClient api,
+  String path,
+  int pages,
+  T Function(Map<String, dynamic>) parse, {
+  Map<String, dynamic>? query,
+}) async {
   final results = await Future.wait([
     for (var p = 1; p <= pages; p++)
       api.get<List<T>>(
@@ -67,7 +73,8 @@ Object? _id(Object x) {
   }
 }
 
-/// "Showing 25 of 140 · Load more" at the end of a paged list.
+/// The end of a paged list: "Showing 25 of 140", and the next page loads by itself as the list scrolls near the end
+/// (a screen ahead, so it is usually there before it is reached). Goes at the end of a scrolling list.
 class LoadMoreTile extends ConsumerStatefulWidget {
   const LoadMoreTile({super.key, required this.list, required this.items, this.noun = 'items'});
   final String list;
@@ -79,33 +86,82 @@ class LoadMoreTile extends ConsumerStatefulWidget {
 }
 
 class _LoadMoreTileState extends ConsumerState<LoadMoreTile> {
-  int? _waitingFor;
+  /// How far from the end the next page is fetched.
+  static const _ahead = 600.0;
+  ScrollPosition? _position;
+
+  /// The list as it was when the next page was asked for: loading until a new one arrives, even one that adds nothing.
+  List<Object?>? _waitingOn;
+
+  bool get _loading => identical(_waitingOn, widget.items);
+
+  /// More on the server, and not already asked for. Bounded by the pages asked for, so a list whose pages overlap (an
+  /// item added at the top meanwhile) can't keep asking forever.
+  bool get _canLoad {
+    final items = widget.items;
+    return items is PagedList &&
+        items.hasMore &&
+        !_loading &&
+        ref.read(pagesProvider(widget.list)) * pageSize < items.total;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final position = Scrollable.maybeOf(context)?.position;
+    if (position != _position) {
+      _position?.removeListener(_check);
+      _position = position?..addListener(_check);
+    }
+    _checkSoon();
+  }
+
+  @override
+  void didUpdateWidget(LoadMoreTile old) {
+    super.didUpdateWidget(old);
+    _checkSoon(); // a page arrived: if it didn't fill the screen, get the next one
+  }
+
+  @override
+  void dispose() {
+    _position?.removeListener(_check);
+    super.dispose();
+  }
+
+  void _checkSoon() => WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) _check();
+  });
+
+  void _check() {
+    final position = _position;
+    if (position == null || !position.hasContentDimensions || !_canLoad) return;
+    if (position.extentAfter > _ahead) return;
+    setState(() => _waitingOn = widget.items);
+    ref.read(pagesProvider(widget.list).notifier).more();
+  }
 
   @override
   Widget build(BuildContext context) {
     final items = widget.items;
     if (items is! PagedList || items.total == 0) return const SizedBox.shrink();
-    final loading = _waitingFor != null && items.length < _waitingFor!;
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final loading = _loading && items.hasMore;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('Showing ${items.length} of ${items.total} ${widget.noun}', style: TextStyle(fontSize: 12, color: muted)),
-          if (items.hasMore) ...[
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(minimumSize: const Size(160, 44)),
-              onPressed: loading
-                  ? null
-                  : () {
-                      setState(() => _waitingFor = items.length + 1);
-                      ref.read(pagesProvider(widget.list).notifier).more();
-                    },
-              icon: loading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.expand_more_rounded),
-              label: Text(loading ? 'Loading…' : 'Load more'),
-            ),
+          if (loading) ...[
+            const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+            const SizedBox(width: 8),
           ],
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              '${loading ? 'Loading more… ' : ''}Showing ${items.length} of ${items.total} ${widget.noun}',
+              style: TextStyle(fontSize: 12, color: muted),
+            ),
+          ),
         ],
       ),
     );

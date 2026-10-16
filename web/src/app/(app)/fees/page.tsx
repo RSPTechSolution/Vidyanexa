@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { InvoiceRow } from "@/lib/api/types";
 import { formatDateTime, inr } from "@/lib/format";
+import { usePage } from "@/components/common/load-more";
 import { useDebounced } from "@/lib/hooks";
 import { useClasses, useFeeSummary, useFeeTerms, useInvoices } from "@/lib/queries";
 
@@ -103,7 +104,6 @@ function Invoices() {
   const can = useCan();
   const classes = useClasses();
   const terms = useFeeTerms();
-  const [page, setPage] = useState(1);
   const [search, setSearch] = useState(useSearchParams().get("q") ?? ""); // quick actions link here with ?q=
   const [statusParam, setStatus] = useParam("status");
   const status = statusParam ?? "all";
@@ -111,6 +111,7 @@ function Invoices() {
   const [term, setTerm] = useState("all");
   const [collecting, setCollecting] = useState<InvoiceRow | null>(null);
   const q = useDebounced(search.trim());
+  const [page, setPage] = usePage(q);
   const invoices = useInvoices({
     page, search: q || undefined, status: status === "all" ? undefined : status,
     class_id: classId === "all" ? undefined : classId, term: term === "all" ? undefined : term,
@@ -158,7 +159,7 @@ function Invoices() {
         </Select>
       </div>
       <DataTable caption="Fee invoices" columns={columns} data={invoices.data?.data ?? []} meta={invoices.data?.meta} loading={invoices.isLoading}
-        refreshing={invoices.isFetching && !invoices.isLoading} onPageChange={setPage} getRowId={(i) => i.id}
+        refreshing={invoices.isFetching && !invoices.isLoading} page={page} onPageChange={setPage} getRowId={(i) => i.id}
         empty={<EmptyState title="No invoices match" description={can("fees.manage") ? "Try another filter, or generate invoices for a term in Fee setup." : "Try another filter."} />} />
       {collecting && <CollectDialog invoice={collecting} open onOpenChange={(o) => !o && setCollecting(null)} />}
     </>

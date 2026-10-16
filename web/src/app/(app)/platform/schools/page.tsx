@@ -26,6 +26,7 @@ import { Switch } from "@/components/ui/switch";
 import { ApiError, api } from "@/lib/api/client";
 import type { ModuleState, School } from "@/lib/api/types";
 import { formatDate, inr } from "@/lib/format";
+import { usePage } from "@/components/common/load-more";
 import { generatePassword, useDebounced } from "@/lib/hooks";
 import { qk, usePricingCatalog, useSchools } from "@/lib/queries";
 import { timeZoneOptions, tzLabel } from "@/lib/timezones";
@@ -282,9 +283,9 @@ function SchoolModulesSheet({ school, onClose }: { school: School | null; onClos
 
 function SchoolsPage() {
   const queryClient = useQueryClient();
-  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const q = useDebounced(search.trim());
+  const [page, setPage] = usePage(q);
   const schools = useSchools({ page, search: q || undefined });
   const [creating, setCreating] = useState(false);
   const [modulesFor, setModulesFor] = useState<School | null>(null);
@@ -352,7 +353,7 @@ function SchoolsPage() {
         meta={schools.data?.meta}
         loading={schools.isLoading}
         refreshing={schools.isFetching && !schools.isLoading}
-        onPageChange={setPage}
+        page={page} onPageChange={setPage}
         getRowId={(s) => s.id}
         empty={<EmptyState icon={Building2} title={q ? "No schools match" : "No schools yet"} description={q ? undefined : "Create the first school to get started."} />}
       />

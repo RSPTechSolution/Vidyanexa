@@ -275,7 +275,7 @@ function AccountsPage() {
               </table>
             </div>
           )}
-          <LoadMore shown={more.rows.length} total={more.total} hasMore={more.hasMore} loading={entries.isFetching && page > 1} onLoadMore={() => setPage(more.nextPage)} noun="entries" />
+          <LoadMore shown={more.rows.length} total={more.total} hasMore={more.hasMore} loading={entries.isFetching && page === more.nextPage} fetching={entries.isFetching} onLoadMore={() => setPage(more.nextPage)} noun="entries" />
         </>
       )}
       {heads.data && <EntryDialog entry={dialog.entry} kind={dialog.kind} heads={heads.data} open={dialog.open} onOpenChange={(o) => setDialog((d) => ({ ...d, open: o }))} />}

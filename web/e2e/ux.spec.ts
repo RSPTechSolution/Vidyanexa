@@ -1,17 +1,22 @@
 import { expect, test } from "./fixtures";
 import { DEMO, apiAs, login, loginAsAdmin } from "./helpers";
 
-test("long lists grow with Load more instead of pages", async ({ page }) => {
+test("long lists load more by themselves as they scroll, with no button or pages", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 600 }); // short, so the first page doesn't reach the end
   await loginAsAdmin(page);
   await page.goto("/students?status=all");
   const rows = page.locator("table tbody tr");
-  const status = page.getByText(/^Showing [\d,]+ of [\d,]+ students$/);
-  await expect(status).toBeVisible(); // the first page has loaded
-  const before = await rows.count();
-  await page.getByRole("button", { name: "Load more" }).click();
-  // The first page stays and the next is added under it: the list grows, it doesn't flip.
-  await expect(status).toHaveText(new RegExp(`^Showing ${before * 2} of`));
-  await expect(rows).toHaveCount(before * 2);
+  const status = page.getByText(/Showing [\d,]+ of [\d,]+ students$/);
+  await expect(status).toHaveText(/^Showing 25 of/); // only the first page until the end comes near
+  await expect(page.getByRole("button", { name: /load more|next/i })).toHaveCount(0);
+  await rows.last().scrollIntoViewIfNeeded();
+  // The first page stays and the next is added under it: the list grows, it doesn't flip. Pages load a screen ahead,
+  // so it may be one page or two, but never the whole list at once.
+  await expect(status).toHaveText(/^Showing (?!25 )[\d,]+ of/); // grown, and finished loading
+  const [shown, total] = ((await status.textContent()) ?? "").match(/[\d,]+/g)!.map((n) => Number(n.replace(/,/g, "")));
+  expect(shown % 25).toBe(0);
+  expect(shown).toBeLessThan(total);
+  await expect(rows).toHaveCount(shown);
 });
 
 test("a student row offers quick actions", async ({ page }) => {
