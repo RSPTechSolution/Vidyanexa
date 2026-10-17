@@ -68,11 +68,40 @@ Schools should only use Vidyanexa over https.
 - **If your cloud gives you a hostname with a certificate** (a load balancer, or a platform such as Render or Railway): point it at port 80 of this server, and set `PUBLIC_URL` to the https address.
 - **On a plain server**: put a TLS-terminating proxy in front of nginx. For example, Caddy obtains certificates automatically for any hostname that resolves to the server.
 
+## File storage (Cloudflare R2)
+
+Uploaded files (photos, documents, homework) belong in a bucket, not on the server's disk. Each school's plan includes storage (Basic 10 GB, Pro 50 GB, Max 500 GB): the app counts what each school has uploaded, warns its admins at 80%, and refuses new uploads when the plan is full. Photos are shrunk to WebP on upload.
+
+1. In Cloudflare, under **R2**, create two private buckets (location hint: Asia-Pacific): one for files (e.g. `vidyanexa-files`) and one for backups (e.g. `vidyanexa-backups`). Leave public access off.
+2. Under **R2 → Manage API tokens**, create a token with **Object Read & Write** on those two buckets only. Note the Access Key ID, the Secret Access Key (shown once) and the endpoint.
+3. Add to `.env.prod` on the server (never commit these):
+
+   ```sh
+   STORAGE_BACKEND=s3
+   S3_ENDPOINT_URL=https://<account-id>.r2.cloudflarestorage.com
+   S3_REGION=auto
+   S3_ACCESS_KEY_ID=...
+   S3_SECRET_ACCESS_KEY=...
+   S3_BUCKET=vidyanexa-files
+   S3_BACKUP_BUCKET=vidyanexa-backups
+   ```
+
+4. If the server already has uploaded files, copy them into the bucket once, then restart the API:
+
+   ```sh
+   docker compose -f docker-compose.prod.yml --env-file .env.prod exec api python -m app.storage_migrate --check
+   docker compose -f docker-compose.prod.yml --env-file .env.prod exec api python -m app.storage_migrate
+   docker compose -f docker-compose.prod.yml --env-file .env.prod restart api
+   ```
+
+The same settings work for Wasabi or AWS S3 (Mumbai: `S3_REGION=ap-south-1`, leave `S3_ENDPOINT_URL` empty): moving provider is copying the bucket (e.g. with rclone) and changing these lines. In development, files stay on disk (`STORAGE_BACKEND=local`); `docker compose -f infra/compose/docker-compose.dev.yml up -d s3` starts a local stand-in bucket on port 9090 for trying `s3`.
+
 ## Backups and restore
 
 - With `BACKUP_DAILY=true`, the API writes one backup a day to `/data/storage/backups` and keeps the newest `BACKUP_KEEP`. The backup is one consistent snapshot of every table, as CSV files in a zip.
+- With `S3_BACKUP_BUCKET` set, each backup is also copied to that bucket (keeping the newest `BACKUP_KEEP` there too), so losing the server doesn't lose the backups.
 - The platform admin can also make, download and delete backups under **Platform → System → Backups**.
-- **Keep copies off the server.** Download backups regularly, or sync the volume to object storage:
+- Without a backup bucket, **keep copies off the server**: download backups regularly, or copy the volume out:
   `docker run --rm -v eduvia-prod_api_storage:/s alpine tar -C /s -czf - backups > backups.tgz`
 
 To restore, the database must be at the same migration revision as the backup. The revision is in the backup's `manifest.json`.

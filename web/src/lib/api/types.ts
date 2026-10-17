@@ -164,7 +164,7 @@ export interface Subscription {
   trial_expired: boolean;
   current_period_end: string | null;
   can_self_change: boolean;
-  usage: { students: number; staff: number };
+  usage: { students: number; staff: number; storage_bytes: number };
   available_plans: Plan[];
   gst_rate: number;
   online_payment: boolean;
@@ -227,6 +227,8 @@ export interface DashboardSummary {
   student_logins: number;
   students: { used: number; limit: number | null };
   staff: { used: number; limit: number | null };
+  /** Bytes. */
+  storage: { used: number; limit: number | null };
   modules_enabled: number;
   modules_in_plan: number;
 }

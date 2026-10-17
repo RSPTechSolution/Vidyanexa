@@ -41,6 +41,7 @@ class DashboardSummary(BaseModel):
     signins_total: int
     students: Limit
     staff: Limit
+    storage: Limit  # bytes
     modules_enabled: int
     modules_in_plan: int
 
@@ -87,6 +88,7 @@ async def summary(db: DB, current: CurrentUser = require_permission("school.view
         signins_total=sum(d.count for d in signins),
         students=Limit(used=used["students"], limit=school.plan.max_students),
         staff=Limit(used=used["staff"], limit=school.plan.max_staff),
+        storage=Limit(used=used["storage_bytes"], limit=school.plan.storage_gb * 1024 ** 3),
         modules_enabled=len(await enabled_modules(db, school_id)),
         modules_in_plan=len(school.plan.modules),
     ))

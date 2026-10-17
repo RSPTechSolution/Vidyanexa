@@ -31,6 +31,14 @@ services:
       interval: 5s
       retries: 20
 
+  # A local stand-in for the file bucket (Cloudflare R2 in production): the same S3 API, at http://localhost:9090.
+  # Only needed with STORAGE_BACKEND=s3, and by the storage tests. It accepts any keys.
+  s3:
+    image: adobe/s3mock:5.2.2
+    container_name: eduvia_s3
+    restart: unless-stopped
+    ports: ["9090:9090"]
+
 
 volumes:
   pg_data:

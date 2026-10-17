@@ -46,7 +46,7 @@ async def public_file(file_id: uuid.UUID, db: DB):
         f = await db.scalar(select(StoredFile).where(StoredFile.id == file_id, StoredFile.purpose.in_(storage_service.PUBLIC_PURPOSES)))
     if not f:
         raise NotFound("File not found")
-    resp = _send(f, storage_service.read_bytes(f), False)
+    resp = _send(f, await storage_service.read_bytes(f), False)
     resp.headers["Cache-Control"] = "public, max-age=3600"
     return resp
 
@@ -54,7 +54,7 @@ async def public_file(file_id: uuid.UUID, db: DB):
 @router.get("/{file_id}")
 async def download(file_id: uuid.UUID, current: Auth, db: DB, download: bool = False):
     f = await storage_service.get_readable(db, current.user, file_id)
-    return _send(f, storage_service.read_bytes(f), download)
+    return _send(f, await storage_service.read_bytes(f), download)
 
 
 @router.delete("/{file_id}", response_model=ApiResponse[Message])

@@ -133,7 +133,7 @@ async def id_cards_pdf(db: AsyncSession, user: User, data: IdCardsRequest) -> by
         photo = None
         if s.id in photos:
             try:
-                photo = storage_service.read_bytes(photos[s.id])
+                photo = await storage_service.read_bytes(photos[s.id])
             except NotFound:
                 photo = None
         parents = await _parents(db, s.id)

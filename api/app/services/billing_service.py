@@ -91,9 +91,11 @@ async def usage(db: AsyncSession, school_id: uuid.UUID) -> dict[str, int]:
     by_role = {r: n for r, n in rows}
     students = await db.scalar(select(func.count()).select_from(Student).where(
         Student.school_id == school_id, Student.status == "active")) or 0
+    from app.services.storage_service import used_bytes
     return {
         "students": students,
         "staff": sum(n for r, n in by_role.items() if r in STAFF_ROLE_VALUES),
+        "storage_bytes": await used_bytes(db, school_id),
     }
 
 
@@ -114,6 +116,9 @@ def _fits(used: dict[str, int], plan: Plan) -> str | None:
         return f"you have {used['students']} students and {plan.name} allows {plan.max_students}"
     if plan.max_staff is not None and used["staff"] > plan.max_staff:
         return f"you have {used['staff']} staff accounts and {plan.name} allows {plan.max_staff}"
+    if used.get("storage_bytes", 0) > plan.storage_gb * 1024 ** 3:
+        from app.services.storage_service import fmt_size
+        return f"your files take {fmt_size(used['storage_bytes'])} and {plan.name} includes {plan.storage_gb} GB"
     return None
 
 

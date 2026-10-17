@@ -17,3 +17,4 @@ openpyxl>=3.1
 qrcode>=8.2
 pillow>=12.0
 cryptography>=45
+boto3>=1.40  # S3-compatible file storage (Cloudflare R2, Wasabi, AWS S3)

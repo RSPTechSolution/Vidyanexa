@@ -145,6 +145,7 @@ class LeadUpdate(BaseModel):
 class UsageOut(BaseModel):
     students: int
     staff: int
+    storage_bytes: int = 0  # everything the school has uploaded; the plan's storage_gb is the limit
 
 
 class SubscriptionOut(BaseModel):

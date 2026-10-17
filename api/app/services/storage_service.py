@@ -1,22 +1,28 @@
-"""Uploaded files: saved on disk, described in the `files` table, guarded by per-purpose rules.
+"""Uploaded files: kept in the file store (a bucket in production, see blob_store), described in the `files` table,
+guarded by per-purpose rules, and counted against the school's plan storage.
 
 Each purpose registers who may upload and who may read. Modules add their own purposes with
 `register_purpose`, so the rules live next to the feature they protect.
 """
+import io
+import logging
 import mimetypes
-import os
 import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.errors import AppError, Forbidden, NotFound
 from app.core.permissions import STAFF_ROLES, has_permission
-from app.models import StoredFile, User
+from app.models import School, StoredFile, User
+from app.services import blob_store
+
+log = logging.getLogger(__name__)
+GB = 1024 ** 3
 
 ALLOWED_TYPES = {
     "image/jpeg", "image/png", "image/webp", "image/gif",
@@ -48,15 +54,83 @@ def register_purpose(name: str, purpose: Purpose) -> None:
     _PURPOSES[name] = purpose
 
 
-def _root() -> Path:
-    return Path(settings.STORAGE_DIR).resolve()
+# ---- plan storage ------------------------------------------------------------------------------
+
+async def used_bytes(db: AsyncSession, school_id: uuid.UUID) -> int:
+    """Everything the school has uploaded, in bytes."""
+    return int(await db.scalar(select(func.coalesce(func.sum(StoredFile.size), 0)).where(StoredFile.school_id == school_id)) or 0)
 
 
-def _path(key: str) -> Path:
-    p = (_root() / key).resolve()
-    if _root() not in p.parents:
-        raise NotFound("File not found")  # never follow a key outside the storage folder
-    return p
+def limit_bytes(school: School) -> int:
+    return school.plan.storage_gb * GB
+
+
+def fmt_size(n: int) -> str:
+    for unit, size in (("GB", GB), ("MB", 1024 ** 2), ("KB", 1024)):
+        if n >= size:
+            return f"{n / size:.1f} {unit}".replace(".0 ", " ")
+    return f"{n} bytes"
+
+
+async def _check_space(db: AsyncSession, school: School, adding: int, freeing: int) -> tuple[int, int]:
+    """Refuse an upload that would take the school past its plan's storage. Returns (used before, used after)."""
+    used = await used_bytes(db, school.id)
+    after = used - freeing + adding
+    limit = limit_bytes(school)
+    if after > limit and adding > freeing:
+        raise AppError(
+            f"Your school's storage is full ({fmt_size(used)} of {school.plan.storage_gb} GB on the {school.plan.name} plan). "
+            "Remove files you no longer need, or upgrade your plan for more space.",
+            code="STORAGE_FULL", status_code=413, details={"used": used, "limit": limit})
+    return used, after
+
+
+async def _warn_if_crossed(db: AsyncSession, school: School, before: int, after: int) -> None:
+    """Tell the school's admins once, when their files first pass the warning level or fill the plan."""
+    limit = limit_bytes(school)
+    warn = limit * settings.STORAGE_WARN_PERCENT // 100
+    if before < limit <= after:
+        title = "Your school's storage is full"
+        body = f"{fmt_size(after)} of {school.plan.storage_gb} GB is used. New uploads are paused until you free up space or upgrade."
+    elif before < warn <= after:
+        title = f"Your school has used {settings.STORAGE_WARN_PERCENT}% of its storage"
+        body = f"{fmt_size(after)} of {school.plan.storage_gb} GB is used. Remove old files or upgrade before it fills up."
+    else:
+        return
+    from app.services import notification_service
+    admins = (await db.scalars(select(User.id).where(User.school_id == school.id, User.role == "school_admin",
+                                                     User.is_active.is_(True), User.deleted_at.is_(None)))).all()
+    await notification_service.notify(db, admins, school_id=school.id, kind="storage", title=title, body=body, link="/settings/billing")
+
+
+# ---- pictures ----------------------------------------------------------------------------------
+
+SHRINKABLE = {"image/jpeg", "image/png", "image/webp"}
+
+
+def shrink_image(data: bytes, content_type: str, max_px: int | None = None) -> tuple[bytes, str]:
+    """A phone photo (often 3-5 MB) becomes a WebP of a few hundred KB: turned upright, made to fit `max_px`, and stripped
+    of hidden details such as where it was taken. Kept as it was if that isn't smaller or it can't be read."""
+    if content_type not in SHRINKABLE:
+        return data, content_type
+    from PIL import Image, ImageOps
+
+    max_px = max_px or settings.IMAGE_MAX_PX
+    try:
+        with Image.open(io.BytesIO(data)) as src:
+            if getattr(src, "is_animated", False):
+                return data, content_type
+            im = ImageOps.exif_transpose(src)
+            im.thumbnail((max_px, max_px))
+            if im.mode not in ("RGB", "RGBA"):
+                im = im.convert("RGBA" if "A" in im.getbands() or im.info.get("transparency") is not None else "RGB")
+            out = io.BytesIO()
+            im.save(out, "WEBP", quality=82, method=4)
+    except Exception:  # not really an image, or one Pillow can't read: keep the original
+        log.info("image not shrunk", exc_info=True)
+        return data, content_type
+    small = out.getvalue()
+    return (small, "image/webp") if len(small) < len(data) else (data, content_type)
 
 
 async def save(db: AsyncSession, user: User, *, purpose: str, owner_id: uuid.UUID | None, filename: str,
@@ -76,19 +150,27 @@ async def save(db: AsyncSession, user: User, *, purpose: str, owner_id: uuid.UUI
     if len(data) > settings.MAX_UPLOAD_MB * 1024 * 1024:
         raise AppError(f"Files can be at most {settings.MAX_UPLOAD_MB} MB", code="FILE_TOO_BIG", status_code=413)
 
-    if rules.single and owner_id:
-        for old in (await db.scalars(select(StoredFile).where(StoredFile.purpose == purpose, StoredFile.owner_id == owner_id))).all():
-            await delete_file(db, old)
+    data, new_type = shrink_image(data, content_type)
+    if new_type != content_type:
+        content_type = new_type
+        filename = str(Path(filename).with_suffix(".webp"))
 
+    replaced = list((await db.scalars(select(StoredFile).where(StoredFile.purpose == purpose, StoredFile.owner_id == owner_id))).all()) \
+        if rules.single and owner_id else []
+    school = await db.get(School, user.school_id) if user.school_id else None
+    if school:
+        before, after = await _check_space(db, school, len(data), sum(f.size for f in replaced))
     ext = Path(filename).suffix.lower()[:10] or (mimetypes.guess_extension(content_type) or "")
     key = f"{user.school_id or 'platform'}/{purpose}/{uuid.uuid4().hex}{ext}"
-    path = _path(key)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(data)
+    await blob_store.files().put(key, data, content_type)
+    for old in replaced:  # only once the new one is safely stored
+        await delete_file(db, old)
     f = StoredFile(school_id=user.school_id, purpose=purpose, owner_id=owner_id, filename=Path(filename).name[:255] or "file",
                    content_type=content_type, size=len(data), storage_key=key, label=label, uploaded_by=user.id)
     db.add(f)
     await db.flush()
+    if school:
+        await _warn_if_crossed(db, school, before, after)
     if rules.on_change:
         await rules.on_change(db, user, owner_id, f.id)
     return f
@@ -104,18 +186,17 @@ async def get_readable(db: AsyncSession, user: User, file_id: uuid.UUID) -> Stor
     return f
 
 
-def read_bytes(f: StoredFile) -> bytes:
-    p = _path(f.storage_key)
-    if not p.exists():
-        raise NotFound("The file is missing from storage")
-    return p.read_bytes()
+async def read_bytes(f: StoredFile) -> bytes:
+    return await blob_store.files().get(f.storage_key)
 
 
 async def delete_file(db: AsyncSession, f: StoredFile) -> None:
     try:
-        os.remove(_path(f.storage_key))
-    except (FileNotFoundError, NotFound):
+        await blob_store.files().delete(f.storage_key)
+    except NotFound:
         pass
+    except Exception:  # the row goes either way; a stray object only costs a little space
+        log.warning("Could not delete %s from storage", f.storage_key, exc_info=True)
     await db.delete(f)
 
 

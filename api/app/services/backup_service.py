@@ -1,5 +1,5 @@
 """Database backups: every table as CSV in one zip, with a manifest. Made with the owner connection (so row-level security
-doesn't hide rows), kept under STORAGE_DIR/backups, and pruned to the newest BACKUP_KEEP. Restore with `python -m app.restore`.
+doesn't hide rows), kept under STORAGE_DIR/backups (and copied to S3_BACKUP_BUCKET when set), and pruned to the newest BACKUP_KEEP. Restore with `python -m app.restore`.
 
 A school can also export its own rows (every table with a school_id) as a zip of CSVs."""
 import asyncio
@@ -66,7 +66,27 @@ async def create_backup(note: str = "manual") -> dict:
         if tmp.exists():
             tmp.unlink()
     prune()
+    await copy_offsite(backup_dir() / name)
     return {"name": name, **manifest, "size": (backup_dir() / name).stat().st_size}
+
+
+async def copy_offsite(path: Path) -> bool:
+    """Put a copy of the backup in the backup bucket (S3_BACKUP_BUCKET), so losing the server doesn't lose the backups,
+    and keep the newest BACKUP_KEEP there too. A failure is logged, never raised: the local backup is still good."""
+    from app.services import blob_store
+
+    store = blob_store.backups_offsite()
+    if not store:
+        return False
+    try:
+        await store.put(f"backups/{path.name}", path.read_bytes(), "application/zip")
+        names = sorted((o["key"] for o in await store.list("backups/") if NAME.match(o["key"].rsplit("/", 1)[-1])), reverse=True)
+        for old in names[settings.BACKUP_KEEP:]:
+            await store.delete(old)
+        return True
+    except Exception:
+        log.exception("Could not copy backup %s to the backup bucket", path.name)
+        return False
 
 
 def prune(keep: int | None = None) -> None:

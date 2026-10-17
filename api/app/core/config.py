@@ -55,8 +55,20 @@ class Settings(BaseSettings):
     # Never send to these domains: the demo data and tests use them, and demo.com is someone else's.
     EMAIL_SKIP_DOMAINS: Annotated[list[str], NoDecode] = ["demo.com", "students.demo.com", "example.com", "t.com", "eduvia.local"]
 
-    # Uploaded files are kept on disk under STORAGE_DIR (one folder per school).
+    # Uploaded files: "local" keeps them on disk under STORAGE_DIR (one folder per school), for development; "s3" keeps
+    # them in an S3-compatible bucket (Cloudflare R2, Wasabi, AWS S3, MinIO). Switching provider is only these settings.
+    STORAGE_BACKEND: str = "local"  # local | s3
     STORAGE_DIR: str = "storage"
+    S3_ENDPOINT_URL: str = ""  # R2: https://<account-id>.r2.cloudflarestorage.com (empty = AWS)
+    S3_REGION: str = "auto"  # R2: auto; AWS Mumbai: ap-south-1; Wasabi: e.g. ap-southeast-1
+    S3_ACCESS_KEY_ID: str = ""
+    S3_SECRET_ACCESS_KEY: str = ""
+    S3_BUCKET: str = ""  # uploaded files (private)
+    S3_BACKUP_BUCKET: str = ""  # optional: a copy of every backup goes here, off the server
+    # Schools are warned when their files reach this share of the plan's storage, and uploads stop at 100%.
+    STORAGE_WARN_PERCENT: int = 80
+    # Photos and pictures are shrunk to fit this many pixels on the long side and saved as WebP (if that's smaller).
+    IMAGE_MAX_PX: int = 1600
     # Backups: a zip of every table under STORAGE_DIR/backups. BACKUP_DAILY makes one a day in the background.
     BACKUP_DAILY: bool = False
     BACKUP_KEEP: int = 14

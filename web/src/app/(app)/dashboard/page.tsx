@@ -11,7 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { StatCard } from "@/components/common/stat-card";
 import { Stagger, StaggerItem } from "@/components/motion/primitives";
 import { CustomiseDashboard, DashboardSections } from "@/components/dashboard/customise";
-import { UsageBar } from "@/components/common/usage-bar";
+import { UsageBar, formatBytes } from "@/components/common/usage-bar";
 import { RolesDonut, RolesDonutSkeleton, SigninsChart } from "@/components/dashboard/lazy-charts";
 import { DAY_NAMES, TodayList, formatTime } from "@/components/timetable/grid";
 import { PercentBadge } from "@/components/attendance/status";
@@ -251,8 +251,10 @@ function SchoolDashboard() {
                 <>
                   <UsageBar label="Students" used={s.students.used} limit={s.students.limit} />
                   <UsageBar label="Staff accounts" used={s.staff.used} limit={s.staff.limit} />
+                  <UsageBar label="Storage" used={s.storage.used} limit={s.storage.limit} format={formatBytes}
+                    hint={s.storage.used >= (s.storage.limit ?? Infinity) ? "Storage is full: new uploads are paused. Remove old files or upgrade." : "Storage is nearly full. Remove old files or upgrade before it fills up."} />
                 </>
-              ) : [0, 1].map((i) => <div key={i} className="space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-2 w-full rounded-full" /></div>)}
+              ) : [0, 1, 2].map((i) => <div key={i} className="space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-2 w-full rounded-full" /></div>)}
               {can("billing.view") && (
                 <Link href="/settings/billing" className={buttonVariants({ variant: "outline", className: "w-full" })}>Compare plans</Link>
               )}

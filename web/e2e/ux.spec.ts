@@ -71,3 +71,13 @@ test("opening a notice marks it read straight away", async ({ page }) => {
   await card.getByRole("button", { name: new RegExp(title) }).click();
   await expect(card.getByLabel("Unread")).toHaveCount(0, { timeout: 800 });
 });
+
+test("plan usage shows how much storage the school has used", async ({ page }) => {
+  await loginAsAdmin(page);
+  const main = page.locator("#main");
+  const bar = main.getByRole("progressbar", { name: "Storage used" });
+  await expect(bar).toBeVisible();
+  await expect(bar).toHaveAttribute("aria-valuetext", /^[\d.,]+ (bytes|KB|MB|GB) of \d+ GB$/);
+  await page.goto("/settings/billing");
+  await expect(page.getByRole("progressbar", { name: "Storage used" })).toHaveAttribute("aria-valuetext", / of \d+ GB$/);
+});
