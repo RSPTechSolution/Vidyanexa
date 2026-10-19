@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ACCESS_COOKIE, REFRESH_COOKIE, clearAuthCookies, setAuthCookies } from "@/lib/auth/cookies";
-import { refreshTokens } from "@/lib/auth/refresh";
+import { clientHeaders, refreshTokens } from "@/lib/auth/refresh";
 
 // Marketing site and auth pages: reachable without a session.
 const PUBLIC_PAGES = [
@@ -39,7 +39,7 @@ export async function middleware(req: NextRequest) {
   if (!refresh) return unauthenticated(req);
 
   // Access cookie expired: refresh, then hand the new token to this same request.
-  const tokens = await refreshTokens(refresh, req.headers.get("x-forwarded-for"));
+  const tokens = await refreshTokens(refresh, clientHeaders(req.headers));
   if (!tokens) return unauthenticated(req);
 
   req.cookies.set(ACCESS_COOKIE, tokens.access_token);

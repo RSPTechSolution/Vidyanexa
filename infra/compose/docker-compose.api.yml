@@ -1,0 +1,70 @@
+# The API on its own server, with the website hosted elsewhere (Vercel). Caddy serves https://$API_DOMAIN and gets
+# and renews its certificate by itself (ports 80 and 443 must be open, and the domain must point at this server).
+#   cp .env.api.example .env.api   (fill it in), then
+#   docker compose -f docker-compose.api.yml --env-file .env.api up -d --build
+# See docs/DEPLOYMENT.md, "API on its own server".
+name: vidyanexa-api
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: eduvia
+      POSTGRES_PASSWORD: ${OWNER_DB_PASSWORD:?set OWNER_DB_PASSWORD}
+      POSTGRES_DB: eduvia
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?set APP_DB_PASSWORD}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./postgres-init-prod:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eduvia -d eduvia"]
+      interval: 5s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy noeviction
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 30
+
+  api:
+    build: ../../api
+    restart: unless-stopped
+    env_file: .env.api
+    environment:
+      DATABASE_URL: postgresql+asyncpg://eduvia_app:${APP_DB_PASSWORD}@postgres:5432/eduvia
+      MIGRATION_DATABASE_URL: postgresql+asyncpg://eduvia:${OWNER_DB_PASSWORD}@postgres:5432/eduvia
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_DIR: /data/storage
+      APP_URL: ${APP_URL:?set APP_URL}
+      API_PUBLIC_URL: https://${API_DOMAIN:?set API_DOMAIN}
+      CORS_ORIGINS: ${APP_URL}
+    volumes:
+      - api_storage:/data/storage    # backups, and uploaded files when STORAGE_BACKEND=local
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      API_DOMAIN: ${API_DOMAIN}
+    volumes:
+      - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data             # certificates: keep this volume
+      - caddy_config:/config
+    depends_on: [api]
+
+volumes:
+  pg_data:
+  redis_data:
+  api_storage:
+  caddy_data:
+  caddy_config:

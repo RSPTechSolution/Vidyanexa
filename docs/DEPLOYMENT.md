@@ -68,6 +68,52 @@ Schools should only use Vidyanexa over https.
 - **If your cloud gives you a hostname with a certificate** (a load balancer, or a platform such as Render or Railway): point it at port 80 of this server, and set `PUBLIC_URL` to the https address.
 - **On a plain server**: put a TLS-terminating proxy in front of nginx. For example, Caddy obtains certificates automatically for any hostname that resolves to the server.
 
+## API on its own server, website on Vercel
+
+The setup for `www.vidyanexa.com` (website, Vercel) and `apis.vidyanexa.com` (API, an AWS EC2 server). The website's
+server code calls the API, so the website and the API should be in the same region (both Sydney: `syd1`, set in
+`web/vercel.json`; change it there if the API moves, e.g. Mumbai `bom1`).
+
+**Server** (Ubuntu, 2 GB memory or more, 30 GB disk; firewall: 22 from your IP, 80 and 443 from anywhere):
+
+1. Point `apis.vidyanexa.com` at the server's Elastic IP (an A record; on Cloudflare, "DNS only").
+2. Connect: `ssh -i vidyanexa-api.pem ubuntu@apis.vidyanexa.com`.
+3. Get the code onto the server (for a private repository, add a read-only deploy key in GitHub first), then run the
+   setup once and log out and back in:
+
+   ```sh
+   git clone git@github.com:RSPTechSolution/EDUVIA.git vidyanexa && cd vidyanexa
+   bash scripts/server-setup.sh
+   ```
+
+4. Fill in the settings (`openssl rand -base64 36` makes each secret) and start:
+
+   ```sh
+   cd ~/vidyanexa/infra/compose
+   cp .env.api.example .env.api && nano .env.api
+   docker compose -f docker-compose.api.yml --env-file .env.api up -d --build
+   curl https://apis.vidyanexa.com/api/v1/health      # {"status":"ok","database":"ok","redis":"ok"}
+   ```
+
+5. Create the platform admin (see section 3, with `-f docker-compose.api.yml --env-file .env.api`).
+
+**Website** (Vercel): import the repository with **Root Directory `web`**, and set these environment variables:
+
+| Name | Value |
+|---|---|
+| `API_URL` | `https://apis.vidyanexa.com` |
+| `NEXT_PUBLIC_SITE_URL` | `https://www.vidyanexa.com` |
+| `COOKIE_SECURE` | `true` |
+| `WEB_PROXY_SECRET` | the same value as in `.env.api` |
+| `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | optional |
+
+Then add the domains `www.vidyanexa.com` and `vidyanexa.com` (redirecting to `www`) and create the DNS records Vercel
+shows. `WEB_PROXY_SECRET` matters: without it the API sees every website visitor as Vercel's address, and sign-in
+limits would be shared by everyone.
+
+**Updating the API:** `cd ~/vidyanexa && git pull && cd infra/compose && docker compose -f docker-compose.api.yml --env-file .env.api up -d --build`.
+The website updates itself on every push to GitHub.
+
 ## File storage (Cloudflare R2)
 
 Uploaded files (photos, documents, homework) belong in a bucket, not on the server's disk. Each school's plan includes storage (Basic 10 GB, Pro 50 GB, Max 500 GB): the app counts what each school has uploaded, warns its admins at 80%, and refuses new uploads when the plan is full. Photos are shrunk to WebP on upload.

@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { API_URL } from "@/lib/auth/refresh";
+import { API_URL, clientHeaders } from "@/lib/auth/refresh";
 
 /** Ask the API to send a sign-in code by email or SMS. */
 export async function POST(req: NextRequest) {
@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(req.headers.get("x-forwarded-for") ? { "X-Forwarded-For": req.headers.get("x-forwarded-for")! } : {}),
+      ...clientHeaders(req.headers),
     },
     body: await req.text(),
     cache: "no-store",

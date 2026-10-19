@@ -1,4 +1,5 @@
 """FastAPI dependencies: database session with tenant context, auth, permissions."""
+import hmac
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -8,6 +9,7 @@ from fastapi import Depends, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db, set_tenant
 from app.core.errors import Forbidden, Unauthorized
 from app.core.permissions import Role, has_permission
@@ -48,6 +50,13 @@ class CurrentUser:
 
 
 def client_ip(request: Request) -> str | None:
+    """The visitor's address. Requests from our own website carry it in X-Client-IP, believed only with the shared
+    secret (anyone can send the header); everything else is the connecting address (the phone, or the website)."""
+    secret = settings.WEB_PROXY_SECRET
+    if secret and hmac.compare_digest(request.headers.get("x-web-secret", "").encode(), secret.encode()):
+        ip = request.headers.get("x-client-ip", "").strip()
+        if ip:
+            return ip[:64]
     return request.client.host if request.client else None
 
 

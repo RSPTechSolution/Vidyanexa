@@ -99,6 +99,10 @@ class Settings(BaseSettings):
     PAYMENT_GATEWAY: str = "test"
 
     CORS_ORIGINS: Annotated[list[str], NoDecode] = ["http://localhost:3000"]
+    # When the website runs elsewhere (e.g. Vercel), every web request reaches the API from the website's servers. The
+    # website then sends the visitor's address in X-Client-IP with this shared secret, and only then is it believed, so
+    # sign-in limits stay per visitor. Set the same value as WEB_PROXY_SECRET on the website. Empty = not used.
+    WEB_PROXY_SECRET: str = ""
     APP_URL: str = "http://localhost:3000"
 
     @field_validator("EMAIL_SKIP_DOMAINS", mode="before")

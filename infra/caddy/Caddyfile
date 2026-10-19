@@ -1,0 +1,30 @@
+# https://{$API_DOMAIN} -> the API. Caddy gets and renews the certificate itself and sends http:// to https://.
+# Caddy doesn't trust an X-Forwarded-For sent by the caller: the API sees the real connecting address (a phone, an
+# attendance machine, or the website's servers, which pass the visitor's address with WEB_PROXY_SECRET instead).
+{$API_DOMAIN} {
+	encode zstd gzip
+
+	request_body {
+		max_size 25MB
+	}
+
+	header {
+		-Server
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+	}
+
+	# The API and biometric attendance machines (ZKTeco ADMS). Nothing else is served here.
+	@app path /api/* /iclock /iclock/*
+	handle @app {
+		reverse_proxy api:8000 {
+			transport http {
+				read_timeout 120s
+			}
+		}
+	}
+
+	handle {
+		respond "Vidyanexa API" 404
+	}
+}

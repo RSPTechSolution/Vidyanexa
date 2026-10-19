@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { setAuthCookies } from "@/lib/auth/cookies";
-import { API_URL } from "@/lib/auth/refresh";
+import { API_URL, clientHeaders } from "@/lib/auth/refresh";
 import type { ApiEnvelope, Me, TokenPair } from "@/lib/api/types";
 
 /** Sign in with a one-time code. Like /api/auth/login, the tokens go into httpOnly cookies. */
@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     headers: {
       "Content-Type": "application/json",
       "User-Agent": req.headers.get("user-agent") ?? "",
-      ...(req.headers.get("x-forwarded-for") ? { "X-Forwarded-For": req.headers.get("x-forwarded-for")! } : {}),
+      ...clientHeaders(req.headers),
     },
     body: await req.text(),
     cache: "no-store",

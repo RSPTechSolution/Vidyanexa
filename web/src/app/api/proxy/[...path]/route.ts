@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ACCESS_COOKIE } from "@/lib/auth/cookies";
-import { API_URL } from "@/lib/auth/refresh";
+import { API_URL, clientHeaders } from "@/lib/auth/refresh";
 
 /** Browser -> Next -> FastAPI. Adds the bearer token from the httpOnly cookie.
  *  The middleware has already refreshed an expired token before we get here. */
@@ -18,10 +18,11 @@ async function handle(req: NextRequest, ctx: { params: Promise<{ path: string[] 
 
   const token = req.cookies.get(ACCESS_COOKIE)?.value;
   const headers: Record<string, string> = {};
-  for (const h of ["content-type", "accept", "user-agent", "x-forwarded-for"]) {
+  for (const h of ["content-type", "accept", "user-agent"]) {
     const v = req.headers.get(h);
     if (v) headers[h] = v;
   }
+  Object.assign(headers, clientHeaders(req.headers));
   if (token) headers.authorization = `Bearer ${token}`;
 
   const url = `${API_URL}/api/v1/${path.map(encodeURIComponent).join("/")}${req.nextUrl.search}`;

@@ -39,3 +39,4 @@ api/storage-test/
 
 # Production secrets for docker compose
 infra/compose/.env.prod
+infra/compose/.env.api
