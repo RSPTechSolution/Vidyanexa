@@ -26,10 +26,13 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     PASSWORD_RESET_EXPIRE_MINUTES: int = 30
-    # AI assistant: "rules" answers from built-in templates; "anthropic" lets Claude pick the template and draft notices.
-    AI_PROVIDER: str = "rules"
+    # AI assistant: "rules" answers from built-in templates; "anthropic" (Claude) or "gemini" (Google) picks the template
+    # from free text and drafts notices. Only the question and class names are sent, never student data.
+    AI_PROVIDER: str = "rules"  # rules | anthropic | gemini
     ANTHROPIC_API_KEY: str = ""
     AI_MODEL: str = "claude-haiku-5-5"
+    GEMINI_API_KEY: str = ""  # from Google AI Studio (aistudio.google.com)
+    GEMINI_MODEL: str = "gemini-3.5-flash-lite"
     AI_DAILY_LIMIT: int = 100  # questions per user per day
 
     OTP_EXPIRE_MINUTES: int = 10

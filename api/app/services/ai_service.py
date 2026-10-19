@@ -1,9 +1,9 @@
 """The AI assistant. Questions are answered by a fixed set of safe, read-only templates over the school's own data, each needing
 the permission its data needs (and teachers only see the sections they teach).
 
-Without an AI key, a keyword matcher picks the template. With ANTHROPIC_API_KEY set, Claude picks the template and its
-parameters from free text, and drafts notices. Only the question and the school's class names are sent to Claude; student
-data never leaves the server."""
+Without an AI key, a keyword matcher picks the template. With AI_PROVIDER=anthropic (Claude) or gemini (Google) and its key,
+the model picks the template and its parameters from free text, and drafts notices. Only the question and the school's class
+names are sent; student data never leaves the server. If the model can't be reached, the keyword matcher answers instead."""
 import json
 import logging
 import re
@@ -367,7 +367,18 @@ def match_rules(question: str, allowed: list[Template]) -> tuple[Template | None
 
 
 def _llm_on() -> bool:
-    return settings.AI_PROVIDER == "anthropic" and bool(settings.ANTHROPIC_API_KEY)
+    return (settings.AI_PROVIDER == "anthropic" and bool(settings.ANTHROPIC_API_KEY)) or \
+        (settings.AI_PROVIDER == "gemini" and bool(settings.GEMINI_API_KEY))
+
+
+def llm_name() -> str:
+    """Which model answers, for the platform's system page."""
+    return {"anthropic": "claude", "gemini": "gemini"}[settings.AI_PROVIDER] if _llm_on() else "rules"
+
+
+ROUTER_PROMPT = "You route questions from school staff to exactly one tool. Never answer directly."
+NOTICE_PROMPT = ("You write short, warm, clear notices from an Indian school to parents. Plain text, under 150 words, start with "
+                 "'Dear Parents,', end with 'Regards,' and the school name. Use placeholders like [date] for anything not given. No markdown.")
 
 
 async def _claude(body: dict) -> dict | None:
@@ -384,16 +395,50 @@ async def _claude(body: dict) -> dict | None:
         return None
 
 
+async def _gemini(body: dict) -> dict | None:
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            r = await client.post(f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_MODEL}:generateContent",
+                                  json=body, headers={"x-goog-api-key": settings.GEMINI_API_KEY, "content-type": "application/json"})
+        if r.status_code != 200:
+            log.warning("Gemini API returned %s: %s", r.status_code, r.text[:300])
+            return None
+        return r.json()
+    except httpx.HTTPError as e:
+        log.warning("Gemini API unreachable: %s", e)
+        return None
+
+
+def _gemini_parts(data: dict) -> list[dict]:
+    cands = data.get("candidates") or []
+    return ((cands[0].get("content") or {}).get("parts") or []) if cands else []
+
+
 async def match_llm(question: str, allowed: list[Template], class_names: list[str]) -> tuple[Template | None, dict] | None:
-    """Ask Claude which template answers the question. Returns None if the API isn't usable (the caller falls back to rules)."""
+    """Ask the model which template answers the question. Returns None if the API isn't usable (the caller falls back to rules)."""
     props = {"class_name": {"type": "string", "description": f"One of: {', '.join(class_names)}. Leave out for the whole school."},
              "name": {"type": "string", "description": "The student's name or admission number."},
              "topic": {"type": "string", "description": "What the notice is about, including any date."}}
-    tools = [{"name": t.id, "description": f"{t.title}. Example: {t.example}",
-              "input_schema": {"type": "object", "properties": {p: props[p] for p in t.params}}} for t in allowed]
-    tools.append({"name": "none", "description": "Use when no other tool fits the question.", "input_schema": {"type": "object", "properties": {}}})
-    data = await _claude({"model": settings.AI_MODEL, "max_tokens": 300, "tool_choice": {"type": "any"}, "tools": tools,
-                          "system": "You route questions from school staff to exactly one tool. Never answer directly.",
+    tools = [(t.id, f"{t.title}. Example: {t.example}", {p: props[p] for p in t.params}) for t in allowed]
+    tools.append(("none", "Use when no other tool fits the question.", {}))
+
+    if settings.AI_PROVIDER == "gemini":
+        # A function with no parameters leaves them out: Gemini refuses an object schema with no properties.
+        decls = [{"name": n, "description": d, **({"parameters": {"type": "object", "properties": p}} if p else {})} for n, d, p in tools]
+        data = await _gemini({"systemInstruction": {"parts": [{"text": ROUTER_PROMPT}]},
+                              "contents": [{"role": "user", "parts": [{"text": question[:500]}]}],
+                              "tools": [{"functionDeclarations": decls}],
+                              "toolConfig": {"functionCallingConfig": {"mode": "ANY"}},
+                              "generationConfig": {"maxOutputTokens": 300, "temperature": 0}})
+        if not data:
+            return None
+        call = next((p["functionCall"] for p in _gemini_parts(data) if "functionCall" in p), None)
+        if not call or call.get("name") == "none":
+            return None, {}
+        return _BY_ID.get(call.get("name")), call.get("args") or {}
+
+    data = await _claude({"model": settings.AI_MODEL, "max_tokens": 300, "tool_choice": {"type": "any"}, "system": ROUTER_PROMPT,
+                          "tools": [{"name": n, "description": d, "input_schema": {"type": "object", "properties": p}} for n, d, p in tools],
                           "messages": [{"role": "user", "content": question[:500]}]})
     if not data:
         return None
@@ -404,10 +449,15 @@ async def match_llm(question: str, allowed: list[Template], class_names: list[st
 
 
 async def _llm_notice(topic: str, school_name: str) -> str | None:
-    data = await _claude({"model": settings.AI_MODEL, "max_tokens": 600, "system": (
-        "You write short, warm, clear notices from an Indian school to parents. Plain text, under 150 words, start with 'Dear Parents,', "
-        "end with 'Regards,' and the school name. Use placeholders like [date] for anything not given. No markdown."),
-        "messages": [{"role": "user", "content": f"School: {school_name}\nWrite a notice about: {topic[:400]}"}]})
+    prompt = f"School: {school_name}\nWrite a notice about: {topic[:400]}"
+    if settings.AI_PROVIDER == "gemini":
+        data = await _gemini({"systemInstruction": {"parts": [{"text": NOTICE_PROMPT}]},
+                              "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+                              "generationConfig": {"maxOutputTokens": 600}})
+        text = "".join(p.get("text", "") for p in _gemini_parts(data) if not p.get("thought")).strip() if data else ""
+        return text or None
+    data = await _claude({"model": settings.AI_MODEL, "max_tokens": 600, "system": NOTICE_PROMPT,
+                          "messages": [{"role": "user", "content": prompt}]})
     if not data:
         return None
     text = "".join(c.get("text", "") for c in data.get("content", []) if c.get("type") == "text").strip()

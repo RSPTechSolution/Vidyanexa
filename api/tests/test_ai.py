@@ -100,3 +100,41 @@ async def test_claude_picks_the_template(client, db, school, admin_headers, monk
     monkeypatch.setattr(ai_service, "_claude", broken)
     fallback = (await client.post(f"{API}/ai/ask", headers=admin_headers, json={"question": "who is absent today"})).json()["data"]
     assert fallback["mode"] == "rules" and fallback["template"] == "absent_today"
+
+
+async def test_gemini_picks_the_template_and_drafts_notices(client, db, school, admin_headers, monkeypatch):
+    await _setup(client, db, school, admin_headers)
+    monkeypatch.setattr(settings, "AI_PROVIDER", "gemini")
+    monkeypatch.setattr(settings, "GEMINI_API_KEY", "test-key")
+    sent = []
+
+    async def fake_gemini(body):
+        sent.append(body)
+        if "tools" in body:
+            return {"candidates": [{"content": {"parts": [{"functionCall": {"name": "absent_today", "args": {"class_name": "Class 4"}}}]}}]}
+        return {"candidates": [{"content": {"parts": [{"text": "Dear Parents,\nSports day is on Friday.\nRegards,\nAlpha School"}]}}]}
+    monkeypatch.setattr(ai_service, "_gemini", fake_gemini)
+
+    status = (await client.get(f"{API}/ai", headers=admin_headers)).json()["data"]
+    assert status["mode"] == "ai"
+    a = (await client.post(f"{API}/ai/ask", headers=admin_headers, json={"question": "kaun kaun aaj nahi aaya?"})).json()["data"]
+    assert a["mode"] == "ai" and a["template"] == "absent_today" and len(a["rows"]) == 2
+    # Only the question and class names go to Google, never student data; tools without inputs carry no empty schema.
+    assert "Kid" not in str(sent[0]) and "Class 4" in str(sent[0])
+    none_tool = next(d for d in sent[0]["tools"][0]["functionDeclarations"] if d["name"] == "none")
+    assert "parameters" not in none_tool
+
+    async def notice_call(body):
+        sent.append(body)
+        if "tools" in body:
+            return {"candidates": [{"content": {"parts": [{"functionCall": {"name": "draft_notice", "args": {"topic": "sports day on Friday"}}}]}}]}
+        return {"candidates": [{"content": {"parts": [{"text": "Dear Parents,\nSports day is on Friday.\nRegards,\nAlpha School"}]}}]}
+    monkeypatch.setattr(ai_service, "_gemini", notice_call)
+    n = (await client.post(f"{API}/ai/ask", headers=admin_headers, json={"question": "write a notice about sports day on friday"})).json()["data"]
+    assert n["template"] == "draft_notice" and n["rows"][0][0].startswith("Dear Parents,")
+
+    async def broken(body):
+        return None
+    monkeypatch.setattr(ai_service, "_gemini", broken)
+    fallback = (await client.post(f"{API}/ai/ask", headers=admin_headers, json={"question": "who is absent today"})).json()["data"]
+    assert fallback["mode"] == "rules" and fallback["template"] == "absent_today"

@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.redis import get_redis
 from app.models import PlatformSetting, School, StoredFile, Student, User, UserSession
-from app.services import backup_service
+from app.services import ai_service, backup_service
 
 
 class Banner(BaseModel):
@@ -80,7 +80,7 @@ async def health(db: AsyncSession, started_at: float | None) -> dict:
                          "hours_ago": round(age_h, 1) if age_h is not None else None, "daily": settings.BACKUP_DAILY}
     checks["providers"] = {"email": settings.EMAIL_PROVIDER, "sms": settings.SMS_PROVIDER, "whatsapp": settings.WHATSAPP_PROVIDER,
                            "push": settings.PUSH_PROVIDER, "payments": settings.PAYMENT_GATEWAY,
-                           "ai": "claude" if settings.AI_PROVIDER == "anthropic" and settings.ANTHROPIC_API_KEY else "rules"}
+                           "ai": ai_service.llm_name()}
     day = datetime.now(UTC) - timedelta(days=1)
     usage = {
         "schools": await db.scalar(select(func.count()).select_from(School).where(School.is_active.is_(True))) or 0,
