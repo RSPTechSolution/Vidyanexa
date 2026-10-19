@@ -86,7 +86,7 @@ server code calls the API, so the website and the API should be in the same regi
    bash scripts/server-setup.sh
    ```
 
-4. Fill in the settings (`openssl rand -base64 36` makes each secret) and start:
+4. Fill in the settings (`openssl rand -hex 32` makes each secret) and start:
 
    ```sh
    cd ~/vidyanexa/infra/compose
