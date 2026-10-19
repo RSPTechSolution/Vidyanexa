@@ -78,11 +78,11 @@ server code calls the API, so the website and the API should be in the same regi
 
 1. Point `apis.vidyanexa.com` at the server's Elastic IP (an A record; on Cloudflare, "DNS only").
 2. Connect: `ssh -i vidyanexa-api.pem ubuntu@apis.vidyanexa.com`.
-3. Get the code onto the server (for a private repository, add a read-only deploy key in GitHub first), then run the
+3. Get the code onto the server (a private repository needs a read-only deploy key in GitHub first, and the git@github.com: address), then run the
    setup once and log out and back in:
 
    ```sh
-   git clone git@github.com:RSPTechSolution/EDUVIA.git vidyanexa && cd vidyanexa
+   git clone https://github.com/RSPTechSolution/Vidyanexa.git vidyanexa && cd vidyanexa
    bash scripts/server-setup.sh
    ```
 
