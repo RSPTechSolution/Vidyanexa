@@ -1292,7 +1292,7 @@ export interface AnalyticsReport {
 }
 
 export interface AiTemplate { id: string; title: string; example: string }
-export interface AiStatus { mode: "rules" | "ai"; templates: AiTemplate[]; left_today: number }
+export interface AiStatus { mode: "rules" | "ai"; provider?: "rules" | "gemini" | "claude"; templates: AiTemplate[]; left_today: number }
 export interface AiAnswer { template: string | null; mode: "rules" | "ai"; text: string; columns: string[]; rows: (string | number | null)[][]; link: string | null; suggestions: string[] }
 
 export interface MyClass {

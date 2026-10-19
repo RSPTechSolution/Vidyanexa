@@ -26,5 +26,6 @@ class AiAnswer(BaseModel):
 
 class AiStatus(BaseModel):
     mode: str  # rules | ai
+    provider: str = "rules"  # rules | gemini | claude: which model understands free-form questions
     templates: list[AiTemplate]
     left_today: int

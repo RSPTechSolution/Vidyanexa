@@ -22,7 +22,7 @@ async def status(db: DB, current: CurrentUser = require_permission("ai.use")):
     from app.core.redis import get_redis
     used = int(await get_redis().get(_key(current)) or 0)
     modules = set(await enabled_modules(db, current.user.school_id))
-    return ok(AiStatus(mode="ai" if svc._llm_on() else "rules", templates=svc.templates_out(current.user, modules),
+    return ok(AiStatus(mode="ai" if svc._llm_on() else "rules", provider=svc.llm_name(), templates=svc.templates_out(current.user, modules),
                        left_today=max(settings.AI_DAILY_LIMIT - used, 0)))
 
 

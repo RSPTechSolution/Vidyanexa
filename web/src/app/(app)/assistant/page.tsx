@@ -92,7 +92,7 @@ function Assistant() {
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="e.g. Who is absent today in Class 5?" aria-label="Your question" maxLength={500} className="border-0 shadow-none focus-visible:ring-0" />
           <Button type="submit" disabled={q.trim().length < 3} loading={ask.isPending}><SendHorizonal aria-hidden />Ask</Button>
         </form>
-        {s && <p className="mt-2 text-center text-xs text-muted-foreground">{s.mode === "ai" ? "Understands free-form questions with Claude." : "Answers set questions; add an AI key to understand free-form questions."} {s.left_today} questions left today.</p>}
+        {s && <p className="mt-2 text-center text-xs text-muted-foreground">{s.mode === "ai" ? `Understands free-form questions with ${s.provider === "gemini" ? "Gemini" : s.provider === "claude" ? "Claude" : "AI"}.` : "Answers set questions; add an AI key to understand free-form questions."} {s.left_today} questions left today.</p>}
       </div>
     </>
   );

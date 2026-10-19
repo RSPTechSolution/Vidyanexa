@@ -138,3 +138,28 @@ async def test_gemini_picks_the_template_and_drafts_notices(client, db, school, 
     monkeypatch.setattr(ai_service, "_gemini", broken)
     fallback = (await client.post(f"{API}/ai/ask", headers=admin_headers, json={"question": "who is absent today"})).json()["data"]
     assert fallback["mode"] == "rules" and fallback["template"] == "absent_today"
+
+
+async def test_greetings_get_a_friendly_reply_without_asking_the_model(client, db, school, admin_headers, monkeypatch):
+    await _setup(client, db, school, admin_headers)
+    monkeypatch.setattr(settings, "AI_PROVIDER", "gemini")
+    monkeypatch.setattr(settings, "GEMINI_API_KEY", "test-key")
+    calls = []
+
+    async def fake_gemini(body):
+        calls.append(body)
+        return {"candidates": [{"content": {"parts": [{"functionCall": {"name": "absent_today", "args": {}}}]}}]}
+    monkeypatch.setattr(ai_service, "_gemini", fake_gemini)
+
+    status = (await client.get(f"{API}/ai", headers=admin_headers)).json()["data"]
+    assert status["provider"] == "gemini"
+    for q in ["H, How are you?", "hello", "Good morning sir", "namaste ji, kaise ho?"]:
+        a = (await client.post(f"{API}/ai/ask", headers=admin_headers, json={"question": q})).json()["data"]
+        assert a["text"].startswith("Hello") and a["suggestions"] and a["template"] is None, q
+    thanks = (await client.post(f"{API}/ai/ask", headers=admin_headers, json={"question": "thank you!"})).json()["data"]
+    assert thanks["text"].startswith("You're welcome")
+    assert calls == []  # small talk never costs a model call
+
+    # A greeting with a real question in it is still answered.
+    a = (await client.post(f"{API}/ai/ask", headers=admin_headers, json={"question": "hi, who is absent today?"})).json()["data"]
+    assert a["template"] == "absent_today" and len(calls) == 1

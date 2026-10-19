@@ -464,8 +464,30 @@ async def _llm_notice(topic: str, school_name: str) -> str | None:
     return text or None
 
 
+# Greetings and thanks, in English and Hindi. A message made only of these words gets a friendly reply instead of
+# "I can't answer that"; anything else in it (a name, "absent", "fee") means it's a real question.
+_SMALL_TALK = set("""hi hii hiii hello helo hey heyy h namaste namaskar good morning afternoon evening night day how are r you u
+    ya doing today there dear sir madam mam maam ji kaise ho aap kya haal hai whats what's up sup who is this what can do help me
+    thanks thank thankyou thx ty shukriya dhanyavad dhanyawad ok okay great nice cool fine""".split())
+_THANKS = {"thanks", "thank", "thankyou", "thx", "ty", "shukriya", "dhanyavad", "dhanyawad"}
+
+
+def small_talk(question: str, user: User) -> str | None:
+    words = re.findall(r"[a-z']+", question.lower())
+    if not words or not set(words) <= _SMALL_TALK:
+        return None
+    first = (user.full_name or "").split(" ")[0]
+    if set(words) & _THANKS:
+        return "You're welcome! Anything else you'd like to know? For example:"
+    return (f"Hello{' ' + first if first else ''}! I'm doing well, thank you. I'm your school's assistant: I answer questions from "
+            "your school's own records, and draft notices. Try one of these:")
+
+
 async def ask(db: AsyncSession, user: User, modules: set[str], question: str) -> AiAnswer:
     allowed = available(user, modules)
+    if reply := small_talk(question, user):
+        return AiAnswer(template=None, mode="ai" if _llm_on() else "rules", text=reply, columns=[], rows=[], link=None,
+                        suggestions=[t.example for t in allowed])
     classes = (await db.execute(select(SchoolClass.id, SchoolClass.name).where(SchoolClass.school_id == user.school_id).order_by(SchoolClass.sort_order))).all()
     mode = "rules"
     picked = None
