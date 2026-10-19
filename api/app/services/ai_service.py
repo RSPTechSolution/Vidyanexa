@@ -283,6 +283,25 @@ async def visitors_inside(ctx: Ctx) -> AiAnswer:
                 [[n, p, m or ""] for n, p, m, _ in rows], "/gate")
 
 
+async def enquiries(ctx: Ctx) -> AiAnswer:
+    from app.services import enquiry_service
+    s = await enquiry_service.summary(ctx.db, ctx.user)
+    open_now = sum(s.by_status.get(k, 0) for k in enquiry_service.OPEN)
+    total = sum(s.by_status.values())
+    if not total:
+        return _ans("enquiries", "There are no admission enquiries yet. They appear here as the office adds them, or as parents enquire "
+                                 "on your school's website.", link="/admissions")
+    follow = [f"{s.due_today} follow-up{'s' if s.due_today != 1 else ''} due today" if s.due_today else "",
+              f"{s.overdue} overdue" if s.overdue else ""]
+    follow_text = " and ".join(f for f in follow if f)
+    text = (f"You have {open_now} open admission enquir{'ies' if open_now != 1 else 'y'} ({total} in all)."
+            + (f" {follow_text[0].upper() + follow_text[1:]}." if follow_text else " No follow-ups are due.")
+            + f" This month: {s.this_month} new, {s.admitted_this_month} admitted.")
+    labels = {"new": "New", "contacted": "Contacted", "visit": "Visit planned", "applied": "Applied", "admitted": "Admitted", "lost": "Lost"}
+    return _ans("enquiries", text, ["Stage", "Enquiries"], [[labels[k], s.by_status.get(k, 0)] for k in enquiry_service.STATUSES],
+                "/admissions")
+
+
 async def draft_notice(ctx: Ctx) -> AiAnswer:
     topic = (ctx.topic or "").strip().rstrip(".") or "an upcoming school event"
     school = await ctx.db.get(School, ctx.user.school_id)
@@ -317,6 +336,8 @@ TEMPLATES: list[Template] = [
               "staff absent", "teachers absent", "teachers are absent"], staff_on_leave),
     Template("library_overdue", "Overdue library books", "Which library books are overdue?", "library.manage",
              ["library", "overdue book", "books overdue", "not returned"], library_overdue),
+    Template("enquiries", "Admission enquiries", "How many admission enquiries do we have?", "admissions.manage",
+             ["enquir", "inquir", "admission", "lead", "follow-up", "follow up", "prospective"], enquiries),
     Template("visitors_inside", "Visitors on campus", "Who are the visitors on campus now?", "gate.view", ["visitor", "on campus", "guests"], visitors_inside),
     Template("draft_notice", "Draft a notice", "Write a notice about the annual sports day on 15 November", "notices.post",
              ["write a notice", "draft a notice", "notice about", "draft notice", "circular about", "write a circular", "announce"], draft_notice, ("topic",)),
@@ -324,7 +345,7 @@ TEMPLATES: list[Template] = [
 _BY_ID = {t.id: t for t in TEMPLATES}
 MODULE_OF = {"absent_today": "attendance", "class_attendance": "attendance", "low_attendance": "attendance", "fee_defaulters": "fees",
              "fees_collected": "fees", "top_performers": "exams", "student_lookup": "students", "birthdays": "students", "staff_on_leave": "hr",
-             "library_overdue": "library", "visitors_inside": "security", "draft_notice": "communication"}
+             "library_overdue": "library", "visitors_inside": "security", "draft_notice": "communication", "enquiries": "students"}
 
 
 def available(user: User, modules: set[str]) -> list[Template]:

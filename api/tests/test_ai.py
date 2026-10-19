@@ -163,3 +163,17 @@ async def test_greetings_get_a_friendly_reply_without_asking_the_model(client, d
     # A greeting with a real question in it is still answered.
     a = (await client.post(f"{API}/ai/ask", headers=admin_headers, json={"question": "hi, who is absent today?"})).json()["data"]
     assert a["template"] == "absent_today" and len(calls) == 1
+
+
+async def test_admission_enquiries(client, db, school, admin_headers):
+    await _setup(client, db, school, admin_headers)
+    ask = lambda q: client.post(f"{API}/ai/ask", headers=admin_headers, json={"question": q})  # noqa: E731
+    empty = (await ask("how many inquiries I have?")).json()["data"]
+    assert empty["template"] == "enquiries" and "no admission enquiries yet" in empty["text"]
+
+    for name in ("Riya", "Kabir"):
+        r = await client.post(f"{API}/admissions", headers=admin_headers, json={"student_name": name, "parent_name": "Parent", "phone": "9876543210"})
+        assert r.status_code == 201, r.text
+    a = (await ask("how many inquiries I have?")).json()["data"]
+    assert a["template"] == "enquiries" and a["text"].startswith("You have 2 open admission enquiries") and a["link"] == "/admissions"
+    assert ["New", 2] in a["rows"]
