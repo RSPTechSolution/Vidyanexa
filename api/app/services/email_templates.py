@@ -2,6 +2,7 @@
 
 HTML uses inline styles and tables only, which is what email clients reliably render.
 """
+import re
 from datetime import date, datetime
 from decimal import Decimal
 from html import escape
@@ -59,8 +60,8 @@ def _text(title: str, intro: list[str], rows: list[tuple[str, str]] | None = Non
 
 
 def _plain(s: str) -> str:
-    """The plain-text version of a line that may contain <b> tags."""
-    return s.replace("<b>", "").replace("</b>", "")
+    """The plain-text version of a line that may contain tags such as <b> or <b style=...>."""
+    return re.sub(r"</?[a-z][^>]*>", "", s)
 
 
 def _build(*, to: str, to_name: str | None, subject: str, kind: str, title: str, school: str | None, intro: list[str],
