@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ACCESS_COOKIE } from "@/lib/auth/cookies";
-import { API_URL, clientHeaders } from "@/lib/auth/refresh";
+import { API_URL, UNAVAILABLE, clientHeaders } from "@/lib/auth/refresh";
 
 /** Browser -> Next -> FastAPI. Adds the bearer token from the httpOnly cookie.
  *  The middleware has already refreshed an expired token before we get here. */
@@ -32,7 +32,11 @@ async function handle(req: NextRequest, ctx: { params: Promise<{ path: string[] 
     body: ["GET", "HEAD"].includes(req.method) ? undefined : await req.arrayBuffer(),
     cache: "no-store",
     redirect: "manual",
-  });
+  }).catch(() => null);
+  // The API is down or restarting (its front door answers 502/503 with a plain page): say so in the usual shape.
+  if (!upstream || (upstream.status >= 502 && !(upstream.headers.get("content-type") ?? "").includes("application/json"))) {
+    return NextResponse.json(UNAVAILABLE, { status: 503 });
+  }
 
   const out = new NextResponse(upstream.body, { status: upstream.status });
   for (const h of ["content-type", "content-disposition", "cache-control"]) {
