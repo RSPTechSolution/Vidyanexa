@@ -110,6 +110,10 @@ class SignupOut(BaseModel):
     email: str
     plan: PlanBrief
     trial_ends_at: datetime
+    # The school opens once the code sent here is entered (POST /auth/login-code; ask again with /auth/login-code/request).
+    verify_by: list[str] = ["email"]
+    expires_in: int = 600
+    debug_code: str | None = None  # local development and automated tests only (OTP_DEBUG)
 
 
 class ContactRequest(BaseModel):

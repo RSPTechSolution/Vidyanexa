@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { VerifyCode } from "@/components/auth/verify-code";
 import { Field } from "@/components/common/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,8 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   // Stays true after a successful sign-in until the browser has loaded the next page.
   const [redirecting, setRedirecting] = useState(false);
+  // A school that signed itself up but hasn't confirmed its email yet: finish that here.
+  const [confirm, setConfirm] = useState<{ email: string; slug: string } | null>(null);
   const {
     register, handleSubmit, setValue, formState: { errors, isSubmitting },
   } = useForm<Values>({
@@ -62,9 +65,15 @@ export function LoginForm() {
       setRedirecting(true);
       window.location.assign(safeNext(new URLSearchParams(window.location.search).get("next")));
     } catch (e) {
+      if (e instanceof ApiError && e.code === "ACCOUNT_NOT_VERIFIED") {
+        const d = (e.details ?? {}) as { email?: string; school_slug?: string };
+        return setConfirm({ email: d.email ?? v.email, slug: d.school_slug ?? v.school_slug });
+      }
       setError(e instanceof ApiError ? e.message : "Could not reach the server. Check your connection and try again.");
     }
   };
+
+  if (confirm) return <VerifyCode email={confirm.email} schoolSlug={confirm.slug} sendOnOpen onBack={() => setConfirm(null)} />;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate method="post" className="space-y-5">

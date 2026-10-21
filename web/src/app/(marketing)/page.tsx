@@ -180,8 +180,9 @@ export default async function HomePage() {
         </p>
       </Section>
 
-      {/* Apps */}
-      <Section>
+      {/* Apps. The circle of icons is wider than the phone: it's sized to stay inside the column at every width, and the
+          section clips anything that still reaches the edge, so the page never scrolls sideways. */}
+      <Section className="overflow-x-clip">
         <div className="grid items-center gap-14 lg:grid-cols-2">
           <div>
             <SectionHeading
@@ -203,8 +204,8 @@ export default async function HomePage() {
               ))}
             </ul>
           </div>
-          <div className="relative mx-auto w-full max-w-sm">
-            <OrbitGraphic className="absolute top-1/2 left-1/2 -z-10 w-[150%] max-w-none -translate-x-1/2 -translate-y-1/2"
+          <div className="relative mx-auto w-full max-w-[15rem] sm:max-w-[18rem] lg:max-w-sm">
+            <OrbitGraphic className="absolute top-1/2 left-1/2 -z-10 w-[140%] max-w-none -translate-x-1/2 -translate-y-1/2 lg:w-[135%]"
               icons={[<CalendarCheck key="a" />, <Wallet key="b" />, <Bus key="c" />, <MessageSquare key="d" />, <GraduationCap key="e" />, <BellRing key="f" />]} />
             <div className="overflow-hidden rounded-[2.5rem] border-8 border-[#1a1b21] bg-card shadow-[0_40px_80px_-24px_rgb(0_0_0/0.35)] dark:border-[#34343a]">
               <Image src="/marketing/app-parent.png" alt="The Vidyanexa parent app home screen" width={412} height={860} sizes="384px" className="block w-full" />

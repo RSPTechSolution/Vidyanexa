@@ -45,7 +45,7 @@ async def test_quote_matches_pricing_rules(client):
 
 
 async def test_signup_starts_a_trial_with_plan_modules(client):
-    res = await client.post(f"{API}/public/signup", json=SIGNUP)
+    res = await factories.signup(client, SIGNUP)
     assert res.status_code == 201, res.text
     assert res.json()["data"]["plan"]["code"] == "pro"
 
@@ -153,7 +153,7 @@ async def test_user_limits_follow_the_plan(client, db, school, admin_headers, su
 # ---- subscription ---------------------------------------------------------------------------
 
 async def _trial_school(client):
-    await client.post(f"{API}/public/signup", json={**SIGNUP, "plan_code": "basic"})
+    await factories.signup(client, {**SIGNUP, "plan_code": "basic"})
     return await factories.login_headers(client, "meera@sunrise.edu", "Sunrise123", "sunrise")
 
 

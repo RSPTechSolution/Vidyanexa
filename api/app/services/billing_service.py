@@ -252,11 +252,19 @@ def subscription_view(school: School, used: dict[str, int]) -> dict:
 
 # ---- self-service sign-up ---------------------------------------------------------------
 
-async def signup(db: AsyncSession, data, *, ip: str | None) -> tuple[School, User]:
-    """Creates a school on a 14-day trial with its first admin. `data` is a SignupRequest."""
+async def signup(db: AsyncSession, data, *, ip: str | None) -> tuple[School, User, str]:
+    """Creates a school on a 14-day trial with its first admin, waiting for the admin to confirm their email with a code
+    (sent by email, and SMS when a mobile is given). Nothing can be used until then. Returns the school, the admin and
+    the code. `data` is a SignupRequest."""
     await set_tenant(db, None, bypass=True)
-    if await db.scalar(select(School.id).where(School.slug == data.school_slug)):
-        raise Conflict("That school ID is already taken. Try another.", code="SLUG_TAKEN")
+    taken = await db.scalar(select(School).where(School.slug == data.school_slug))
+    if taken:
+        # A sign-up whose email was never confirmed holds nothing yet, so it doesn't hold the school ID: starting again
+        # (say, after a mistyped email) replaces it.
+        if not (taken.settings or {}).get("awaiting_verification"):
+            raise Conflict("That school ID is already taken. Try another.", code="SLUG_TAKEN")
+        await db.delete(taken)
+        await db.flush()
 
     if data.plan_code == "custom":
         try:
@@ -270,7 +278,8 @@ async def signup(db: AsyncSession, data, *, ip: str | None) -> tuple[School, Use
     school = School(
         name=data.school_name, slug=data.school_slug, city=data.city, phone=data.phone, email=data.email.lower(),
         plan=plan, subscription_status="trialing", billing_cycle=data.billing_cycle,
-        trial_ends_at=_now() + timedelta(days=pricing.TRIAL_DAYS),
+        trial_ends_at=_now() + timedelta(days=pricing.TRIAL_DAYS),  # restarted when the email is confirmed
+        settings={"awaiting_verification": True},
     )
     db.add(school)
     await db.flush()
@@ -281,7 +290,10 @@ async def signup(db: AsyncSession, data, *, ip: str | None) -> tuple[School, Use
     await db.flush()
     await audit_service.record(db, "school.signup", school_id=school.id, user_id=admin.id, ip=ip,
                                entity_type="plan", entity_id=plan.code)
-    return school, admin
+    from app.services import auth_service, notify
+    code = await auth_service.issue_code(admin)
+    await notify.signup_code(db, admin, school, code)
+    return school, admin, code
 
 
 # ---- leads -------------------------------------------------------------------------------

@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { authRequest } from "@/lib/api/client";
+import { VerifyCode } from "@/components/auth/verify-code";
 import type { BillingCycle, Plan, Quote } from "@/lib/api/types";
 import { formatMoney, inr } from "@/lib/format";
 import { useHydrated } from "@/lib/use-hydrated";
@@ -51,7 +51,8 @@ export function SignupForm({ initialPlans, query }: { initialPlans: Plan[] | nul
   const customStudents = Number(params.get("students") ?? 0) || 0;
   const hasCustom = customModules.length > 0 && customStudents > 0;
   const [error, setError] = useState<string | null>(null);
-  const [redirecting, setRedirecting] = useState(false);
+  // After the form is sent: the school waits for its admin to enter the code sent to their email (and mobile).
+  const [pending, setPending] = useState<{ email: string; slug: string; sms: boolean } | null>(null);
 
   const plans = useQuery({ queryKey: ["public", "plans"], initialData: initialPlans ?? undefined, queryFn: () => publicGet<Plan[]>("/plans") });
   const quote = useQuery({
@@ -92,14 +93,9 @@ export function SignupForm({ initialPlans, query }: { initialPlans: Plan[] | nul
       }
       return setError(err?.message ?? "Could not create your school. Please try again.");
     }
-    // Sign straight in and open the new school.
-    try {
-      await authRequest("/api/auth/login", { email: v.email, password: v.password, school_slug: v.school_slug });
-      setRedirecting(true);
-      window.location.assign("/dashboard?welcome=1");
-    } catch {
-      window.location.assign(`/login`);
-    }
+    // Confirm the email before the school opens: the code is on its way.
+    setPending({ email: payload.data.email, slug: payload.data.school_slug, sms: (payload.data.verify_by ?? []).includes("sms") });
+    document.getElementById("signup-details")?.scrollIntoView({ block: "start", behavior: "smooth" });
   };
 
   const chosen = plans.data?.find((p) => p.code === planCode);
@@ -184,8 +180,13 @@ export function SignupForm({ initialPlans, query }: { initialPlans: Plan[] | nul
         </div>
       </div>
 
-      {/* Details */}
-      <form onSubmit={handleSubmit(onSubmit)} noValidate method="post" className="rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
+      {/* Details, then the confirmation code */}
+      {pending ? (
+        <div id="signup-details" className="scroll-mt-24 rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
+          <VerifyCode email={pending.email} schoolSlug={pending.slug} bySms={pending.sms} onBack={() => setPending(null)} />
+        </div>
+      ) : (
+      <form id="signup-details" onSubmit={handleSubmit(onSubmit)} noValidate method="post" className="scroll-mt-24 rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
         <h2 className="text-lg font-bold">2. Your school</h2>
         {error && <Alert variant="destructive" className="mt-4"><AlertDescription>{error}</AlertDescription></Alert>}
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -204,11 +205,11 @@ export function SignupForm({ initialPlans, query }: { initialPlans: Plan[] | nul
           <Field label="Your name" error={errors.full_name?.message} required>
             {(a) => <Input {...a} {...register("full_name")} autoComplete="name" />}
           </Field>
-          <Field label="Phone" error={errors.phone?.message}>
-            {(a) => <Input {...a} {...register("phone")} type="tel" autoComplete="tel" />}
+          <Field label="Mobile number" error={errors.phone?.message} hint="Optional. We'll text your code here too.">
+            {(a) => <Input {...a} {...register("phone")} type="tel" inputMode="tel" autoComplete="tel" placeholder="98140 12345" />}
           </Field>
-          <Field label="Work email" error={errors.email?.message} required className="sm:col-span-2">
-            {(a) => <Input {...a} {...register("email")} type="email" autoComplete="email" />}
+          <Field label="Work email" error={errors.email?.message} required className="sm:col-span-2" hint="We'll send a code here to confirm it's yours.">
+            {(a) => <Input {...a} {...register("email")} type="email" inputMode="email" autoComplete="email" />}
           </Field>
           <Field label="Password" error={errors.password?.message} required hint="At least 8 characters, with letters and numbers." className="sm:col-span-2">
             {(a) => <Input {...a} {...register("password")} type="password" autoComplete="new-password" />}
@@ -234,8 +235,8 @@ export function SignupForm({ initialPlans, query }: { initialPlans: Plan[] | nul
           size="lg"
           className="mt-7 h-11 w-full"
           disabled={!hydrated || (planCode === "custom" && !quote.data)}
-          loading={isSubmitting || redirecting}
-          loadingText={redirecting ? "Opening your school…" : "Creating your school…"}
+          loading={isSubmitting}
+          loadingText="Creating your school…"
         >
           Create my school
         </Button>
@@ -243,6 +244,7 @@ export function SignupForm({ initialPlans, query }: { initialPlans: Plan[] | nul
           Already using Vidyanexa? <Link href="/login" className="font-medium text-primary hover:underline">Sign in</Link>
         </p>
       </form>
+      )}
     </div>
   );
 }

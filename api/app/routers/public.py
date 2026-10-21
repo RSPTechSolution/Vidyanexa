@@ -57,9 +57,11 @@ async def quote(body: QuoteRequest):
 @router.post("/signup", response_model=ApiResponse[SignupOut], status_code=201)
 async def signup(body: SignupRequest, request: Request, db: DB):
     await _limit(request, "signup", settings.SIGNUP_RATE_LIMIT, 3600)
-    school, admin = await billing_service.signup(db, body, ip=client_ip(request))
-    return ok(SignupOut(school_slug=school.slug, email=admin.email,
-                        plan=PlanBrief.model_validate(school.plan), trial_ends_at=school.trial_ends_at))
+    school, admin, code = await billing_service.signup(db, body, ip=client_ip(request))
+    return ok(SignupOut(school_slug=school.slug, email=admin.email, plan=PlanBrief.model_validate(school.plan),
+                        trial_ends_at=school.trial_ends_at, verify_by=["email", "sms"] if admin.phone else ["email"],
+                        expires_in=settings.OTP_EXPIRE_MINUTES * 60,
+                        debug_code=code if settings.OTP_DEBUG and settings.ENVIRONMENT != "production" else None))
 
 
 @router.post("/contact", response_model=ApiResponse[Message], status_code=201)

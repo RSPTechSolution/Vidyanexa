@@ -29,7 +29,7 @@ export function SiteHeader({ signedIn }: { signedIn: boolean }) {
           <BrandMark size={32} />
           <Wordmark />
         </Link>
-        <nav aria-label="Main" className="ml-4 hidden items-center gap-1 md:flex">
+        <nav aria-label="Main" className="ml-4 hidden items-center gap-1 lg:flex">
           {LINKS.map((l) => (
             <Link
               key={l.href}
@@ -44,7 +44,7 @@ export function SiteHeader({ signedIn }: { signedIn: boolean }) {
             </Link>
           ))}
         </nav>
-        <div className="ml-auto hidden items-center gap-2 md:flex">
+        <div className="ml-auto hidden items-center gap-2 lg:flex">
           <ThemeMenu />
           {signedIn ? (
             <Link href="/dashboard" className={buttonVariants({ className: "h-10 px-5" })}>Open dashboard</Link>
@@ -56,8 +56,8 @@ export function SiteHeader({ signedIn }: { signedIn: boolean }) {
           )}
         </div>
         <Sheet open={open} onOpenChange={setOpen}>
-          <div className="ml-auto flex items-center md:hidden"><ThemeMenu /></div>
-        <SheetTrigger render={<button type="button" className="inline-flex size-10 items-center justify-center rounded-full outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring md:hidden" aria-label="Open menu" />}>
+          <div className="ml-auto flex items-center lg:hidden"><ThemeMenu /></div>
+        <SheetTrigger render={<button type="button" className="inline-flex size-10 items-center justify-center rounded-full outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring lg:hidden" aria-label="Open menu" />}>
             <Menu className="size-5" aria-hidden />
           </SheetTrigger>
           <SheetContent side="right" className="w-72 p-6">

@@ -103,14 +103,14 @@ test("super admin provisions a school whose admin can sign in", async ({ page, b
   await dialog.getByLabel("School name").fill(`E2E Academy ${slug}`);
   await dialog.getByLabel("School ID").fill(slug);
   await dialog.getByLabel("Full name").fill("E2E Principal");
-  await dialog.getByLabel("Email").fill(`head@${slug}.edu`);
+  await dialog.getByLabel("Email").fill(`head+${slug}@example.com`);
   const pw = await dialog.getByLabel("Temporary password").inputValue();
   await dialog.getByRole("button", { name: "Create school" }).click();
   await expect(page.getByText(`E2E Academy ${slug} is ready`)).toBeVisible();
 
   const ctx = await browser.newContext();
   const head = await ctx.newPage();
-  await login(head, `head@${slug}.edu`, pw, slug);
+  await login(head, `head+${slug}@example.com`, pw, slug);
   await expect(head).toHaveURL(/\/account\?required=1/);
   await ctx.close();
 });

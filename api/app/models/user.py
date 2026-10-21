@@ -36,6 +36,9 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=False)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # When the person proved they own the email (a code sent there) or the mobile number. A school that signs itself up
+    # stays unusable until its first admin is verified; people added by a school are verified on first sign-in.
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Personal settings that follow the person across devices, such as their dashboard layout.
     preferences: Mapped[dict] = mapped_column(JSONB, default=dict, server_default=text("'{}'::jsonb"))
 

@@ -56,3 +56,19 @@ def student_body(section: Section, admission_no: str, **extra) -> dict:
         "admission_no": admission_no, "admission_date": "2024-04-01",
         "class_id": str(section.class_id), "section_id": str(section.id), **extra,
     }
+
+
+async def signup(client: AsyncClient, body: dict, *, confirm: bool = True):
+    """Sign a school up through the website form, and (unless `confirm=False`) enter the emailed code, as the person would."""
+    from app.core.config import settings
+    debug = settings.OTP_DEBUG
+    settings.OTP_DEBUG = True  # the response carries the code, standing in for the person's inbox
+    try:
+        res = await client.post(f"{API}/public/signup", json=body)
+    finally:
+        settings.OTP_DEBUG = debug
+    if confirm and res.status_code == 201:
+        ok = await client.post(f"{API}/auth/login-code", json={"identifier": body["email"], "school_slug": body["school_slug"],
+                                                                "code": res.json()["data"]["debug_code"]})
+        assert ok.status_code == 200, ok.text
+    return res

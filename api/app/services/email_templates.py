@@ -76,7 +76,7 @@ def welcome(*, to: str, name: str, role_label: str, school_name: str, school_slu
         to=to, to_name=name, kind="welcome", school=school_name,
         subject=f"Your {school_name} account on Vidyanexa",
         title=f"Welcome, {name.split()[0]}",
-        intro=[f"Hello {first}, an Vidyanexa account has been created for you at <b>{escape(school_name)}</b> as <b>{escape(role_label)}</b>.",
+        intro=[f"Hello {first}, a Vidyanexa account has been created for you at <b>{escape(school_name)}</b> as <b>{escape(role_label)}</b>.",
                "Use these details to sign in on the website or in the Vidyanexa app:"],
         rows=[("School ID", school_slug), ("Email", to), ("Temporary password", password)],
         button=("Sign in", f"{settings.APP_URL}/login"),
@@ -111,6 +111,39 @@ def login_code(*, to: str, name: str, school_name: str | None, code: str, minute
         intro=[f"Hello {escape(name.split()[0])}, use this code to sign in:", f"<b style='font-size:28px;letter-spacing:6px'>{code}</b>",
                f"It works once and expires in {minutes} minutes."],
         outro=["If you didn't try to sign in, you can ignore this email. Never share this code with anyone, including school staff."])
+
+
+def signup_code(*, to: str, name: str, school_name: str, code: str, minutes: int) -> Email:
+    return _build(
+        to=to, to_name=name, kind="signup_code", school=school_name, subject=f"{code} is your Vidyanexa confirmation code",
+        title="Confirm your email",
+        intro=[f"Hello {escape(name.split()[0])}, thanks for signing up <b>{escape(school_name)}</b> on Vidyanexa.",
+               "Enter this code on the sign-up page to confirm your email and open your school:",
+               f"<b style='font-size:28px;letter-spacing:6px'>{code}</b>",
+               f"It works once and expires in {minutes} minutes."],
+        outro=["If you didn't sign up, you can ignore this email: nothing is set up until the code is entered."])
+
+
+def school_ready(*, to: str, name: str, school_name: str, school_slug: str, trial_days: int) -> Email:
+    return _build(
+        to=to, to_name=name, kind="school_ready", school=school_name, subject=f"{school_name} is ready on Vidyanexa",
+        title="Your school is ready",
+        intro=[f"Hello {escape(name.split()[0])}, your email is confirmed and <b>{escape(school_name)}</b> is set up.",
+               f"Your {trial_days}-day free trial starts today. Keep these details: everyone at your school signs in with the School ID."],
+        rows=[("School ID", school_slug), ("Your sign-in", to)],
+        button=("Open your school", f"{settings.APP_URL}/dashboard"),
+        outro=["Next: add your classes, then your staff and students. The checklist on your dashboard walks you through it.",
+               "Questions? Just reply to this email."])
+
+
+def password_changed(*, to: str, name: str, school_name: str | None, when: str) -> Email:
+    return _build(
+        to=to, to_name=name, kind="password_changed", school=school_name, subject="Your Vidyanexa password was changed",
+        title="Your password was changed",
+        intro=[f"Hello {escape(name.split()[0])}, the password for your Vidyanexa account was changed on {escape(when)}.",
+               "You've been signed out on your other devices."],
+        button=("Sign in", f"{settings.APP_URL}/login"),
+        outro=["If this wasn't you, reset your password straight away from the sign-in page, and tell your school office."])
 
 
 def fee_receipt(*, to: str, name: str, school_name: str, student: str, class_section: str, term: str, receipt_no: str,

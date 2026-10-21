@@ -42,10 +42,22 @@ test("a school signs up on a trial and lands on its dashboard", async ({ page })
   await page.getByLabel("School name").fill(`E2E Trial ${slug}`);
   await page.getByLabel("School ID").fill(slug);
   await page.getByLabel("Your name").fill("Trial Admin");
-  await page.getByLabel("Work email").fill(`admin@${slug}.edu`);
+  const email = `admin+${slug}@example.com`; // example.com is never really emailed
+  await page.getByLabel("Work email").fill(email);
   await page.getByRole("textbox", { name: "Password", exact: true }).fill("Trial12345");
   await page.getByRole("checkbox").click();
+  const created = page.waitForResponse((r) => r.url().endsWith("/public/signup") && r.request().method() === "POST");
   await page.getByRole("button", { name: "Create my school" }).click();
+  const { data } = await (await created).json();
+  test.skip(!data?.debug_code, "The API isn't running with OTP_DEBUG, so the emailed code can't be read here.");
+
+  // The school opens only once the emailed code is entered.
+  await expect(page.getByRole("heading", { name: "Confirm your email" })).toBeVisible();
+  await expect(page.getByText(email)).toBeVisible();
+  const code = page.getByLabel("Confirmation code");
+  await code.fill(data.debug_code === "000000" ? "111111" : "000000"); // a wrong code is checked as soon as it's complete
+  await expect(page.locator("#signup-details").getByRole("alert")).toContainText("wrong or has expired");
+  await code.fill(data.debug_code);
 
   await expect(page).toHaveURL(/\/dashboard\?welcome=1/, { timeout: 30_000 });
   await expect(page.getByText("Your school is ready!")).toBeVisible();
@@ -99,4 +111,22 @@ test("contact form enquiries reach the platform admin", async ({ page, browser }
   await expect(row).toBeVisible();
   await expect(row).toContainText("900 students");
   await ctx.close();
+});
+
+test("someone who never entered the sign-up code is asked for it when they sign in", async ({ page, request }) => {
+  const slug = unique("e2e-unconfirmed-");
+  const email = `owner+${slug}@example.com`;
+  const res = await request.post("/api/proxy/public/signup", { data: {
+    school_name: `Unconfirmed ${slug}`, school_slug: slug, full_name: "Pat Owner", email, password: "Unconfirmed1",
+    plan_code: "basic", billing_cycle: "monthly", accept_terms: true,
+  } });
+  expect(res.status()).toBe(201);
+
+  await page.goto("/login");
+  await page.getByLabel("School ID").fill(slug);
+  await page.getByLabel("Email").fill(email);
+  await page.getByRole("textbox", { name: "Password" }).fill("Unconfirmed1");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("heading", { name: "Confirm your email" })).toBeVisible();
+  await expect(page.getByText(`A new code is on its way to ${email}`)).toBeVisible(); // a fresh one: the first may have expired
 });

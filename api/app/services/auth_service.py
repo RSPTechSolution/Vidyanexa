@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import set_tenant
 from app.core.deps import enabled_modules
-from app.core.errors import BadRequest, Unauthorized
+from app.core.errors import BadRequest, Forbidden, Unauthorized
 from app.core.permissions import PERMISSIONS, Role, has_permission
 from app.core.security import (
     DUMMY_HASH, create_access_token, hash_password, hash_token, new_opaque_token, verify_password,
@@ -24,6 +24,27 @@ INVALID = "Invalid email, password or school"
 
 def _now() -> datetime:
     return datetime.now(UTC)
+
+
+def awaiting_verification(school: School | None, user: User) -> bool:
+    """A school that signed itself up can't be used until its first admin confirms the email (or mobile) with a code."""
+    return bool(school and (school.settings or {}).get("awaiting_verification") and not user.verified_at)
+
+
+async def _verified(db: AsyncSession, user: User, school: School | None) -> None:
+    """The person proved they own the address: by a code sent there, or the temporary password sent there. The first
+    time this happens for a school that signed itself up, the school opens and its free trial starts."""
+    if user.verified_at:
+        return
+    opening = awaiting_verification(school, user)
+    user.verified_at = _now()
+    if opening:
+        from app.core import pricing
+        school.settings = {k: v for k, v in (school.settings or {}).items() if k != "awaiting_verification"}
+        if school.subscription_status == "trialing":
+            school.trial_ends_at = _now() + timedelta(days=pricing.TRIAL_DAYS)  # the trial counts from the day it opens
+        await audit_service.record(db, "school.verified", school_id=school.id, user_id=user.id)
+        await notify.school_ready(db, user, school)
 
 
 async def build_me(db: AsyncSession, user: User) -> MeOut:
@@ -74,6 +95,10 @@ async def login(db: AsyncSession, email: str, password: str, school_slug: str | 
         raise Unauthorized("This account is disabled", code="ACCOUNT_DISABLED")
     if school and not school.is_active:
         raise Unauthorized("This school is inactive", code="SCHOOL_INACTIVE")
+    if awaiting_verification(school, user):
+        raise Forbidden(f"Confirm your email first: enter the code we sent to {user.email}, or ask for a new one.",
+                        code="ACCOUNT_NOT_VERIFIED", details={"email": user.email, "school_slug": school.slug})
+    await _verified(db, user, school)  # added by their school: the temporary password reached them, so the address is theirs
 
     tokens = await _issue_tokens(db, user, ip=ip, user_agent=user_agent)
     user.last_login_at = _now()
@@ -142,6 +167,7 @@ async def change_password(db: AsyncSession, user: User, session_id: uuid.UUID, c
     user.must_change_password = False
     await revoke_user_sessions(db, user.id, except_session=session_id)
     await audit_service.record(db, "auth.password_change", school_id=user.school_id, user_id=user.id)
+    await notify.password_changed(db, user)
 
 
 # ---- sign in with a one-time code ------------------------------------------------------------
@@ -172,17 +198,27 @@ def _otp_key(user_id: uuid.UUID) -> str:
 async def request_login_code(db: AsyncSession, identifier: str, school_slug: str | None) -> str | None:
     """Send a 6-digit code to the account's email (and phone, when signing in by phone). Returns the code, or None if no account matched.
     Callers answer the same either way."""
-    import secrets
-
-    from app.core.redis import get_redis
     await set_tenant(db, None, bypass=True)
     user = await _find_for_otp(db, identifier, school_slug)
     if not user or not user.is_active:
         return None
+    code = await issue_code(user)
+    await audit_service.record(db, "auth.login_code_requested", school_id=user.school_id, user_id=user.id)
+    school = await db.get(School, user.school_id) if user.school_id else None
+    if awaiting_verification(school, user):
+        await notify.signup_code(db, user, school, code)  # "send again" while confirming a new school
+    else:
+        await notify.login_code(db, user, code, by_sms="@" not in identifier)
+    return code
+
+
+async def issue_code(user: User) -> str:
+    """A fresh 6-digit code for this person, replacing any earlier one. Stored hashed, with a count of wrong tries."""
+    import secrets
+
+    from app.core.redis import get_redis
     code = f"{secrets.randbelow(10**6):06d}"
     await get_redis().set(_otp_key(user.id), f"{hash_token(code + str(user.id))}|0", ex=settings.OTP_EXPIRE_MINUTES * 60)
-    await audit_service.record(db, "auth.login_code_requested", school_id=user.school_id, user_id=user.id)
-    await notify.login_code(db, user, code, by_sms="@" not in identifier)
     return code
 
 
@@ -211,6 +247,7 @@ async def login_with_code(db: AsyncSession, identifier: str, code: str, school_s
     school = await db.get(School, user.school_id) if user.school_id else None
     if school and not school.is_active:
         raise Unauthorized("This school is inactive", code="SCHOOL_INACTIVE")
+    await _verified(db, user, school)  # the code reached their email or phone
     tokens = await _issue_tokens(db, user, ip=ip, user_agent=user_agent)
     user.last_login_at = _now()
     await audit_service.record(db, "auth.login", school_id=user.school_id, user_id=user.id, ip=ip, meta={"method": "code"})
@@ -256,3 +293,4 @@ async def confirm_password_reset(db: AsyncSession, token: str, new_password: str
     row.used_at = _now()
     await revoke_user_sessions(db, user.id)
     await audit_service.record(db, "auth.password_reset", school_id=user.school_id, user_id=user.id)
+    await notify.password_changed(db, user)
