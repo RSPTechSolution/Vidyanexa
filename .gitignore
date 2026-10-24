@@ -43,3 +43,6 @@ infra/compose/.env.api
 
 # Instagram renders (large videos): regenerate with web/scripts/social
 brand/social/out/
+
+# Cloudflare wrangler cache
+.wrangler/
