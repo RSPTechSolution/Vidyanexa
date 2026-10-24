@@ -36,7 +36,7 @@ for (const theme of ["light", "dark"] as const) {
 
     test("school admin pages are accessible", async ({ page }) => {
       await login(page, DEMO.admin, DEMO.password);
-      for (const path of ["/dashboard", "/students", "/fees", "/attendance", "/notices", "/settings/users", "/settings/school"]) {
+      for (const path of ["/dashboard", "/students", "/fees", "/attendance", "/notices", "/settings/users", "/settings/school", "/settings/storage"]) {
         await page.goto(path);
         await scan(page, path);
       }

@@ -209,7 +209,7 @@ function BillingPage() {
           <CardContent className="grid gap-6 sm:grid-cols-3">
             <UsageBar label="Students" used={s.usage.students} limit={s.plan.max_students} />
             <UsageBar label="Staff accounts" used={s.usage.staff} limit={s.plan.max_staff} />
-            <UsageBar label="Storage" used={s.usage.storage_bytes} limit={s.plan.storage_gb * 1024 ** 3} format={formatBytes}
+            <UsageBar label="Storage" used={s.usage.storage_bytes} limit={s.plan.storage_gb * 1024 ** 3} format={formatBytes} href={can("school.manage") ? "/settings/storage" : undefined}
                     hint={s.usage.storage_bytes >= s.plan.storage_gb * 1024 ** 3 ? "Storage is full: new uploads are paused. Remove old files or upgrade." : "Storage is nearly full. Remove old files or upgrade before it fills up."} />
             <div>
               <p className="text-sm font-medium">Modules</p>

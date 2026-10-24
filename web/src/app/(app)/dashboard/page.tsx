@@ -251,7 +251,7 @@ function SchoolDashboard() {
                 <>
                   <UsageBar label="Students" used={s.students.used} limit={s.students.limit} />
                   <UsageBar label="Staff accounts" used={s.staff.used} limit={s.staff.limit} />
-                  <UsageBar label="Storage" used={s.storage.used} limit={s.storage.limit} format={formatBytes}
+                  <UsageBar label="Storage" used={s.storage.used} limit={s.storage.limit} format={formatBytes} href={can("school.manage") ? "/settings/storage" : undefined}
                     hint={s.storage.used >= (s.storage.limit ?? Infinity) ? "Storage is full: new uploads are paused. Remove old files or upgrade." : "Storage is nearly full. Remove old files or upgrade before it fills up."} />
                 </>
               ) : [0, 1, 2].map((i) => <div key={i} className="space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-2 w-full rounded-full" /></div>)}

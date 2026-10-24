@@ -12,7 +12,7 @@ from app.core.errors import install_error_handlers
 from app.core.permissions import MODULES
 from app.core.redis import close_redis, get_redis
 from app.core import roles
-from app.routers import academics, academics_extra, accounts, ai, analytics, campus, hr, security, transport, messaging, online, attendance, attendance_extra, auth, billing, communication, dashboard, emails, exams, fees, files, notifications, platform, public, schools, timetable, transfer, users
+from app.routers import academics, academics_extra, accounts, ai, storage, analytics, campus, hr, security, transport, messaging, online, attendance, attendance_extra, auth, billing, communication, dashboard, emails, exams, fees, files, notifications, platform, public, schools, timetable, transfer, users
 from app.schemas.common import ok
 
 logging.basicConfig(level=logging.DEBUG if settings.DEBUG else logging.INFO,
@@ -86,6 +86,7 @@ app.include_router(messaging.surveys, prefix=f"{API}/surveys", tags=["Surveys"])
 app.include_router(communication.notices, prefix=f"{API}/notices", tags=["Notices"])
 app.include_router(communication.homework, prefix=f"{API}/homework", tags=["Homework"])
 app.include_router(files.router, prefix=f"{API}/files", tags=["Files"])
+app.include_router(storage.router, prefix=f"{API}/storage", tags=["Storage"])
 app.include_router(notifications.router, prefix=f"{API}/notifications", tags=["Notifications"])
 app.include_router(transport.router, prefix=f"{API}/transport", tags=["Transport"])
 app.include_router(hr.router, prefix=f"{API}/hr", tags=["HR and payroll"])

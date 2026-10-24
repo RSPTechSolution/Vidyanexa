@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const fmtCount = (n: number) => n.toLocaleString("en-IN");
@@ -12,15 +13,17 @@ export function formatBytes(n: number) {
 }
 
 /** "120 of 300 students" with a bar that turns amber at 80% and red at 100%. `format` shows the numbers (e.g. as sizes). */
-export function UsageBar({ label, used, limit, format = fmtCount, hint, className }: {
-  label: string; used: number; limit: number | null; format?: (n: number) => string; hint?: React.ReactNode; className?: string;
+export function UsageBar({ label, used, limit, format = fmtCount, hint, href, className }: {
+  label: string; used: number; limit: number | null; format?: (n: number) => string; hint?: React.ReactNode;
+  /** Makes the label a link to where this can be managed (e.g. the storage page). */
+  href?: string; className?: string;
 }) {
   const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : 0;
   const tone = !limit ? "bg-primary" : pct >= 100 ? "bg-destructive" : pct >= 80 ? "bg-warning" : "bg-primary";
   return (
     <div className={className}>
       <div className="flex items-baseline justify-between gap-2 text-sm">
-        <span className="font-medium">{label}</span>
+        {href ? <Link href={href} className="font-medium hover:text-primary hover:underline">{label}</Link> : <span className="font-medium">{label}</span>}
         <span className="text-muted-foreground tabular">
           <span className="font-semibold text-foreground">{format(used)}</span>
           {limit === null ? " · unlimited" : ` of ${format(limit)}`}

@@ -1376,3 +1376,28 @@ export interface PersonExtras {
   ptm: PtmRow[];
   student_overview: StudentOverview | null;
 }
+
+/** The school's storage page: space used and left, and what uses it (bytes). */
+export interface StorageSummary {
+  used: number;
+  limit: number;
+  free: number;
+  files: number;
+  plan_name: string;
+  storage_gb: number;
+  groups: { group: "photos" | "documents" | "homework" | "other"; files: number; bytes: number }[];
+  kinds: { purpose: string; label: string; group: string; files: number; bytes: number }[];
+}
+export interface StorageFile {
+  id: string;
+  filename: string;
+  content_type: string;
+  size: number;
+  label: string | null;
+  purpose: string;
+  purpose_label: string;
+  group: "photos" | "documents" | "homework" | "other";
+  owner: string | null;
+  uploaded_by: string | null;
+  created_at: string;
+}
