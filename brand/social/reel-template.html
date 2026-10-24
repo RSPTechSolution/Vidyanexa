@@ -1,0 +1,73 @@
+<!doctype html>
+<!-- One template, several layers, each screenshotted at 1080x1920 by web/scripts/social/reels.mjs and stacked by ffmpeg:
+     #layer=bg      the background, brand, kicker and headline (the recording goes on top of this)
+     #layer=frame   the phone bezel, transparent where the screen is
+     #layer=caption one step caption (transparent around it)
+     #layer=end     the closing card
+     Parameters come in the hash as URL-encoded JSON: #{"layer":"bg","kicker":"ATTENDANCE","title":"…","em":"…"} -->
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: Cinzel; src: url("../../web/src/fonts/Cinzel-SemiBold.ttf"); font-weight: 600; }
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 1080px; height: 1920px; overflow: hidden; background: transparent; }
+body { color: #15233F; font-family: "Segoe UI", Arial, sans-serif; }
+.bg { position: absolute; inset: 0;
+  background: radial-gradient(900px 700px at 100% 0%, rgba(184,137,60,.20), transparent 60%),
+              radial-gradient(800px 700px at 0% 100%, rgba(21,35,63,.10), transparent 60%), #F7F2E8; }
+.brand { position: absolute; left: 80px; top: 78px; display: flex; align-items: center; gap: 16px; }
+.brand img { width: 54px; }
+.word { font-family: Cinzel; font-weight: 600; font-size: 30px; letter-spacing: .08em; }
+.kicker { position: absolute; left: 80px; top: 196px; font-size: 26px; letter-spacing: .22em; color: #B8893C; font-weight: 700; }
+h1 { position: absolute; left: 80px; right: 80px; top: 240px; font-family: Georgia, serif; font-size: 66px; line-height: 1.08; letter-spacing: -.01em; }
+h1 em { font-style: normal; color: #B8893C; }
+.foot { position: absolute; left: 0; right: 0; bottom: 70px; text-align: center; font-size: 28px; color: #5B6478; letter-spacing: .02em; }
+.foot b { color: #15233F; }
+/* The phone: screen 560 x 1212 at (260, 500); bezel 16px around it. */
+.phone { position: absolute; left: 244px; top: 484px; width: 592px; height: 1244px; border-radius: 74px; border: 16px solid #15233F;
+  box-shadow: 0 0 0 2px #2a3a5e; }
+.phone-shadow { position: absolute; left: 244px; top: 484px; width: 592px; height: 1244px; border-radius: 74px;
+  box-shadow: 0 60px 120px -30px rgba(21,35,63,.55); background: #fff; }
+/* The bezel layer also paints the corners outside the rounded screen, so the square recording looks rounded. */
+.mask { position: absolute; left: 260px; top: 500px; width: 560px; height: 1212px; border-radius: 58px; box-shadow: 0 0 0 40px #15233F; }
+.notch { position: absolute; left: 470px; top: 512px; width: 140px; height: 34px; border-radius: 20px; background: #15233F; }
+.caption { position: absolute; left: 90px; right: 90px; bottom: 300px; display: flex; justify-content: center; }
+.pill { display: inline-flex; align-items: center; gap: 18px; background: #15233F; color: #F7F2E8; border-radius: 28px; padding: 26px 36px;
+  font-size: 38px; line-height: 1.25; box-shadow: 0 24px 50px -12px rgba(21,35,63,.6); max-width: 900px; }
+.pill .tick { flex: none; width: 52px; height: 52px; border-radius: 50%; background: #B8893C; color: #15233F; display: grid; place-items: center; font-size: 30px; font-weight: 800; }
+.pill b { color: #E2BE74; }
+.end { position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
+  background: radial-gradient(900px 700px at 50% 30%, rgba(184,137,60,.28), transparent 65%), #15233F; color: #F7F2E8; }
+.end .crest { width: 170px; margin: 0 auto 34px; }
+.end .w { font-family: Cinzel; font-weight: 600; font-size: 64px; letter-spacing: .1em; }
+.end .line { margin-top: 26px; font-size: 40px; color: #D9C9A6; }
+.end .cta { display: inline-block; margin-top: 70px; padding: 30px 54px; border-radius: 60px; background: #B8893C; color: #15233F; font-size: 40px; font-weight: 700; }
+.end .url { margin-top: 34px; font-size: 34px; letter-spacing: .04em; }
+[hidden] { display: none !important; }
+</style></head>
+<body>
+<div id="bg" hidden>
+  <div class="bg"></div>
+  <div class="brand"><img src="../png/vidyanexa-crest.png" alt=""><div class="word">VIDYANEXA</div></div>
+  <div class="kicker" id="kicker"></div>
+  <h1 id="title"></h1>
+  <div class="phone-shadow"></div>
+  <div class="foot"><b>vidyanexa.com</b> · School management, made simple</div>
+</div>
+<div id="frame" hidden><div class="mask"></div><div class="phone"></div></div>
+<div id="caption" hidden><div class="caption"><div class="pill"><span class="tick">✓</span><span id="ctext"></span></div></div></div>
+<div id="end" hidden><div class="end"><div>
+  <img class="crest" src="../png/vidyanexa-crest-reverse.png" alt="">
+  <div class="w">VIDYANEXA</div>
+  <div class="line" id="eline">School management software for Indian schools</div>
+  <div class="cta">Start your free 14-day trial</div>
+  <div class="url">www.vidyanexa.com</div>
+</div></div></div>
+<script>
+  const p = JSON.parse(decodeURIComponent(location.hash.slice(1) || "{}"));
+  document.getElementById(p.layer || "bg").hidden = false;
+  if (p.kicker) document.getElementById("kicker").textContent = p.kicker;
+  if (p.title) document.getElementById("title").innerHTML = p.title.replace(/\*(.+?)\*/g, "<em>$1</em>");
+  if (p.caption) document.getElementById("ctext").innerHTML = p.caption.replace(/\*(.+?)\*/g, "<b>$1</b>");
+  if (p.line) document.getElementById("eline").textContent = p.line;
+</script>
+</body></html>
