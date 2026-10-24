@@ -14,6 +14,23 @@ as it is.
 - **Bio:** have the link in bio go to www.vidyanexa.com/signup, and the bio say "School ERP for Indian schools ·
   Free 14-day trial · DM 'DEMO'". Every caption below points there.
 
+## Scheduling with Metricool
+
+`brand/social/metricool.csv` holds all ten posts for Metricool's bulk import, scheduled Monday, Wednesday and Friday at
+7:30 pm from 26 October. Its media is served from www.vidyanexa.com/social/ (each Reel with a cover image), so the site
+must be deployed before importing. Rebuild the file after changing a caption here:
+`node scripts/social/metricool.mjs` (from `web/`; `--start 2026-11-02` moves the dates).
+
+1. In Metricool, set the brand's **timezone to Asia/Kolkata** (Settings → brand), so 19:30 means 7:30 pm in India.
+2. **Planning → ⋯ → Import CSV**, choose `metricool.csv`, and set the formats to match: date **YYYY-MM-DD**, time
+   **24 hours (00:00:00)**, durations in **seconds**.
+3. Check the preview: ten Instagram posts, five as Reels with covers. Import.
+4. Tags and the location aren't part of the CSV: open each scheduled post in Metricool to add the *Ludhiana, Punjab*
+   location and any school tags before its date.
+
+If Metricool reports unknown columns, download its own template (same menu) and run
+`node scripts/social/metricool.mjs --template <downloaded file>`: the posts are written into its exact columns.
+
 ## Tagging Ludhiana schools
 
 Tag schools where it's natural (they're in your audience, or you already know them), and no more than two or three

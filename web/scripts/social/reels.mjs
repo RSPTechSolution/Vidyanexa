@@ -166,6 +166,7 @@ async function compose(browser, story, timeline, outFile) {
   const args = ["-loop", "1", "-t", total.toFixed(2), "-i", bg, "-i", joined, "-loop", "1", "-t", total.toFixed(2), "-i", frame];
   capFiles.forEach((f) => args.push("-loop", "1", "-t", total.toFixed(2), "-i", f));
   args.push("-loop", "1", "-t", total.toFixed(2), "-i", end);
+  args.push("-f", "lavfi", "-t", total.toFixed(2), "-i", "anullsrc=r=48000:cl=stereo"); // silent track: Instagram wants one
   const n = 3 + capFiles.length; // index of the end card
   let g = `[1:v]tpad=stop_mode=clone:stop_duration=${END_CARD + 1}[scr];[0:v][scr]overlay=260:500:shortest=0[a0];[a0][2:v]overlay=0:0[b0]`;
   let last = "b0";
@@ -177,8 +178,8 @@ async function compose(browser, story, timeline, outFile) {
   });
   const e0 = (total - END_CARD).toFixed(2);
   g += `;[${n}:v]format=rgba,fade=t=in:st=${e0}:d=0.45:alpha=1[end];[${last}][end]overlay=0:0:enable='gte(t,${e0})'[out]`;
-  ffmpeg([...args, "-filter_complex", g, "-map", "[out]", "-t", total.toFixed(2), "-r", String(FPS),
-    "-c:v", "libx264", "-preset", "slow", "-crf", "19", "-pix_fmt", "yuv420p", "-movflags", "+faststart", outFile]);
+  ffmpeg([...args, "-filter_complex", g, "-map", "[out]", "-map", `${n + 1}:a`, "-t", total.toFixed(2), "-r", String(FPS),
+    "-c:v", "libx264", "-preset", "slow", "-crf", "19", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", outFile]);
   return total;
 }
 
