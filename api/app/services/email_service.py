@@ -42,6 +42,9 @@ class Email:
     to_name: str | None = None
     kind: str = "general"
     log_id: uuid.UUID | None = None
+    content: dict | None = None  # the parts (title, intro, rows...), so the school's branding can be applied when queued
+    from_name: str | None = None  # e.g. "Green Valley Public School via Vidyanexa"; EMAIL_FROM_NAME when empty
+    reply_to: str | None = None  # the school office, so replies reach the school
 
 
 def provider_name() -> str:
@@ -57,6 +60,13 @@ async def queue(db: AsyncSession, msg: Email, *, school_id: uuid.UUID | None) ->
     whether to email the new accounts."""
     if db.info.get("suppress_emails"):
         return
+    if school_id and msg.content:
+        # Every school email looks like the school's own: its colour band, logo and details on top, its name as sender.
+        from app.models import School
+        from app.services import email_templates
+        school = await db.get(School, school_id)
+        if school:
+            email_templates.apply_brand(msg, school)
     row = EmailLog(school_id=school_id, to_email=msg.to, to_name=msg.to_name, subject=msg.subject, kind=msg.kind,
                    provider=provider_name(), status="queued")
     db.add(row)
@@ -119,8 +129,9 @@ async def deliver(msg: Email) -> None:
     if provider_name() == "brevo-api":
         async with httpx.AsyncClient(timeout=20) as client:
             res = await client.post("https://api.brevo.com/v3/smtp/email", headers={"api-key": settings.BREVO_API_KEY}, json={
-                "sender": {"email": settings.EMAIL_FROM, "name": settings.EMAIL_FROM_NAME},
+                "sender": {"email": settings.EMAIL_FROM, "name": msg.from_name or settings.EMAIL_FROM_NAME},
                 "to": [{"email": msg.to, **({"name": msg.to_name} if msg.to_name else {})}],
+                **({"replyTo": {"email": msg.reply_to}} if msg.reply_to else {}),
                 "subject": msg.subject, "htmlContent": msg.html, "textContent": msg.text,
             })
             if res.status_code >= 300:
@@ -134,8 +145,10 @@ async def deliver(msg: Email) -> None:
 
 def _smtp_send(msg: Email) -> None:
     m = EmailMessage()
-    m["From"] = formataddr((settings.EMAIL_FROM_NAME, settings.EMAIL_FROM))
+    m["From"] = formataddr((msg.from_name or settings.EMAIL_FROM_NAME, settings.EMAIL_FROM))
     m["To"] = formataddr((msg.to_name or "", msg.to))
+    if msg.reply_to:
+        m["Reply-To"] = msg.reply_to
     m["Subject"] = msg.subject
     m.set_content(msg.text)
     m.add_alternative(msg.html, subtype="html")

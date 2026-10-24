@@ -108,7 +108,7 @@ async def _warn_if_crossed(db: AsyncSession, school: School, before: int, after:
 SHRINKABLE = {"image/jpeg", "image/png", "image/webp"}
 
 
-def shrink_image(data: bytes, content_type: str, max_px: int | None = None) -> tuple[bytes, str]:
+def shrink_image(data: bytes, content_type: str, max_px: int | None = None, fmt: str = "WEBP") -> tuple[bytes, str]:
     """A phone photo (often 3-5 MB) becomes a WebP of a few hundred KB: turned upright, made to fit `max_px`, and stripped
     of hidden details such as where it was taken. Kept as it was if that isn't smaller or it can't be read."""
     if content_type not in SHRINKABLE:
@@ -125,12 +125,17 @@ def shrink_image(data: bytes, content_type: str, max_px: int | None = None) -> t
             if im.mode not in ("RGB", "RGBA"):
                 im = im.convert("RGBA" if "A" in im.getbands() or im.info.get("transparency") is not None else "RGB")
             out = io.BytesIO()
-            im.save(out, "WEBP", quality=82, method=4)
+            if fmt == "PNG":
+                im.save(out, "PNG", optimize=True)
+            else:
+                im.save(out, "WEBP", quality=82, method=4)
     except Exception:  # not really an image, or one Pillow can't read: keep the original
         log.info("image not shrunk", exc_info=True)
         return data, content_type
     small = out.getvalue()
-    return (small, "image/webp") if len(small) < len(data) else (data, content_type)
+    kind = "image/png" if fmt == "PNG" else "image/webp"
+    must_convert = fmt == "PNG" and content_type != kind  # a logo must end up PNG, even if that's a little bigger
+    return (small, kind) if must_convert or len(small) < len(data) else (data, content_type)
 
 
 async def save(db: AsyncSession, user: User, *, purpose: str, owner_id: uuid.UUID | None, filename: str,
@@ -150,10 +155,12 @@ async def save(db: AsyncSession, user: User, *, purpose: str, owner_id: uuid.UUI
     if len(data) > settings.MAX_UPLOAD_MB * 1024 * 1024:
         raise AppError(f"Files can be at most {settings.MAX_UPLOAD_MB} MB", code="FILE_TOO_BIG", status_code=413)
 
-    data, new_type = shrink_image(data, content_type)
+    # The school logo appears in every email, and Outlook can't show WebP: logos stay PNG (and small).
+    logo = purpose == "school_logo"
+    data, new_type = shrink_image(data, content_type, 512 if logo else None, "PNG" if logo else "WEBP")
     if new_type != content_type:
         content_type = new_type
-        filename = str(Path(filename).with_suffix(".webp"))
+        filename = str(Path(filename).with_suffix(".png" if new_type == "image/png" else ".webp"))
 
     replaced = list((await db.scalars(select(StoredFile).where(StoredFile.purpose == purpose, StoredFile.owner_id == owner_id))).all()) \
         if rules.single and owner_id else []
