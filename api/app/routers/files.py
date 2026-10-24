@@ -3,6 +3,7 @@ import uuid
 from urllib.parse import quote
 
 from fastapi import APIRouter, File, Form, Response, UploadFile
+from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 
 from app.core.config import settings
@@ -46,6 +47,8 @@ async def public_file(file_id: uuid.UUID, db: DB):
         f = await db.scalar(select(StoredFile).where(StoredFile.id == file_id, StoredFile.purpose.in_(storage_service.PUBLIC_PURPOSES)))
     if not f:
         raise NotFound("File not found")
+    if url := storage_service.media_url(f, minutes=24 * 60):  # public by nature: a long-lived link
+        return RedirectResponse(url, status_code=302, headers={"Cache-Control": "public, max-age=3600"})
     resp = _send(f, await storage_service.read_bytes(f), False)
     resp.headers["Cache-Control"] = "public, max-age=3600"
     return resp
@@ -54,6 +57,9 @@ async def public_file(file_id: uuid.UUID, db: DB):
 @router.get("/{file_id}")
 async def download(file_id: uuid.UUID, current: Auth, db: DB, download: bool = False):
     f = await storage_service.get_readable(db, current.user, file_id)
+    # Allowed to see it: from the media domain when it's set up (faster, and off this server), else sent from here.
+    if url := storage_service.media_url(f, download=download):
+        return RedirectResponse(url, status_code=302, headers={"Cache-Control": "private, max-age=300"})
     return _send(f, await storage_service.read_bytes(f), download)
 
 

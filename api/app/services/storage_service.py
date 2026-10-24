@@ -186,6 +186,27 @@ async def get_readable(db: AsyncSession, user: User, file_id: uuid.UUID) -> Stor
     return f
 
 
+def media_url(f: StoredFile, *, download: bool = False, minutes: int | None = None) -> str | None:
+    """A signed link to the file on the media domain, or None when files aren't served from there. The link carries when
+    it expires and how to show the file (inline or as a download, under its own name); the Worker checks the signature
+    over all of it, so none of it can be changed. Expiry is rounded up to a whole window so the link (and the browser's
+    and the edge's cached copy) stays the same for a while."""
+    if not (settings.MEDIA_BASE_URL and settings.MEDIA_SIGNING_SECRET and settings.STORAGE_BACKEND == "s3"):
+        return None
+    import hashlib
+    import hmac
+    import time
+    from urllib.parse import quote, urlencode
+
+    window = (minutes or settings.MEDIA_LINK_MINUTES) * 60
+    exp = (int(time.time()) // window + 2) * window
+    d = "1" if download else "0"
+    message = "\n".join([f.storage_key, str(exp), d, f.filename]).encode()
+    sig = hmac.new(settings.MEDIA_SIGNING_SECRET.encode(), message, hashlib.sha256).hexdigest()
+    query = urlencode({"exp": exp, "d": d, "n": f.filename, "sig": sig}, quote_via=quote)
+    return f"{settings.MEDIA_BASE_URL.rstrip('/')}/{quote(f.storage_key)}?{query}"
+
+
 async def read_bytes(f: StoredFile) -> bytes:
     return await blob_store.files().get(f.storage_key)
 

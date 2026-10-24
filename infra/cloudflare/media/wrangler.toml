@@ -1,0 +1,17 @@
+# media.vidyanexa.com: signed, edge-cached access to the uploaded-files bucket. Deploy from this folder:
+#   npx wrangler@4 login
+#   npx wrangler@4 secret put MEDIA_SIGNING_SECRET      # the same value as MEDIA_SIGNING_SECRET in the API's .env.api
+#   npx wrangler@4 deploy
+name = "vidyanexa-media"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+workers_dev = false
+
+routes = [{ pattern = "media.vidyanexa.com", custom_domain = true }]
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "vidyanexa-files"
+
+[vars]
+ALLOWED_ORIGIN = "https://www.vidyanexa.com"

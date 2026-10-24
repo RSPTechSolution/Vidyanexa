@@ -21,8 +21,17 @@ function unauthenticated(req: NextRequest) {
   return res;
 }
 
+// The CDN address (ASSET_PREFIX, e.g. https://cdn.vidyanexa.com) points at this same site but is only for built CSS, JS
+// and fonts, which never reach the middleware. Anything else asked of it goes to the real site, so search engines never
+// see a second copy of the pages.
+const CDN_HOST = process.env.ASSET_PREFIX ? new URL(process.env.ASSET_PREFIX).host : null;
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  if (CDN_HOST && SITE_URL && req.headers.get("host") === CDN_HOST) {
+    return NextResponse.redirect(new URL(pathname + req.nextUrl.search, SITE_URL), 308);
+  }
   if (pathname.startsWith("/api/auth/") || PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }

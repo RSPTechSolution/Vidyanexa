@@ -39,7 +39,8 @@ async function handle(req: NextRequest, ctx: { params: Promise<{ path: string[] 
   }
 
   const out = new NextResponse(upstream.body, { status: upstream.status });
-  for (const h of ["content-type", "content-disposition", "cache-control"]) {
+  // "location" carries a file's signed link on the media domain (a 302): the browser follows it from here.
+  for (const h of ["content-type", "content-disposition", "cache-control", "location"]) {
     const v = upstream.headers.get(h);
     if (v) out.headers.set(h, v);
   }

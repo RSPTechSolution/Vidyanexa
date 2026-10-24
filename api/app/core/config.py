@@ -68,6 +68,13 @@ class Settings(BaseSettings):
     S3_SECRET_ACCESS_KEY: str = ""
     S3_BUCKET: str = ""  # uploaded files (private)
     S3_BACKUP_BUCKET: str = ""  # optional: a copy of every backup goes here, off the server
+    # Serving files from the edge (e.g. https://media.vidyanexa.com, a Cloudflare Worker in front of the R2 bucket; see
+    # infra/cloudflare/media). The API still checks who may see a file, then sends the browser to a signed link there
+    # that stops working after MEDIA_LINK_MINUTES (up to twice that, so links stay the same and can be cached). Empty =
+    # files are sent by the API itself. The Worker must have the same MEDIA_SIGNING_SECRET.
+    MEDIA_BASE_URL: str = ""
+    MEDIA_SIGNING_SECRET: str = ""
+    MEDIA_LINK_MINUTES: int = 60
     # Schools are warned when their files reach this share of the plan's storage, and uploads stop at 100%.
     STORAGE_WARN_PERCENT: int = 80
     # Photos and pictures are shrunk to fit this many pixels on the long side and saved as WebP (if that's smaller).

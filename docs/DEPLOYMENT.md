@@ -105,6 +105,8 @@ server code calls the API, so the website and the API should be in the same regi
 | `NEXT_PUBLIC_SITE_URL` | `https://www.vidyanexa.com` |
 | `COOKIE_SECURE` | `true` |
 | `WEB_PROXY_SECRET` | the same value as in `.env.api` |
+| `NEXT_PUBLIC_MEDIA_URL` | `https://media.vidyanexa.com` (once the media Worker is deployed; see "CDN" below) |
+| `ASSET_PREFIX` | `https://cdn.vidyanexa.com` (optional; see "CDN" below) |
 | `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | optional |
 
 Then add the domains `www.vidyanexa.com` and `vidyanexa.com` (redirecting to `www`) and create the DNS records Vercel
@@ -113,6 +115,42 @@ limits would be shared by everyone.
 
 **Updating the API:** `cd ~/vidyanexa && git pull && cd infra/compose && docker compose -f docker-compose.api.yml --env-file .env.api up -d --build`.
 The website updates itself on every push to GitHub.
+
+## CDN: cdn.vidyanexa.com and media.vidyanexa.com
+
+**Uploaded files (media.vidyanexa.com).** Photos and documents are served by a Cloudflare Worker from the R2 bucket,
+cached at Cloudflare's edge, instead of passing through the API server. The bucket stays private: the API still checks
+who may see each file and then redirects to a signed link that expires within one to two hours; the Worker refuses any
+link that is unsigned, changed or expired, and serves files so they can never run as a page.
+
+1. Make a secret on the server (`openssl rand -hex 32`) and put it in `.env.api` as `MEDIA_SIGNING_SECRET`, with
+   `MEDIA_BASE_URL=https://media.vidyanexa.com`. Don't restart yet.
+2. Deploy the Worker (Node 20+, from `infra/cloudflare/media`):
+
+   ```sh
+   npx wrangler@4 login
+   npx wrangler@4 secret put MEDIA_SIGNING_SECRET     # paste the same secret
+   npx wrangler@4 deploy                              # creates media.vidyanexa.com on Cloudflare
+   ```
+
+   `wrangler.toml` binds the `vidyanexa-files` bucket and sets the custom domain; the domain must be on Cloudflare (it is).
+3. Restart the API: `docker compose -f docker-compose.api.yml --env-file .env.api up -d`.
+4. In Vercel, add `NEXT_PUBLIC_MEDIA_URL=https://media.vidyanexa.com` and redeploy (so the site's security rules allow
+   images from there).
+
+Check: open a student photo in the app; in the browser's developer tools its final address is on media.vidyanexa.com.
+Tests for the Worker: `node --test infra/cloudflare/media/worker.test.mjs`.
+
+**CSS, JS and fonts (cdn.vidyanexa.com).** Optional: Vercel already serves these from its own global CDN, so this
+changes the address, not the speed (a first visit makes one extra connection). To use it:
+
+1. In Vercel → the project → Settings → Domains, add `cdn.vidyanexa.com` (no redirect), and add the CNAME Vercel shows
+   in Cloudflare DNS (DNS only).
+2. In Vercel → Environment Variables, add `ASSET_PREFIX=https://cdn.vidyanexa.com` (for build and run) and redeploy.
+
+The built files are then linked from cdn.vidyanexa.com (cached for a year, shared with the site only); anything else
+asked of cdn.vidyanexa.com is redirected to www, so search engines never see a second copy of the pages. To go back,
+remove `ASSET_PREFIX` and redeploy.
 
 ## File storage (Cloudflare R2)
 
