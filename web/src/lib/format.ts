@@ -56,6 +56,13 @@ export function formatMoney(n: number, currency = "INR") {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency, maximumFractionDigits: 2 }).format(n);
 }
 
+/** The name to greet someone by: "Dr. Rajesh Kumar" → "Rajesh" (titles such as Dr., Mr., Mrs., Ms. and Prof. skipped). */
+export function firstName(fullName: string) {
+  const words = fullName.trim().split(/\s+/);
+  const named = words.find((w) => !/^(dr|mr|mrs|ms|miss|prof|sir|smt|shri|sri)\.?$/i.test(w));
+  return named ?? words[0] ?? "";
+}
+
 export function greeting(date = new Date()) {
   const h = date.getHours();
   return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";

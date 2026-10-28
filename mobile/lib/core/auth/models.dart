@@ -46,7 +46,12 @@ class Me {
   final List<String> modules;
   final List<String> permissions;
 
-  String get firstName => fullName.trim().split(RegExp(r'\s+')).first;
+  /// The name to greet by: "Dr. Rajesh Kumar" → "Rajesh" (titles such as Dr., Mr., Mrs. and Prof. skipped).
+  String get firstName {
+    final words = fullName.trim().split(RegExp(r'\s+'));
+    final title = RegExp(r'^(dr|mr|mrs|ms|miss|prof|sir|smt|shri|sri)\.?$', caseSensitive: false);
+    return words.firstWhere((w) => !title.hasMatch(w), orElse: () => words.first);
+  }
 
   String get initials {
     final parts = fullName.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();

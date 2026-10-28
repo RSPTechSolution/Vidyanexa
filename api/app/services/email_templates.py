@@ -128,6 +128,13 @@ def _text(title: str, intro: list[str], rows: list[tuple[str, str]] | None = Non
     return "\n".join(parts)
 
 
+def first_name(name: str) -> str:
+    """The name to greet someone by: "Dr. Rajesh Kumar" -> "Rajesh" (titles such as Dr., Mr., Mrs. and Prof. skipped)."""
+    words = name.split()
+    named = next((w for w in words if not re.fullmatch(r"(?i)(dr|mr|mrs|ms|miss|prof|sir|smt|shri|sri)\.?", w)), None)
+    return named or (words[0] if words else "")
+
+
 def _plain(s: str) -> str:
     """The plain-text version of a line that may contain tags such as <b> or <b style=...>."""
     return re.sub(r"</?[a-z][^>]*>", "", s)
@@ -161,11 +168,11 @@ def apply_brand(msg: Email, school) -> None:
 
 
 def welcome(*, to: str, name: str, role_label: str, school_name: str, school_slug: str, password: str) -> Email:
-    first = escape(name.split()[0])
+    first = escape(first_name(name))
     return _build(
         to=to, to_name=name, kind="welcome", school=school_name,
         subject=f"Your {school_name} account on Vidyanexa",
-        title=f"Welcome, {name.split()[0]}",
+        title=f"Welcome, {first_name(name)}",
         intro=[f"Hello {first}, an account has been created for you at <b>{escape(school_name)}</b> as <b>{escape(role_label)}</b>.",
                "Use these details to sign in on the website or in the Vidyanexa app:"],
         rows=[("School ID", school_slug), ("Email", to), ("Temporary password", password)],
@@ -177,7 +184,7 @@ def password_set_by_school(*, to: str, name: str, school_name: str, school_slug:
     return _build(
         to=to, to_name=name, kind="password_set", school=school_name, subject="Your Vidyanexa password was reset",
         title="Your password was reset",
-        intro=[f"Hello {escape(name.split()[0])}, the school office has set a new temporary password for your account."],
+        intro=[f"Hello {escape(first_name(name))}, the school office has set a new temporary password for your account."],
         rows=[("School ID", school_slug), ("Email", to), ("Temporary password", password)],
         button=("Sign in", f"{settings.APP_URL}/login"),
         outro=["You'll choose your own password when you sign in. If you didn't ask for this, contact the school office."])
@@ -188,7 +195,7 @@ def password_reset(*, to: str, name: str, school_name: str | None, token: str, m
     return _build(
         to=to, to_name=name, kind="password_reset", school=school_name, subject="Reset your Vidyanexa password",
         title="Reset your password",
-        intro=[f"Hello {escape(name.split()[0])}, we received a request to reset your password.",
+        intro=[f"Hello {escape(first_name(name))}, we received a request to reset your password.",
                f"The link works once and expires in {minutes} minutes."],
         button=("Choose a new password", link),
         outro=["If you didn't ask for this, you can ignore this email; your password won't change."])
@@ -198,7 +205,7 @@ def login_code(*, to: str, name: str, school_name: str | None, code: str, minute
     return _build(
         to=to, to_name=name, kind="login_code", school=school_name, subject=f"{code} is your Vidyanexa sign-in code",
         title="Your sign-in code",
-        intro=[f"Hello {escape(name.split()[0])}, use this code to sign in:", f"<b style='font-size:28px;letter-spacing:6px'>{code}</b>",
+        intro=[f"Hello {escape(first_name(name))}, use this code to sign in:", f"<b style='font-size:28px;letter-spacing:6px'>{code}</b>",
                f"It works once and expires in {minutes} minutes."],
         outro=["If you didn't try to sign in, you can ignore this email. Never share this code with anyone, including school staff."])
 
@@ -207,7 +214,7 @@ def signup_code(*, to: str, name: str, school_name: str, code: str, minutes: int
     return _build(
         to=to, to_name=name, kind="signup_code", school=school_name, subject=f"{code} is your Vidyanexa confirmation code",
         title="Confirm your email",
-        intro=[f"Hello {escape(name.split()[0])}, thanks for signing up <b>{escape(school_name)}</b> on Vidyanexa.",
+        intro=[f"Hello {escape(first_name(name))}, thanks for signing up <b>{escape(school_name)}</b> on Vidyanexa.",
                "Enter this code on the sign-up page to confirm your email and open your school:",
                f"<b style='font-size:28px;letter-spacing:6px'>{code}</b>",
                f"It works once and expires in {minutes} minutes."],
@@ -218,7 +225,7 @@ def school_ready(*, to: str, name: str, school_name: str, school_slug: str, tria
     return _build(
         to=to, to_name=name, kind="school_ready", school=school_name, subject=f"{school_name} is ready on Vidyanexa",
         title="Your school is ready",
-        intro=[f"Hello {escape(name.split()[0])}, your email is confirmed and <b>{escape(school_name)}</b> is set up.",
+        intro=[f"Hello {escape(first_name(name))}, your email is confirmed and <b>{escape(school_name)}</b> is set up.",
                f"Your {trial_days}-day free trial starts today. Keep these details: everyone at your school signs in with the School ID."],
         rows=[("School ID", school_slug), ("Your sign-in", to)],
         button=("Open your school", f"{settings.APP_URL}/dashboard"),
@@ -230,7 +237,7 @@ def password_changed(*, to: str, name: str, school_name: str | None, when: str) 
     return _build(
         to=to, to_name=name, kind="password_changed", school=school_name, subject="Your Vidyanexa password was changed",
         title="Your password was changed",
-        intro=[f"Hello {escape(name.split()[0])}, the password for your Vidyanexa account was changed on {escape(when)}.",
+        intro=[f"Hello {escape(first_name(name))}, the password for your Vidyanexa account was changed on {escape(when)}.",
                "You've been signed out on your other devices."],
         button=("Sign in", f"{settings.APP_URL}/login"),
         outro=["If this wasn't you, reset your password straight away from the sign-in page, and tell your school office."])
@@ -242,7 +249,7 @@ def fee_receipt(*, to: str, name: str, school_name: str, student: str, class_sec
     return _build(
         to=to, to_name=name, kind="fee_receipt", school=school_name, subject=f"Fee receipt {receipt_no} – {student}",
         title=f"Payment received: {inr(amount)}",
-        intro=[f"Hello {escape(name.split()[0])}, thank you. We've received a fee payment for <b>{escape(student)}</b>."],
+        intro=[f"Hello {escape(first_name(name))}, thank you. We've received a fee payment for <b>{escape(student)}</b>."],
         rows=[("Receipt no.", receipt_no), ("Student", f"{student} · {class_section}"), ("For", term),
               ("Amount", inr(amount)), ("Paid by", method), ("Date", paid_at.strftime("%d %b %Y, %I:%M %p")),
               ("Balance on this invoice", inr(balance))],
@@ -261,7 +268,7 @@ def fee_reminder(*, to: str, name: str, school_name: str, student: str, class_se
         to=to, to_name=name, kind="fee_reminder", school=school_name,
         subject=f"{'Overdue' if overdue else 'Reminder'}: {term} fees for {student}",
         title=f"{inr(balance)} {'is overdue' if overdue else 'is due soon'}",
-        intro=[f"Hello {escape(name.split()[0])}, this is a reminder about <b>{escape(student)}</b>'s school fees."],
+        intro=[f"Hello {escape(first_name(name))}, this is a reminder about <b>{escape(student)}</b>'s school fees."],
         rows=rows, button=("Pay or view fees", f"{settings.APP_URL}/my-fees"),
         outro=["If you've already paid, thank you, and please ignore this message. For any question, contact the school office."])
 

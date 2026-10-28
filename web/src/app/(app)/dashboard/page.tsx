@@ -22,7 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api/client";
 import type { Lead, TimetableView } from "@/lib/api/types";
 import { describeAudit } from "@/lib/audit-labels";
-import { formatDate, formatDateTime, greeting, inr, roleLabel, timeAgo } from "@/lib/format";
+import { firstName, formatDate, formatDateTime, greeting, inr, roleLabel, timeAgo } from "@/lib/format";
 import { modulesReviewed } from "@/lib/local-flags";
 import {
   useAttendanceOverview, useAttendanceSections, useAudit, useCurrentSchool, useDashboardSummary, useFeeSummary, useMyAttendance, useMyFees,
@@ -41,7 +41,7 @@ function Hero({ subtitle, children }: { subtitle: string; children?: React.React
       <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-sm text-white/75">{new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>
-          <h1 className="mt-1.5 text-2xl font-semibold tracking-tight sm:text-3xl">{greeting()}, {me.full_name.split(" ")[0]}</h1>
+          <h1 className="mt-1.5 text-2xl font-semibold tracking-tight sm:text-3xl">{greeting()}, {firstName(me.full_name)}</h1>
           <p className="mt-1.5 text-white/80">{subtitle}</p>
         </div>
         {children && <div className="flex flex-wrap gap-2">{children}</div>}

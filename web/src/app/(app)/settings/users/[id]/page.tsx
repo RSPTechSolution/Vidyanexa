@@ -21,7 +21,7 @@ import { SetPasswordDialog, UserFormDialog } from "@/components/users/user-dialo
 import { ApiError, api } from "@/lib/api/client";
 import type { LinkedChild, User, UserDetail } from "@/lib/api/types";
 import { describeAudit } from "@/lib/audit-labels";
-import { formatDate, formatDateTime, inr, initials, roleLabel, timeAgo } from "@/lib/format";
+import { formatDate, formatDateTime, inr, initials, roleLabel, timeAgo, firstName } from "@/lib/format";
 import { useUserDetail } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
@@ -203,7 +203,7 @@ function UserPage({ id }: { id: string }) {
       {can("audit.view") && (
         <Card className="mt-6">
           <CardHeader className="flex flex-row items-start justify-between">
-            <div><CardTitle className="flex items-center gap-2"><Activity className="size-4" aria-hidden />Recent activity</CardTitle><CardDescription>Sign-ins and changes made by {u.full_name.split(" ")[0]}</CardDescription></div>
+            <div><CardTitle className="flex items-center gap-2"><Activity className="size-4" aria-hidden />Recent activity</CardTitle><CardDescription>Sign-ins and changes made by {firstName(u.full_name)}</CardDescription></div>
             <Link href="/settings/audit" className="text-sm font-medium text-primary hover:underline">Audit log</Link>
           </CardHeader>
           <CardContent>
