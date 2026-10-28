@@ -35,14 +35,22 @@ class PlanOut(Schema):
     is_public: bool
     is_custom: bool
     highlight: bool
+
+    @classmethod
+    def for_schools(cls, plan) -> "PlanOut":
+        """The plan as schools and the website see it: without modules that are still in preview."""
+        from app.core.permissions import PREVIEW_MODULES
+        out = cls.model_validate(plan)
+        out.modules = [m for m in out.modules if m not in PREVIEW_MODULES]
+        return out
     sort_order: int
     is_active: bool
 
 
 class ModulePrice(BaseModel):
+    """A module in the custom-plan builder. Prices aren't published per module: the quote gives the plan's total."""
     module: str
     label: str
-    monthly: int
     core: bool
 
 
@@ -68,9 +76,6 @@ class QuoteOut(BaseModel):
     students: int
     max_staff: int
     storage_gb: int
-    platform_fee: int
-    module_total: int
-    student_total: int
     monthly: int
     yearly: int
 

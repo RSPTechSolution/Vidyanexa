@@ -4,7 +4,7 @@ import { SignIn } from "./sign-in";
 
 export const metadata: Metadata = pageMetadata({
   title: "Sign In",
-  description: "Sign in to Vidyanexa with your school ID and email, or with a one-time code. For principals, teachers, office staff, parents and students.",
+  description: "Sign in to Vidyanexa with your email and password, or with a one-time code. For principals, teachers, office staff, parents and students.",
   path: "/login",
   keywords: ["Vidyanexa login", "school ERP login", "parent login"],
 });

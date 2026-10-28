@@ -64,13 +64,22 @@ async def _name_taken(db: AsyncSession, school_id: uuid.UUID, name: str, exclude
     return bool(await db.scalar(stmt))
 
 
-async def _check_teacher(db: AsyncSession, school_id: uuid.UUID, teacher_id: uuid.UUID | None) -> None:
+async def _check_teacher(db: AsyncSession, school_id: uuid.UUID, teacher_id: uuid.UUID | None,
+                         section_id: uuid.UUID | None = None) -> None:
     if teacher_id is None:
         return
     teacher = await db.scalar(select(User).where(
         User.id == teacher_id, User.school_id == school_id, User.deleted_at.is_(None), User.is_active.is_(True)))
     if not teacher or teacher.role not in (Role.TEACHER, Role.PRINCIPAL, Role.SCHOOL_ADMIN):
         raise field_error("class_teacher_id", "Choose an active teacher from your school")
+    # The class teacher is the section's in-charge, so each teacher has one class.
+    stmt = select(SchoolClass.name, Section.name).join(SchoolClass, SchoolClass.id == Section.class_id).where(Section.class_teacher_id == teacher_id)
+    if section_id:
+        stmt = stmt.where(Section.id != section_id)
+    other = (await db.execute(stmt)).first()
+    if other:
+        raise field_error("class_teacher_id", f"{teacher.full_name} is already the class teacher of {other[0]} – {other[1]}. "
+                                              "A teacher can be in charge of one class; change that class first.")
 
 
 async def create_class(db: AsyncSession, school_id: uuid.UUID, data: ClassCreate, *, actor_id: uuid.UUID) -> SchoolClass:
@@ -170,8 +179,8 @@ async def update_section(db: AsyncSession, school_id: uuid.UUID, section_id: uui
     if "name" in changes and changes["name"] != s.name and await db.scalar(
             select(Section.id).where(Section.class_id == s.class_id, Section.name == changes["name"])):
         raise field_error("name", f"Section {changes['name']} already exists in this class")
-    if "class_teacher_id" in changes:
-        await _check_teacher(db, school_id, changes["class_teacher_id"])
+    if "class_teacher_id" in changes and changes["class_teacher_id"] != s.class_teacher_id:
+        await _check_teacher(db, school_id, changes["class_teacher_id"], s.id)
     if changes.get("capacity") is not None:
         current = await _students_in(db, section_id=s.id, status="active")
         if changes["capacity"] < current:

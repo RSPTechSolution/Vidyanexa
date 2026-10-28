@@ -542,7 +542,7 @@ export function useMessageLog() {
 }
 
 export function useChatContacts(enabled = true) {
-  return useQuery({ queryKey: ["chat", "contacts"], enabled, queryFn: async () => (await api<ChatContact[]>("/chat/contacts")).data });
+  return useQuery({ queryKey: ["chat", "contacts"], enabled, staleTime: 0, queryFn: async () => (await api<ChatContact[]>("/chat/contacts")).data });
 }
 
 export function useConversations() {

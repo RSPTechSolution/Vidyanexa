@@ -23,7 +23,6 @@ test("a fresh deployment: platform admin sets a password, adds a school, and its
 
   await page.goto(`${URL}/login`);
   await expect(page.getByRole("button", { name: "Sign in" })).toBeEnabled();
-  await page.getByLabel("School ID").fill(slug);
   await page.getByLabel("Email").fill(`admin@${slug}.example.in`);
   await page.getByRole("textbox", { name: "Password", exact: true }).fill("Smoke@12345");
   await page.getByRole("button", { name: "Sign in" }).click();

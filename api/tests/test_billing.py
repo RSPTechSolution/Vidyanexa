@@ -31,9 +31,8 @@ async def test_public_plans_in_inr_without_auth(client):
 async def test_quote_matches_pricing_rules(client):
     res = await client.post(f"{API}/public/quote", json={"modules": ["fees", "transport"], "students": 600})
     q = res.json()["data"]
-    # 500 x 3 + 100 x 2 = 1700 for students; fees 799 + transport 999; platform 1499
-    assert q["student_total"] == 1700
-    assert q["module_total"] == 799 + 999
+    # 500 x 3 + 100 x 2 = 1700 for students; fees 799 + transport 999; platform 1499. Only the total is published.
+    assert "module_total" not in q and "student_total" not in q
     assert q["monthly"] == 1499 + 1798 + 1700
     assert q["yearly"] == q["monthly"] * 10
     assert {"students", "academics", "attendance"} <= set(q["modules"])  # core always included
@@ -196,7 +195,7 @@ async def test_cannot_move_to_a_plan_that_is_too_small(client, db, super_headers
 
 async def test_platform_assigns_custom_plan(client, db, school, super_headers):
     res = await client.put(f"{API}/platform/schools/{school.id}/plan", headers=super_headers,
-                           json={"plan_code": "custom", "custom_modules": ["hostel"], "custom_students": 400})
+                           json={"plan_code": "custom", "custom_modules": ["library"], "custom_students": 400})
     assert res.status_code == 200, res.text
     assert res.json()["data"]["plan"]["is_custom"] is True
     custom = await client.get(f"{API}/platform/plans?include_custom=true", headers=super_headers)

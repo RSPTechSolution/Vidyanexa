@@ -49,6 +49,9 @@ function NewChat({ open, onOpenChange, onStarted }: { open: boolean; onOpenChang
             <ul className="max-h-80 divide-y overflow-y-auto rounded-lg border" aria-label="People">
               {contacts.isLoading && <li className="p-3 text-sm text-muted-foreground">Loading…</li>}
               {contacts.data?.length === 0 && <li className="p-3 text-sm text-muted-foreground">There is nobody to message yet.</li>}
+              {!!contacts.data?.length && list.length === 0 && (
+                <li className="p-3 text-sm text-muted-foreground">No one matches “{search.trim()}”. A student shows here once they or a parent have an app login (add one from the student&apos;s page).</li>
+              )}
               {list.map((c) => (
                 <li key={`${c.student_id}-${c.user_id}`}>
                   <button type="button" onClick={() => setPicked(c)} className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-muted/50">

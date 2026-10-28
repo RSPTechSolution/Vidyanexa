@@ -251,7 +251,7 @@ function NewStudentPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{done?.student.first_name} {done?.student.last_name} has been added</DialogTitle>
-            <DialogDescription>Share these sign-in details. Each person will be asked to choose a new password. School ID: the one your staff use.</DialogDescription>
+            <DialogDescription>Share these sign-in details. They sign in with their email, and will be asked to choose a new password.</DialogDescription>
           </DialogHeader>
           <ul className="space-y-2">
             {Object.entries(done?.passwords ?? {}).map(([email, pw]) => <Credential key={email} who="Parent" email={email} password={pw} />)}

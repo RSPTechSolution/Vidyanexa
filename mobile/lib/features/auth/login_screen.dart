@@ -17,7 +17,6 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _form = GlobalKey<FormState>();
-  final _school = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _busy = false;
@@ -25,7 +24,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   void dispose() {
-    _school.dispose();
     _email.dispose();
     _password.dispose();
     super.dispose();
@@ -42,7 +40,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref.read(authControllerProvider.notifier).signIn(
             email: _email.text,
             password: _password.text,
-            schoolSlug: _school.text.toLowerCase(),
           );
       TextInput.finishAutofillContext();
     } on ApiException catch (e) {
@@ -80,15 +77,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: 20),
                     if (_error != null) ...[FormBanner(message: _error!), const SizedBox(height: 16)],
                     if (notice != null) ...[FormBanner(message: notice, tone: BannerTone.warning), const SizedBox(height: 16)],
-                    TextFormField(
-                      controller: _school,
-                      decoration: const InputDecoration(labelText: 'School ID', helperText: 'Given to you by your school'),
-                      autocorrect: false,
-                      textInputAction: TextInputAction.next,
-                      autofillHints: const [AutofillHints.organizationName],
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter your school ID' : null,
-                    ),
-                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _email,
                       decoration: const InputDecoration(labelText: 'Email'),

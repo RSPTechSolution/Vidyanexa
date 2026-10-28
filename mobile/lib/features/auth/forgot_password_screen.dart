@@ -15,7 +15,6 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _form = GlobalKey<FormState>();
-  final _school = TextEditingController();
   final _email = TextEditingController();
   bool _busy = false;
   bool _sent = false;
@@ -23,7 +22,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   @override
   void dispose() {
-    _school.dispose();
     _email.dispose();
     super.dispose();
   }
@@ -35,7 +33,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       _error = null;
     });
     try {
-      await ref.read(authControllerProvider.notifier).requestPasswordReset(_email.text, _school.text.toLowerCase());
+      await ref.read(authControllerProvider.notifier).requestPasswordReset(_email.text, null);
       if (mounted) setState(() => _sent = true);
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
@@ -70,13 +68,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
                     const SizedBox(height: 20),
                     if (_error != null) ...[FormBanner(message: _error!), const SizedBox(height: 16)],
-                    TextFormField(
-                      controller: _school,
-                      decoration: const InputDecoration(labelText: 'School ID'),
-                      autocorrect: false,
-                      textInputAction: TextInputAction.next,
-                    ),
-                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _email,
                       decoration: const InputDecoration(labelText: 'Email'),

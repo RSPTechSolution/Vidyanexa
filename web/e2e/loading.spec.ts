@@ -8,7 +8,6 @@ test("sign-in button shows a clear busy state", async ({ page }) => {
   await page.goto("/login");
   const button = page.getByRole("button", { name: "Sign in" });
   await expect(button).toBeEnabled();
-  await page.getByLabel("School ID").fill(DEMO.slug);
   await page.getByLabel("Email").fill(DEMO.admin);
   await page.getByRole("textbox", { name: "Password", exact: true }).fill(DEMO.password);
   await button.click();

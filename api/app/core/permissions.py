@@ -98,7 +98,9 @@ PERMISSIONS: dict[str, list[Role]] = {
 }
 
 
-# Module registry. `default` modules are enabled for every new school.
+# Module registry. `default` modules are enabled for every new school. `preview` modules are still being built: they
+# aren't sold or shown to schools, and work only where the platform owner has switched them on for a school (to test).
+# To launch one, remove its `preview` flag.
 MODULES: dict[str, dict] = {
     "students":      {"label": "Students", "default": True},
     "academics":     {"label": "Academics", "default": True},
@@ -110,13 +112,22 @@ MODULES: dict[str, dict] = {
     "transport":     {"label": "Transport", "default": False},
     "hr":            {"label": "HR & Payroll", "default": True},
     "library":       {"label": "Library", "default": False},
-    "hostel":        {"label": "Hostel", "default": False},
+    "hostel":        {"label": "Hostel", "default": False, "preview": True},
     "inventory":     {"label": "Inventory & Assets", "default": False},
     "security":      {"label": "Gate & Security", "default": False},
-    "cctv":          {"label": "CCTV", "default": False},
+    "cctv":          {"label": "CCTV", "default": False, "preview": True},
     "ai":            {"label": "AI Assistant", "default": False},
     "analytics":     {"label": "Analytics", "default": True},
 }
+
+
+PREVIEW_MODULES = frozenset(k for k, v in MODULES.items() if v.get("preview"))
+ON_SALE_MODULES = [k for k in MODULES if k not in PREVIEW_MODULES]
+
+
+def preview_modules_for(settings: dict | None) -> set[str]:
+    """Preview modules the platform owner has switched on for a school (kept in its settings by the platform only)."""
+    return set((settings or {}).get("preview_modules") or []) & PREVIEW_MODULES
 
 
 def has_permission(role: str, permission: str) -> bool:

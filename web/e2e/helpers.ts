@@ -8,16 +8,14 @@ export const DEMO = {
   superAdmin: { email: "superadmin@eduvia.com", password: "Admin@1234" },
 };
 
-export async function login(page: Page, email: string, password: string, slug: string | null = DEMO.slug) {
+export async function login(page: Page, email: string, password: string) {
   await page.goto("/login");
   // Wait for hydration (the button is disabled until then), then type.
   await expect(page.getByRole("button", { name: "Sign in" })).toBeEnabled();
-  const school = page.getByLabel("School ID");
   const emailField = page.getByLabel("Email");
   const passwordField = page.getByRole("textbox", { name: "Password", exact: true });
-  // A late re-render can clear what was typed, so fill until all three stick.
+  // A late re-render can clear what was typed, so fill until both stick.
   await expect(async () => {
-    await school.fill(slug ?? "");
     await emailField.fill(email);
     await passwordField.fill(password);
     await expect(emailField).toHaveValue(email, { timeout: 500 });

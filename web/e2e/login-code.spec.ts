@@ -1,10 +1,8 @@
 import { expect, test } from "./fixtures";
-import { DEMO } from "./helpers";
 
 test("staff member signs in with a one-time code", async ({ page }) => {
   await page.goto("/login");
   await page.getByRole("button", { name: "Use a one-time code instead" }).click();
-  await page.getByLabel("School ID").fill(DEMO.slug);
   await page.getByLabel("Email or mobile number").fill("hr@demo.com");
   const sent = page.waitForResponse((r) => r.url().endsWith("/api/auth/login-code/request"));
   await page.getByRole("button", { name: "Send me a code" }).click();

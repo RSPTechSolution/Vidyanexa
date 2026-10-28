@@ -1,11 +1,11 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, func, text
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, func, text
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.base import Base, SoftDeleteMixin, TimestampMixin, uuid_pk
+from app.models.base import Base, SoftDeleteMixin, TenantMixin, TimestampMixin, uuid_pk
 
 
 class User(Base, TimestampMixin, SoftDeleteMixin):
@@ -14,6 +14,9 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
         # Email unique per school; separately unique among platform users (school_id IS NULL).
         Index("uq_users_school_email", "school_id", "email", unique=True,
               postgresql_where=text("school_id IS NOT NULL AND deleted_at IS NULL")),
+        # People sign in with their email alone, so one email has at most one active account across all schools. A
+        # deactivated account (a family that left) frees the email for their new school.
+        Index("uq_users_active_email", "email", unique=True, postgresql_where=text("deleted_at IS NULL AND is_active")),
         Index("uq_users_platform_email", "email", unique=True,
               postgresql_where=text("school_id IS NULL AND deleted_at IS NULL")),
     )
@@ -73,3 +76,18 @@ class PasswordResetToken(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AccountRequest(Base, TenantMixin, TimestampMixin):
+    """A family asking their school to close their accounts, usually because the child is moving school. Once the school
+    approves, the students are marked as left and the logins deactivated, so the same email can join another school."""
+    __tablename__ = "account_requests"
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    requested_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), index=True)
+    student_ids: Mapped[list[uuid.UUID]] = mapped_column(ARRAY(UUID(as_uuid=True)), default=list)
+    reason: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(20), default="pending", index=True)  # pending | approved | rejected | cancelled
+    decided_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"))
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    decision_note: Mapped[str | None] = mapped_column(String(300))

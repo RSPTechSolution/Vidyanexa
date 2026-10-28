@@ -188,7 +188,7 @@ class _SchoolCard extends StatelessWidget {
                 children: [
                   Text(school.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 2),
-                  Text('${roleLabel(role)} · School ID ${school.slug}', style: TextStyle(color: scheme.onSurfaceVariant)),
+                  Text(roleLabel(role), style: TextStyle(color: scheme.onSurfaceVariant)),
                 ],
               ),
             ),

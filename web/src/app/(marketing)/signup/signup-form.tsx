@@ -16,9 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VerifyCode } from "@/components/auth/verify-code";
 import type { BillingCycle, Plan, Quote } from "@/lib/api/types";
-import { formatMoney, inr } from "@/lib/format";
+import { inr } from "@/lib/format";
 import { useHydrated } from "@/lib/use-hydrated";
-import { withGst } from "@/lib/gst";
 import { cn } from "@/lib/utils";
 import { newPassword } from "@/lib/validation";
 import { type PageQuery, toSearchParams } from "@/lib/query-params";
@@ -100,9 +99,8 @@ export function SignupForm({ initialPlans, query }: { initialPlans: Plan[] | nul
 
   const chosen = plans.data?.find((p) => p.code === planCode);
   const custom = planCode === "custom" ? quote.data : undefined;
-  // What's charged per billing cycle after the trial, and the same with 18% GST.
+  // What's charged per billing cycle after the trial (tax is added at checkout).
   const charge = chosen ? (cycle === "yearly" ? chosen.price_yearly : chosen.price_monthly) : custom ? (cycle === "yearly" ? custom.yearly : custom.monthly) : null;
-  const taxed = withGst(charge ?? 0);
 
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
@@ -135,7 +133,7 @@ export function SignupForm({ initialPlans, query }: { initialPlans: Plan[] | nul
                   <span className="block font-semibold">{p.name}{p.highlight && <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">Popular</span>}</span>
                   <span className="block text-sm text-muted-foreground">{p.max_students === null ? "Unlimited students" : `Up to ${p.max_students.toLocaleString("en-IN")} students`} · {p.modules.length} modules</span>
                 </span>
-                <span className="text-right"><span className="block font-bold tabular">{price.headline}</span><span className="block text-xs text-muted-foreground">/month + GST</span></span>
+                <span className="text-right"><span className="block font-bold tabular">{price.headline}</span><span className="block text-xs text-muted-foreground">/month</span></span>
               </button>
             );
           })}
@@ -159,7 +157,7 @@ export function SignupForm({ initialPlans, query }: { initialPlans: Plan[] | nul
               </span>
               <span className="text-right">
                 <span className="block font-bold tabular">{quote.data ? inr(cycle === "yearly" ? Math.round(quote.data.yearly / 12) : quote.data.monthly) : "…"}</span>
-                <span className="block text-xs text-muted-foreground">/month + GST</span>
+                <span className="block text-xs text-muted-foreground">/month</span>
               </span>
             </button>
           )}
@@ -172,9 +170,7 @@ export function SignupForm({ initialPlans, query }: { initialPlans: Plan[] | nul
           <p className="mt-1 text-muted-foreground">No card needed. You can change plans any time during the trial. After it, you pay for the plan online:</p>
           {charge !== null && (
             <dl className="mt-3 space-y-1 tabular">
-              <div className="flex justify-between"><dt className="text-muted-foreground">{chosen?.name ?? "Custom plan"}, {cycle === "yearly" ? "per year" : "per month"}</dt><dd>{formatMoney(taxed.base)}</dd></div>
-              <div className="flex justify-between"><dt className="text-muted-foreground">GST (18%)</dt><dd>{formatMoney(taxed.gst)}</dd></div>
-              <div className="flex justify-between border-t pt-1 font-semibold"><dt>Total with GST</dt><dd>{formatMoney(taxed.total)}</dd></div>
+              <div className="flex justify-between font-semibold"><dt>{chosen?.name ?? "Custom plan"}, {cycle === "yearly" ? "per year" : "per month"}</dt><dd>{inr(charge)}</dd></div>
             </dl>
           )}
         </div>
@@ -193,7 +189,7 @@ export function SignupForm({ initialPlans, query }: { initialPlans: Plan[] | nul
           <Field label="School name" error={errors.school_name?.message} required className="sm:col-span-2">
             {(a) => <Input {...a} {...register("school_name")} autoComplete="organization" />}
           </Field>
-          <Field label="School ID" error={errors.school_slug?.message} required hint="Everyone at your school signs in with this.">
+          <Field label="School ID" error={errors.school_slug?.message} required hint="Used in your school&apos;s web links, such as its admissions form.">
             {(a) => <Input {...a} {...register("school_slug")} className="font-mono" autoCapitalize="none" spellCheck={false} />}
           </Field>
           <Field label="City" error={errors.city?.message}>

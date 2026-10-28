@@ -26,7 +26,6 @@ async function as(who, { phone = true } = {}) {
   const ctx = await browser.newContext(phone ? { viewport: { width: 430, height: 931 }, deviceScaleFactor: 3 } : { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
   const page = await ctx.newPage();
   await page.goto(`${BASE}/login`, { waitUntil: "networkidle" });
-  await page.getByLabel("School ID").fill("demo");
   await page.getByLabel("Email").fill(`${who}@demo.com`);
   await page.getByRole("textbox", { name: "Password" }).fill("Demo@1234");
   await page.getByRole("button", { name: "Sign in" }).click();

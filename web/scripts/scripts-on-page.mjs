@@ -9,7 +9,6 @@ const page = await browser.newPage({ baseURL: BASE });
 await page.goto("/login");
 const button = page.getByRole("button", { name: "Sign in" });
 for (let i = 0; i < 20 && !(await button.isEnabled()); i++) await page.waitForTimeout(250);
-await page.getByLabel("School ID").fill("demo");
 await page.getByLabel("Email").fill(email);
 await page.getByRole("textbox", { name: "Password", exact: true }).fill("Demo@1234");
 await button.click();

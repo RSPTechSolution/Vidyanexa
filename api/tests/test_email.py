@@ -19,7 +19,8 @@ async def test_welcome_email_on_new_account(client, school, admin_headers):
         "email": "new.teacher@t.com", "full_name": "Neha Rao", "role": "teacher", "password": "TempPass123", "phone": "+91 90000 00031"})
     assert res.status_code == 201, res.text
     [msg] = outbox("welcome")
-    assert msg.to == "new.teacher@t.com" and "TempPass123" in msg.text and school.slug in msg.text and "Teacher" in msg.text
+    assert msg.to == "new.teacher@t.com" and "TempPass123" in msg.text and "Teacher" in msg.text
+    assert "School ID" not in msg.text  # people sign in with their email alone
     assert "TempPass123" in msg.html
 
     # A request that fails sends nothing.

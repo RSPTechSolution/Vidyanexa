@@ -67,6 +67,8 @@ async def _check_admission_no(db: AsyncSession, school_id: uuid.UUID, admission_
 async def _email_free(db: AsyncSession, school_id: uuid.UUID, email: str, field: str) -> None:
     if await db.scalar(select(User.id).where(User.school_id == school_id, User.email == email.lower(), User.deleted_at.is_(None))):
         raise field_error(field, f"{email} already has an account")
+    from app.services.account_service import ensure_email_free
+    await ensure_email_free(db, email, school_id=school_id, field=field)  # or an active account at another school
 
 
 async def link_guardian(db: AsyncSession, school_id: uuid.UUID, student: Student, link: GuardianLink,

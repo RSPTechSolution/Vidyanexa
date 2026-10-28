@@ -64,6 +64,8 @@ class SchoolUpdate(BaseModel):
     def _brand(cls, v):
         if v and "brand_color" in v and v["brand_color"] is not None and v["brand_color"] not in BRAND_COLORS:
             raise ValueError("Pick one of the offered colours")
+        if v:
+            v.pop("preview_modules", None)  # set by the platform only (school_service.set_preview_modules)
         return v
 
 

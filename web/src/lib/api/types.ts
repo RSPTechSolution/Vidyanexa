@@ -135,7 +135,7 @@ export interface PricingCatalog {
   trial_days: number;
   yearly_months_charged: number;
   platform_fee: number;
-  modules: { module: string; label: string; monthly: number; core: boolean }[];
+  modules: { module: string; label: string; core: boolean }[];
   student_tiers: { from: number; to: number; per_student: number }[];
   min_students: number;
   max_students: number;
@@ -146,9 +146,6 @@ export interface Quote {
   students: number;
   max_staff: number;
   storage_gb: number;
-  platform_fee: number;
-  module_total: number;
-  student_total: number;
   monthly: number;
   yearly: number;
 }

@@ -11,10 +11,34 @@ from tests.test_attendance import today
 
 
 async def _max_plan(db, school):
-    """Hostel and inventory are in the Max plan only."""
+    """Hostel and inventory are in the Max plan only; hostel and CCTV are also in preview, so the platform opens them
+    to this school (as the platform owner does to test them)."""
+    plan_id = await db.scalar(select(Plan.id).where(Plan.code == "max"))
+    s = await db.get(School, school.id)
+    await db.execute(update(School).where(School.id == school.id).values(
+        plan_id=plan_id, settings={**(s.settings or {}), "preview_modules": ["hostel", "cctv"]}))
+    await db.commit()
+
+
+async def test_preview_modules_only_where_the_platform_opens_them(client, db, school, admin_headers, super_headers):
     plan_id = await db.scalar(select(Plan.id).where(Plan.code == "max"))
     await db.execute(update(School).where(School.id == school.id).values(plan_id=plan_id))
     await db.commit()
+    # Hidden from the school even on Max, and not for sale.
+    listed = (await client.get(f"{API}/schools/current/modules", headers=admin_headers)).json()["data"]
+    assert not {"hostel", "cctv"} & {m["module"] for m in listed}
+    assert (await client.put(f"{API}/schools/current/modules/hostel", headers=admin_headers, json={"is_enabled": True})).status_code == 404
+    catalog = (await client.get(f"{API}/public/pricing")).json()["data"]
+    assert not {"hostel", "cctv"} & {m["module"] for m in catalog["modules"]} and "monthly" not in catalog["modules"][0]
+    assert "hostel" not in (await client.get(f"{API}/public/plans")).json()["data"][2]["modules"]
+    # A school admin can't open one through the school's settings.
+    await client.patch(f"{API}/schools/current", headers=admin_headers, json={"settings": {"preview_modules": ["hostel"]}})
+    assert (await client.get(f"{API}/hostels", headers=admin_headers)).status_code == 403
+    # The platform owner opens it: it's on straight away.
+    res = await client.put(f"{API}/platform/schools/{school.id}/preview-modules", headers=super_headers, json={"modules": ["hostel"]})
+    assert res.status_code == 200 and res.json()["data"]["settings"]["preview_modules"] == ["hostel"]
+    assert (await client.get(f"{API}/hostels", headers=admin_headers)).status_code == 200
+    assert "hostel" in (await client.get(f"{API}/auth/me", headers=admin_headers)).json()["data"]["modules"]
 
 
 async def _enable(client, headers, *modules):

@@ -10,7 +10,6 @@ import { Faq, GlowBackdrop, PRICING_FAQ, Section, SectionHeading } from "@/compo
 import { buttonVariants } from "@/components/ui/button";
 import { getPlans } from "@/lib/api/public";
 import { inr } from "@/lib/format";
-import { withGst } from "@/lib/gst";
 import { JsonLd, SOFTWARE, faqPage, graph, pageMetadata } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +29,7 @@ const HOME_FAQ = [
   { q: "What is school management software?", a: "School management software (also called a school ERP) brings a school's daily work into one system: admissions, student records, attendance, fees, exams and report cards, timetables, transport, staff and payroll, and communication with parents. Vidyanexa does all of this on the web and in mobile apps for parents, staff and drivers." },
   { q: "Is Vidyanexa suitable for CBSE, ICSE and state board schools?", a: "Yes. Vidyanexa is built for Indian schools. It supports CBSE grading (A1 to E), co-scholastic grades, Indian fee practices such as quarterly terms and sibling concessions, and prices in rupees." },
   { q: "Do parents get a mobile app?", a: "Yes. Parents and students use the Vidyanexa app on Android and iOS for attendance, homework, fees and receipts, results, notices, messages with teachers and live school bus tracking." },
-  { q: "How much does Vidyanexa cost?", a: "Plans start at ₹2,999 a month for the Basic plan, with Pro at ₹7,999 and Max at ₹17,999. You can also build a custom plan with only the modules you need. Prices exclude GST, and every plan starts with a 14-day free trial." },
+  { q: "How much does Vidyanexa cost?", a: "Plans start at ₹2,999 a month for the Basic plan, with Pro at ₹7,999 and Max at ₹17,999. You can also build a custom plan with only the modules you need. Every plan starts with a 14-day free trial." },
   { q: "Is our school's data secure?", a: "Each school's data is isolated inside the database with row-level security, all traffic is encrypted, every important action is recorded in an audit log, and data is backed up daily. Schools can export all their data at any time." },
   { q: "Can we move our existing data into Vidyanexa?", a: "Yes. Students, parents and staff can be imported from Excel or CSV files, and parent accounts are created automatically." },
   ...PRICING_FAQ.slice(0, 2),
@@ -60,7 +59,7 @@ const FEATURE_GROUPS = [
     color: "text-warning bg-warning/10",
     items: [
       { href: "/features/school-bus-gps-tracking", icon: Bus, name: "Transport", text: "Routes, live bus location and boarding with the driver app." },
-      { href: "/features/school-library-management-system", icon: Library, name: "Library & hostel", text: "Catalogue, issue and return, rooms and allocations." },
+      { href: "/features/school-library-management-system", icon: Library, name: "Library", text: "Catalogue, issue and return, fines and due dates." },
       { href: "/features/school-visitor-gate-pass-management", icon: ShieldCheck, name: "Gate & security", text: "Gate passes, visitor logs and campus workers." },
     ],
   },
@@ -130,7 +129,7 @@ export default async function HomePage() {
               </Link>
             </div>
             <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground lg:justify-start">
-              {["No credit card needed", "Plans from ₹2,999/month + GST", "Prices in INR"].map((t) => (
+              {["No credit card needed", "Plans from ₹2,999/month", "Prices in INR"].map((t) => (
                 <li key={t} className="flex items-center gap-1.5"><Check className="size-4 text-success" aria-hidden />{t}</li>
               ))}
             </ul>
@@ -189,7 +188,7 @@ export default async function HomePage() {
               align="left"
               eyebrow="Apps for everyone"
               title="Parents, staff and drivers each get an app built for them"
-              description="Parents see attendance, fees and homework. Teachers mark attendance in seconds. Drivers share the bus location automatically. Everyone signs in with their school ID."
+              description="Parents see attendance, fees and homework. Teachers mark attendance in seconds. Drivers share the bus location automatically. Everyone signs in with their own email."
             />
             <ul className="mt-8 space-y-3">
               {[
@@ -250,7 +249,7 @@ export default async function HomePage() {
       {/* Pricing teaser */}
       {plans.length > 0 && (
         <Section className="bg-popover">
-          <SectionHeading eyebrow="Pricing" title="Simple plans in rupees" description="Prices exclude GST at 18%; the total with GST is shown under each price. Start on any plan free for 14 days." />
+          <SectionHeading eyebrow="Pricing" title="Simple plans in rupees" description="Start on any plan free for 14 days. No card needed." />
           <div className="mt-14 grid gap-5 md:grid-cols-3">
             {plans.map((p) => (
               <Link
@@ -259,8 +258,7 @@ export default async function HomePage() {
                 className={cn("group card-lift rounded-2xl border bg-card p-7", p.highlight && "border-transparent bg-primary-container text-primary-container-foreground")}
               >
                 <p className="flex items-center justify-between text-lg font-semibold">{p.name}{p.highlight && <span className="rounded-lg bg-primary px-2.5 py-0.5 text-xs text-primary-foreground">Most popular</span>}</p>
-                <p className="mt-3"><span className="font-heading text-3xl font-semibold tabular">{inr(p.price_monthly)}</span><span className={cn("text-sm", !p.highlight && "text-muted-foreground")}>/month + GST</span></p>
-                <p className={cn("text-sm", !p.highlight && "text-muted-foreground")}>{inr(withGst(p.price_monthly).total)} a month with GST</p>
+                <p className="mt-3"><span className="font-heading text-3xl font-semibold tabular">{inr(p.price_monthly)}</span><span className={cn("text-sm", !p.highlight && "text-muted-foreground")}>/month</span></p>
                 <p className={cn("mt-2 text-sm", !p.highlight && "text-muted-foreground")}>{p.max_students === null ? "Unlimited students" : `Up to ${p.max_students.toLocaleString("en-IN")} students`} · {p.modules.length} modules</p>
                 <p className={cn("mt-5 inline-flex items-center gap-1 text-sm font-semibold", !p.highlight && "text-primary")}>Compare plans <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden /></p>
               </Link>

@@ -18,7 +18,7 @@ test("flutter parent app end to end", async ({ page }) => {
   await page.evaluate(() => (document.querySelector("flt-semantics-placeholder") as HTMLElement | null)?.click());
   await page.waitForTimeout(800);
 
-  for (const [name, value] of [[/School ID/, "demo"], [/Email/, "parent@demo.com"], [/Password/, "Demo@1234"]] as const) {
+  for (const [name, value] of [[/Email/, "parent@demo.com"], [/Password/, "Demo@1234"]] as const) {
     const field = page.getByRole("textbox", { name });
     await field.click();
     await page.waitForTimeout(250);

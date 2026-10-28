@@ -1,5 +1,5 @@
 import {
-  HardDrive, Server, UsersRound, Sparkles, ChartNoAxesCombined, Cctv, DoorOpen, FileCheck2, Ticket, UserCheck, Hotel, Library, Package, BookOpen, Award, Briefcase, BriefcaseBusiness, Bus, Calculator, ClipboardPen, Handshake, MessagesSquare, Smartphone, FileQuestion, Video, CalendarHeart, CalendarOff, Fingerprint, ListChecks, QrCode, BookMarked, BookOpenCheck, FileBadge2, NotebookPen, Repeat2, TrendingUp, UserPlus, Mail, Building2, CalendarDays, ClipboardCheck, FileSpreadsheet, Megaphone, Wallet, CalendarRange, CreditCard, GraduationCap, Inbox, KeyRound, LayoutDashboard, Layers, School, ScrollText, Settings2, ToggleRight, Users, type LucideIcon,
+  HardDrive, Server, UsersRound, Sparkles, ChartNoAxesCombined, Cctv, DoorOpen, FileCheck2, Ticket, UserCheck, Hotel, Library, Package, BookOpen, Award, Briefcase, BriefcaseBusiness, Bus, Calculator, ClipboardPen, Handshake, MessagesSquare, Smartphone, FileQuestion, Video, CalendarHeart, CalendarOff, Fingerprint, ListChecks, QrCode, BookMarked, BookOpenCheck, FileBadge2, NotebookPen, Repeat2, TrendingUp, UserPlus, Mail, Building2, CalendarDays, ClipboardCheck, FileSpreadsheet, Megaphone, Wallet, CalendarRange, CreditCard, GraduationCap, Inbox, KeyRound, LayoutDashboard, Layers, School, ScrollText, Settings2, ToggleRight, UserMinus, Users, type LucideIcon,
 } from "lucide-react";
 import type { Me } from "@/lib/api/types";
 
@@ -49,6 +49,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Students", href: "/students", icon: GraduationCap, module: "students", permission: "students.view", keywords: ["admission", "pupils", "children"] },
       { label: "Admissions", href: "/admissions", icon: UserPlus, module: "students", permission: "admissions.manage", keywords: ["enquiry", "enquiries", "leads", "new admission", "walk-in"] },
       { label: "Certificates & ID cards", href: "/certificates", icon: FileBadge2, module: "students", permission: "certificates.manage", keywords: ["tc", "transfer certificate", "bonafide", "character", "id card"] },
+      { label: "Leaving requests", href: "/account-requests", icon: UserMinus, module: "students", permission: "students.manage", keywords: ["close account", "deactivate", "transfer", "leaving school", "tc"] },
       { label: "Promotion", href: "/promotion", icon: TrendingUp, module: "students", permission: "students.promote", keywords: ["next class", "new session", "year end", "graduate", "alumni"] },
       { label: "Classes & sections", href: "/academics/classes", icon: School, module: "students", permission: "students.view", keywords: ["grades", "sections", "class teacher"] },
       { label: "Timetable", href: "/timetable", icon: CalendarRange, module: "academics", permission: "timetable.view", keywords: ["schedule", "periods", "free teacher", "substitute"] },
@@ -144,6 +145,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Account",
     items: [
       { label: "My account", href: "/account", icon: KeyRound, keywords: ["password", "profile"] },
+      { label: "Leaving the school", href: "/account-requests", icon: UserMinus, roles: ["parent", "student"], keywords: ["close account", "delete account", "deactivate", "change school", "transfer"] },
     ],
   },
 ];
@@ -151,7 +153,7 @@ export const NAV_GROUPS: NavGroup[] = [
 export function canSee(item: NavItem, me: Me) {
   const isSuper = me.role === "super_admin";
   if (item.superAdminOnly) return isSuper;
-  if (isSuper) return !item.module && !item.permission; // super admin has no school context
+  if (isSuper) return !item.module && !item.permission && !item.roles; // super admin has no school context
   if (item.module && !me.modules.includes(item.module)) return false;
   if (item.permission && !me.permissions.includes(item.permission)) return false;
   if (item.roles && !item.roles.includes(me.role)) return false;

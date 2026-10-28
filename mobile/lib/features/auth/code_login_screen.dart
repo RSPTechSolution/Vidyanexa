@@ -16,7 +16,6 @@ class CodeLoginScreen extends ConsumerStatefulWidget {
 }
 
 class _CodeLoginScreenState extends ConsumerState<CodeLoginScreen> {
-  final _school = TextEditingController();
   final _identifier = TextEditingController();
   final _code = TextEditingController();
   bool _sent = false;
@@ -29,7 +28,6 @@ class _CodeLoginScreenState extends ConsumerState<CodeLoginScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    _school.dispose();
     _identifier.dispose();
     _code.dispose();
     super.dispose();
@@ -39,16 +37,12 @@ class _CodeLoginScreenState extends ConsumerState<CodeLoginScreen> {
 
   Future<void> _send() async {
     FocusScope.of(context).unfocus();
-    if (_school.text.trim().isEmpty) {
-      setState(() => _error = 'Enter your school ID');
-      return;
-    }
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
-      await ref.read(authControllerProvider.notifier).requestLoginCode(identifier: _identifier.text, schoolSlug: _school.text);
+      await ref.read(authControllerProvider.notifier).requestLoginCode(identifier: _identifier.text);
       _timer?.cancel();
       setState(() {
         _sent = true;
@@ -73,7 +67,7 @@ class _CodeLoginScreenState extends ConsumerState<CodeLoginScreen> {
       _error = null;
     });
     try {
-      await ref.read(authControllerProvider.notifier).signInWithCode(identifier: _identifier.text, code: _code.text, schoolSlug: _school.text);
+      await ref.read(authControllerProvider.notifier).signInWithCode(identifier: _identifier.text, code: _code.text);
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } finally {
@@ -89,8 +83,6 @@ class _CodeLoginScreenState extends ConsumerState<CodeLoginScreen> {
         child: ListView(padding: const EdgeInsets.all(24), children: [
           if (_error != null) ...[FormBanner(message: _error!), const SizedBox(height: 16)],
           if (_info != null && _error == null) ...[FormBanner(message: _info!, tone: BannerTone.info), const SizedBox(height: 16)],
-          TextField(controller: _school, enabled: !_sent, autocorrect: false, decoration: const InputDecoration(labelText: 'School ID')),
-          const SizedBox(height: 16),
           TextField(
             controller: _identifier,
             enabled: !_sent,

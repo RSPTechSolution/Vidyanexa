@@ -2,12 +2,13 @@
 import uuid
 
 from fastapi import APIRouter, Depends, Query, Request
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from app.core import pricing
 from app.core.deps import DB, CurrentUser, require_super_admin
 from app.core.errors import BadRequest, NotFound
-from app.core.permissions import MODULES
+from app.core.permissions import MODULES, PREVIEW_MODULES
 from app.models import Lead, Plan
 from app.schemas.billing import AssignPlanRequest, LeadOut, LeadUpdate, PlanOut, PlanUpdate
 from app.schemas.common import ApiResponse, PageMeta, PageParams, ok
@@ -78,6 +79,23 @@ async def assign_plan(school_id: uuid.UUID, body: AssignPlanRequest, db: DB, cur
     else:
         plan = await billing_service.plan_by_code(db, body.plan_code, public_only=False)
     await billing_service.apply_plan(db, school, plan, cycle=body.billing_cycle, status=body.status, actor_id=current.id)
+    return ok(SchoolOut.model_validate(school))
+
+
+class PreviewModules(BaseModel):
+    modules: list[str] = Field(default_factory=list, max_length=20)
+
+
+@router.get("/preview-modules", response_model=ApiResponse[list[dict]])
+async def preview_modules(_: CurrentUser = require_super_admin()):
+    """Modules not launched yet, which can be opened to a school for testing."""
+    return ok([{"module": k, "label": MODULES[k]["label"]} for k in MODULES if k in PREVIEW_MODULES])
+
+
+@router.put("/schools/{school_id}/preview-modules", response_model=ApiResponse[SchoolOut])
+async def set_preview_modules(school_id: uuid.UUID, body: PreviewModules, db: DB, current: CurrentUser = require_super_admin()):
+    school = await school_service.get_school(db, school_id)
+    await school_service.set_preview_modules(db, school, body.modules, actor_id=current.id)
     return ok(SchoolOut.model_validate(school))
 
 

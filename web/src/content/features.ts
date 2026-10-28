@@ -14,9 +14,11 @@ export interface Feature {
   steps?: string[];
   faqs: { q: string; a: string }[];
   related: string[];
+  /** Still being built (the module is in preview): kept here, but not published on the website. */
+  preview?: boolean;
 }
 
-export const FEATURES: Feature[] = [
+const ALL_FEATURES: Feature[] = [
   {
     slug: "attendance-management-system",
     name: "Attendance management",
@@ -247,10 +249,11 @@ export const FEATURES: Feature[] = [
       { q: "How are late fines calculated?", a: "Fines are charged per day after the due date at the rate you set, and can be marked paid when collected." },
       { q: "Can parents see library books?", a: "Yes. Parents see their children's borrowed books and due dates in the app." },
     ],
-    related: ["hostel-management-software", "school-admission-management", "parent-teacher-communication-app"],
+    related: ["school-visitor-gate-pass-management", "school-admission-management", "parent-teacher-communication-app"],
   },
   {
     slug: "hostel-management-software",
+    preview: true,
     name: "Hostel management",
     metaTitle: "Hostel Management Software for Boarding Schools",
     description: "Manage hostels, rooms and beds, allocate and move boarders, assign wardens and track occupancy. Parents see their child's hostel, room and warden in the app.",
@@ -279,7 +282,7 @@ export const FEATURES: Feature[] = [
     slug: "school-visitor-gate-pass-management",
     name: "Gate & visitor management",
     metaTitle: "School Visitor Management & Gate Pass System",
-    description: "Log visitors at the gate, issue early-pickup gate passes with a code, keep a police-verified workers register, a compliance vault and CCTV with parent consent.",
+    description: "Log visitors at the gate, issue early-pickup gate passes with a code, keep a police-verified workers register and a compliance vault.",
     keywords: ["school visitor management system", "school gate pass system", "student early pickup", "school security software", "visitor log book app", "school compliance documents"],
     h1: "Campus safety: visitor log, gate passes and verified workers",
     lead: "Know who is on campus at any moment. Guards check visitors in and out, parents request early pickups that the class teacher approves, and the person collecting shows a 6-digit code at the gate. The school keeps police-verified contract workers and compliance documents in one place.",
@@ -289,7 +292,6 @@ export const FEATURES: Feature[] = [
       { title: "Expected visitors", text: "Staff register guests in advance and are notified when they arrive." },
       { title: "Workers register", text: "Contract workers can enter only with police verification recorded, and every entry and exit is logged." },
       { title: "Compliance vault", text: "Fire NOC, building safety, affiliation and other certificates with scans, expiry dates and reminders." },
-      { title: "CCTV with consent", text: "Classroom cameras can be opened to families only when every family in the class has agreed, and every view is logged." },
     ],
     roles: [
       { role: "Security guards", text: "A simple gate desk: check visitors in and out, and verify pickup codes." },
@@ -304,5 +306,8 @@ export const FEATURES: Feature[] = [
     related: ["attendance-management-system", "school-bus-gps-tracking", "parent-teacher-communication-app"],
   },
 ];
+
+/** The features published on the website. */
+export const FEATURES = ALL_FEATURES.filter((f) => !f.preview);
 
 export const featureBySlug = (slug: string) => FEATURES.find((f) => f.slug === slug);

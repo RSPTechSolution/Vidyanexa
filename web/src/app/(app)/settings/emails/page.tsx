@@ -98,7 +98,7 @@ function EmailsPage() {
           <CardHeader><CardTitle>What gets emailed</CardTitle></CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm">
-              {[["Welcome", "New accounts: school ID and temporary password"], ["Password reset", "From the “Forgot password” page"], ["Password set", "When the office sets a new password"], ["Fee receipt", "To parents after every payment"]].map(([k, v]) => (
+              {[["Welcome", "New accounts: email and temporary password"], ["Password reset", "From the “Forgot password” page"], ["Password set", "When the office sets a new password"], ["Fee receipt", "To parents after every payment"]].map(([k, v]) => (
                 <li key={k}><span className="font-medium">{k}</span><span className="block text-xs text-muted-foreground">{v}</span></li>
               ))}
             </ul>

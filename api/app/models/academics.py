@@ -20,7 +20,11 @@ class SchoolClass(Base, TenantMixin, TimestampMixin):
 
 class Section(Base, TenantMixin, TimestampMixin):
     __tablename__ = "sections"
-    __table_args__ = (UniqueConstraint("class_id", "name", name="uq_section_name"),)
+    __table_args__ = (
+        UniqueConstraint("class_id", "name", name="uq_section_name"),
+        # The class teacher is the section's in-charge (attendance, leave, gate passes): one section per teacher.
+        Index("uq_section_class_teacher", "class_teacher_id", unique=True, postgresql_where=text("class_teacher_id IS NOT NULL")),
+    )
 
     id: Mapped[uuid.UUID] = uuid_pk()
     class_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("classes.id", ondelete="CASCADE"), index=True)

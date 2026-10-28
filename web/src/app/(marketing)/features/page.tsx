@@ -9,7 +9,7 @@ import { SITE_URL } from "@/lib/site";
 export const metadata: Metadata = pageMetadata({
   title: "School ERP Features: Attendance, Fees, Exams & More",
   description:
-    "Every module of the Vidyanexa school ERP: attendance, fees, exams and report cards, bus tracking, HR and payroll, parent app, admissions, library and hostel.",
+    "Every module of the Vidyanexa school ERP: attendance, fees, exams and report cards, bus tracking, HR and payroll, parent app, admissions and library.",
   path: "/features",
   keywords: ["school ERP features", "school management system modules", "school software India", "school management software features"],
 });
@@ -31,7 +31,7 @@ export default function FeaturesPage() {
           <p className="text-sm font-medium text-primary">Features</p>
           <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight text-balance sm:text-5xl">School ERP features for every office in your school</h1>
           <p className="mt-5 text-lg text-pretty text-muted-foreground">
-            Vidyanexa brings admissions, attendance, fees, exams, transport, HR, library, hostel and campus security into one school management system,
+            Vidyanexa brings admissions, attendance, fees, exams, transport, HR, library and campus security into one school management system,
             with apps for parents, staff and drivers. Switch on only the modules you need.
           </p>
         </div>

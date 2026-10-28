@@ -28,11 +28,17 @@ async def test_login_failures_share_one_message(client, admin, other_school):
     wrong_pw = await factories.login(client, admin.email, "nope-wrong-1", "alpha")
     unknown_school = await factories.login(client, admin.email, PASSWORD, "nowhere")
     wrong_school = await factories.login(client, admin.email, PASSWORD, "beta")
-    no_slug = await factories.login(client, admin.email, PASSWORD, None)
-    for res in (wrong_pw, unknown_school, wrong_school, no_slug):
+    unknown_email = await factories.login(client, "nobody@alpha.edu", PASSWORD, None)
+    for res in (wrong_pw, unknown_school, wrong_school, unknown_email):
         assert res.status_code == 401
         assert res.json()["error"]["code"] == "INVALID_CREDENTIALS"
-    assert len({r.json()["error"]["message"] for r in (wrong_pw, unknown_school, wrong_school)}) == 1
+    assert len({r.json()["error"]["message"] for r in (wrong_pw, unknown_school, wrong_school, unknown_email)}) == 1
+
+
+async def test_sign_in_with_email_alone(client, admin):
+    res = await factories.login(client, admin.email, PASSWORD, None)
+    assert res.status_code == 200
+    assert res.json()["data"]["user"]["school"]["slug"] == "alpha"
 
 
 async def test_inactive_user_and_school_cannot_login(client, db, school):
@@ -152,9 +158,9 @@ async def test_sign_in_with_a_code(client, db, school, monkeypatch):
     # A code works once.
     assert (await client.post(f"{API}/auth/login-code", json={"identifier": "otp@t.com", "school_slug": school.slug, "code": code})).status_code == 401
 
-    # By mobile number: the school ID is needed, and an SMS goes out.
-    assert "debug_code" not in (await client.post(f"{API}/auth/login-code/request", json={"identifier": "98765 11111"})).json()["data"]
-    code = (await client.post(f"{API}/auth/login-code/request", json={"identifier": "098765 11111", "school_slug": school.slug})).json()["data"]["debug_code"]
+    # By mobile number (no school ID needed), and an SMS goes out. An unknown number gets no code.
+    assert "debug_code" not in (await client.post(f"{API}/auth/login-code/request", json={"identifier": "98765 22222"})).json()["data"]
+    code = (await client.post(f"{API}/auth/login-code/request", json={"identifier": "098765 11111"})).json()["data"]["debug_code"]
     sms = (await db.scalars(select(MessageLog).where(MessageLog.kind == "login"))).all()
     assert [m.to for m in sms] == ["+919876511111"] and code in sms[0].body
     assert (await client.post(f"{API}/auth/login-code", json={"identifier": "9876511111", "school_slug": school.slug, "code": code})).status_code == 200

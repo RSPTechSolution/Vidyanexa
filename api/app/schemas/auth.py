@@ -22,7 +22,7 @@ NewPassword = Annotated[str, AfterValidator(_password_rules)]
 
 
 class CodeRequest(BaseModel):
-    identifier: str = Field(min_length=3, max_length=200)  # email, or mobile number (needs the school ID)
+    identifier: str = Field(min_length=3, max_length=200)  # email, or mobile number
     school_slug: str | None = Field(None, max_length=100)
 
     @field_validator("school_slug")

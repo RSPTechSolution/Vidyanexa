@@ -157,3 +157,25 @@ class PreferencesIn(RootModel[dict[str, Any]]):
         if len(v) > 20 or any(len(k) > 40 for k in v):
             raise ValueError("Too many settings")
         return v
+
+
+class AccountRequestIn(BaseModel):
+    student_ids: list[uuid.UUID] = Field(default_factory=list, max_length=10)
+    reason: str = Field(min_length=3, max_length=500)
+
+
+class AccountRequestDecision(BaseModel):
+    approve: bool
+    note: str | None = Field(None, max_length=300)
+
+
+class AccountRequestOut(BaseModel):
+    id: uuid.UUID
+    status: str
+    reason: str
+    students: list[str]
+    requested_by_name: str
+    requested_by_email: str | None
+    created_at: datetime
+    decided_at: datetime | None
+    decision_note: str | None

@@ -5,7 +5,7 @@ from app.core import pricing, ratelimit
 from app.core.config import settings
 from app.core.deps import DB, client_ip
 from app.core.errors import BadRequest, TooManyRequests
-from app.core.permissions import MODULES
+from app.core.permissions import MODULES, ON_SALE_MODULES
 from app.schemas.billing import (
     ContactRequest, ModulePrice, PlanBrief, PlanOut, PricingCatalog, QuoteOut, QuoteRequest, SignupOut, SignupRequest,
 )
@@ -23,7 +23,7 @@ async def _limit(request: Request, bucket: str, limit: int, window: int) -> None
 
 @router.get("/plans", response_model=ApiResponse[list[PlanOut]])
 async def plans(db: DB):
-    return ok([PlanOut.model_validate(p) for p in await billing_service.public_plans(db)])
+    return ok([PlanOut.for_schools(p) for p in await billing_service.public_plans(db)])
 
 
 @router.get("/pricing", response_model=ApiResponse[PricingCatalog])
@@ -37,8 +37,7 @@ async def pricing_catalog():
         trial_days=pricing.TRIAL_DAYS,
         yearly_months_charged=pricing.YEARLY_MONTHS_CHARGED,
         platform_fee=pricing.PLATFORM_FEE,
-        modules=[ModulePrice(module=k, label=v["label"], monthly=pricing.MODULE_PRICES[k], core=k in pricing.CORE_MODULES)
-                 for k, v in MODULES.items()],
+        modules=[ModulePrice(module=k, label=MODULES[k]["label"], core=k in pricing.CORE_MODULES) for k in ON_SALE_MODULES],
         student_tiers=tiers,
         min_students=pricing.MIN_STUDENTS,
         max_students=pricing.MAX_SELF_SERVE_STUDENTS,
@@ -51,7 +50,7 @@ async def quote(body: QuoteRequest):
         q = pricing.quote(body.modules, body.students)
     except ValueError as e:
         raise BadRequest(str(e), code="INVALID_CUSTOM_PLAN")
-    return ok(QuoteOut(**q.__dict__))
+    return ok(QuoteOut(**{k: v for k, v in q.__dict__.items() if k in QuoteOut.model_fields}))
 
 
 @router.post("/signup", response_model=ApiResponse[SignupOut], status_code=201)

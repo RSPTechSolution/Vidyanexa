@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input";
 import { useHydrated } from "@/lib/use-hydrated";
 
 const schema = z.object({
-  school_slug: z.string().trim().max(100),
   email: z.string().trim().email("Enter a valid email"),
 });
 type Values = z.infer<typeof schema>;
@@ -24,7 +23,7 @@ export default function ForgotPasswordPage() {
   const hydrated = useHydrated();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { school_slug: "", email: "" },
+    defaultValues: { email: "" },
   });
 
   const onSubmit = async (v: Values) => {
@@ -32,7 +31,7 @@ export default function ForgotPasswordPage() {
     const res = await fetch("/api/proxy/auth/password-reset/request", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...v, school_slug: v.school_slug || null }),
+      body: JSON.stringify(v),
     }).catch(() => null);
     if (!res) return setError("Could not reach the server. Try again.");
     if (!res.ok) {
@@ -63,9 +62,6 @@ export default function ForgotPasswordPage() {
           <p className="mt-1.5 mb-8 text-sm text-muted-foreground">Enter the email you sign in with and we&apos;ll send you a reset link.</p>
           <form onSubmit={handleSubmit(onSubmit)} noValidate method="post" className="space-y-5">
             {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
-            <Field label="School ID" hint="Leave blank if you are a platform admin." error={errors.school_slug?.message}>
-              {(a) => <Input {...a} {...register("school_slug")} autoCapitalize="none" spellCheck={false} />}
-            </Field>
             <Field label="Email" error={errors.email?.message} required>
               {(a) => <Input {...a} {...register("email")} type="email" autoComplete="email" />}
             </Field>

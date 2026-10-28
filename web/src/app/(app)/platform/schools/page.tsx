@@ -175,7 +175,7 @@ function NewSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
       queryClient.invalidateQueries({ queryKey: ["platform", "schools"] });
       onOpenChange(false);
       toast.success(`${data.name} is ready`, {
-        description: `Admin signs in with school ID “${data.slug}”, ${v.admin_email} and temporary password ${v.admin_password}.`,
+        description: `Admin signs in with ${v.admin_email} and temporary password ${v.admin_password}.`,
         duration: 20000,
       });
     },
@@ -197,7 +197,7 @@ function NewSchoolDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
           <Field label="School name" error={errors.name?.message} required className="sm:col-span-2">
             {(a) => <Input {...a} {...register("name")} />}
           </Field>
-          <Field label="School ID" error={errors.slug?.message} required hint="Staff type this to sign in.">
+          <Field label="School ID" error={errors.slug?.message} required hint="Used in the school&apos;s web links, such as its admissions form.">
             {(a) => <Input {...a} {...register("slug")} className="font-mono" autoCapitalize="none" spellCheck={false} />}
           </Field>
           <Field label="Currency" error={errors.currency?.message}>
@@ -258,6 +258,24 @@ function SchoolModulesSheet({ school, onClose }: { school: School | null; onClos
     onSuccess: () => queryClient.invalidateQueries({ queryKey: qk.schoolModules(school!.id) }),
     onError: (e) => toast.error(e instanceof ApiError ? e.message : "Could not update"),
   });
+  // Modules still being built: hidden from every school unless opened to it here (for testing).
+  const previews = useQuery({
+    queryKey: ["platform", "preview-modules"],
+    enabled: Boolean(school),
+    staleTime: Infinity,
+    queryFn: async () => (await api<{ module: string; label: string }[]>("/platform/preview-modules")).data,
+  });
+  const [opened, setOpened] = useState<string[]>([]);
+  useEffect(() => { setOpened(((school?.settings?.preview_modules as string[] | undefined) ?? [])); }, [school]);
+  const setPreview = useMutation({
+    mutationFn: (modules: string[]) => api<School>(`/platform/schools/${school!.id}/preview-modules`, { method: "PUT", body: { modules } }),
+    onSuccess: ({ data }) => {
+      setOpened((data.settings?.preview_modules as string[] | undefined) ?? []);
+      queryClient.invalidateQueries({ queryKey: qk.schoolModules(school!.id) });
+      queryClient.invalidateQueries({ queryKey: ["platform", "schools"] });
+    },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Could not update"),
+  });
   return (
     <Sheet open={Boolean(school)} onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="w-full sm:max-w-md">
@@ -265,6 +283,21 @@ function SchoolModulesSheet({ school, onClose }: { school: School | null; onClos
           <SheetTitle>Modules · {school?.name}</SheetTitle>
           <SheetDescription>Turn features on or off for this school.</SheetDescription>
         </SheetHeader>
+        {!!previews.data?.length && (
+          <div className="mx-4 rounded-xl border border-dashed p-3">
+            <p className="text-sm font-semibold">In preview</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">Not launched: hidden from schools and the website. Open one to this school to test it.</p>
+            <ul className="mt-2 divide-y">
+              {previews.data.map((m) => (
+                <li key={m.module} className="flex items-center justify-between py-2">
+                  <label htmlFor={`pm-${m.module}`} className="text-sm font-medium">{m.label}</label>
+                  <Switch id={`pm-${m.module}`} checked={opened.includes(m.module)} disabled={setPreview.isPending}
+                    onCheckedChange={(c) => setPreview.mutate(c ? [...opened, m.module] : opened.filter((x) => x !== m.module))} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <ul className="flex-1 divide-y overflow-y-auto px-4">
           {modules.isLoading
             ? Array.from({ length: 8 }).map((_, i) => <li key={i} className="py-3"><Skeleton className="h-6" /></li>)

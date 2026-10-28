@@ -94,7 +94,7 @@ test("command palette navigates", async ({ page }) => {
 });
 
 test("super admin provisions a school whose admin can sign in", async ({ page, browser }) => {
-  await login(page, DEMO.superAdmin.email, DEMO.superAdmin.password, null);
+  await login(page, DEMO.superAdmin.email, DEMO.superAdmin.password);
   await expect(page).toHaveURL(/\/dashboard/);
   await page.goto("/platform/schools");
   const slug = unique("e2e-school-");
@@ -110,7 +110,7 @@ test("super admin provisions a school whose admin can sign in", async ({ page, b
 
   const ctx = await browser.newContext();
   const head = await ctx.newPage();
-  await login(head, `head+${slug}@example.com`, pw, slug);
+  await login(head, `head+${slug}@example.com`, pw);
   await expect(head).toHaveURL(/\/account\?required=1/);
   await ctx.close();
 });

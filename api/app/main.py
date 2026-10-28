@@ -12,7 +12,7 @@ from app.core.errors import install_error_handlers
 from app.core.permissions import MODULES
 from app.core.redis import close_redis, get_redis
 from app.core import roles
-from app.routers import academics, academics_extra, accounts, ai, storage, analytics, campus, hr, security, transport, messaging, online, attendance, attendance_extra, auth, billing, communication, dashboard, emails, exams, fees, files, notifications, platform, public, schools, timetable, transfer, users
+from app.routers import account_requests, academics, academics_extra, accounts, ai, storage, analytics, campus, hr, security, transport, messaging, online, attendance, attendance_extra, auth, billing, communication, dashboard, emails, exams, fees, files, notifications, platform, public, schools, timetable, transfer, users
 from app.schemas.common import ok
 
 logging.basicConfig(level=logging.DEBUG if settings.DEBUG else logging.INFO,
@@ -54,6 +54,7 @@ API = "/api/v1"
 app.include_router(auth.router, prefix=f"{API}/auth", tags=["Auth"])
 app.include_router(schools.router, prefix=f"{API}/schools", tags=["Schools"])
 app.include_router(users.router, prefix=f"{API}/users", tags=["Users"])
+app.include_router(account_requests.router, prefix=f"{API}/account-requests", tags=["Users"])
 app.include_router(academics.classes, prefix=f"{API}/classes", tags=["Classes"])
 app.include_router(academics.students, prefix=f"{API}/students", tags=["Students"])
 app.include_router(academics_extra.syllabus, prefix=f"{API}/syllabus", tags=["Syllabus"])

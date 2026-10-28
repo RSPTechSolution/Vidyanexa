@@ -37,7 +37,7 @@ export function SiteFooter() {
       <div className="border-t">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-5 py-6 text-xs text-muted-foreground sm:flex-row sm:px-8">
           <p>© {new Date().getFullYear()} Vidyanexa. All rights reserved.</p>
-          <p>Prices in INR, exclusive of GST.</p>
+          <p>Prices in INR.</p>
         </div>
       </div>
     </footer>

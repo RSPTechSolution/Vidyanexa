@@ -31,15 +31,15 @@ async def _sms(db: AsyncSession, user: User, kind: str, body: str) -> None:
 
 
 async def account_created(db: AsyncSession, user: User, password: str) -> None:
-    """Welcome email and SMS with the school ID and temporary password."""
+    """Welcome email and SMS with the temporary password (people sign in with their email)."""
     school = await _school(db, user.school_id)
     if not school:
         return
     await email_service.queue(db, t.welcome(to=user.email, name=user.full_name, role_label=ROLE_LABELS.get(user.role, user.role),
-                                            school_name=school.name, school_slug=school.slug, password=password),
+                                            school_name=school.name, password=password),
                               school_id=school.id)
-    await _sms(db, user, "account", f"{school.name}: your Vidyanexa account is ready. School ID {school.slug}, temporary password "
-                                    f"{password}. Sign in at {settings.APP_URL}/login or in the Vidyanexa app.")
+    await _sms(db, user, "account", f"{school.name}: your Vidyanexa account is ready. Sign in with {user.email} and temporary password "
+                                    f"{password} at {settings.APP_URL}/login or in the Vidyanexa app.")
 
 
 async def password_set(db: AsyncSession, user: User, password: str) -> None:
@@ -47,9 +47,9 @@ async def password_set(db: AsyncSession, user: User, password: str) -> None:
     if not school:
         return
     await email_service.queue(db, t.password_set_by_school(to=user.email, name=user.full_name, school_name=school.name,
-                                                           school_slug=school.slug, password=password), school_id=school.id)
-    await _sms(db, user, "account", f"{school.name}: the school set a new Vidyanexa password for you. School ID {school.slug}, "
-                                    f"temporary password {password}. Not expecting this? Contact the school office.")
+                                                           password=password), school_id=school.id)
+    await _sms(db, user, "account", f"{school.name}: the school set a new Vidyanexa password for you. "
+                                    f"Temporary password {password}. Not expecting this? Contact the school office.")
 
 
 async def password_changed(db: AsyncSession, user: User) -> None:
@@ -74,7 +74,7 @@ async def signup_code(db: AsyncSession, user: User, school: School, code: str) -
 
 async def school_ready(db: AsyncSession, user: User, school: School) -> None:
     from app.core import pricing
-    await email_service.queue(db, t.school_ready(to=user.email, name=user.full_name, school_name=school.name, school_slug=school.slug,
+    await email_service.queue(db, t.school_ready(to=user.email, name=user.full_name, school_name=school.name,
                                                  trial_days=pricing.TRIAL_DAYS), school_id=school.id)
 
 

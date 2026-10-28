@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal, Pencil, Plus, Sparkles, Trash2, UserRound, Users } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { EmptyState } from "@/components/common/empty-state";
@@ -96,10 +96,16 @@ function ClassDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   );
 }
 
-/** Add or edit a section, including capacity and class teacher. */
-function SectionDialog({ target, onClose }: { target: { cls: ClassItem; section: SectionItem | null } | null; onClose: () => void }) {
+/** Add or edit a section, including capacity and class teacher (the section's in-charge: one class per teacher). */
+function SectionDialog({ target, classes, onClose }: {
+  target: { cls: ClassItem; section: SectionItem | null } | null; classes: ClassItem[]; onClose: () => void;
+}) {
   const invalidate = useInvalidate();
   const teachers = useUsers({ page: 1, page_size: 100, role: "teacher", is_active: true }, Boolean(target));
+  // Which class each teacher is already in charge of (other than this section).
+  const inCharge = useMemo(() => new Map(classes.flatMap((c) => c.sections
+    .filter((s) => s.class_teacher_id && s.id !== target?.section?.id)
+    .map((s) => [s.class_teacher_id!, `${c.name} – ${s.name}`] as const))), [classes, target]);
   const [name, setName] = useState("");
   const [capacity, setCapacity] = useState("");
   const [teacher, setTeacher] = useState("none");
@@ -153,13 +159,21 @@ function SectionDialog({ target, onClose }: { target: { cls: ClassItem; section:
           <Field label="Capacity" hint="Leave empty for no limit">
             {(a) => <Input {...a} inputMode="numeric" value={capacity} onChange={(e) => /^\d*$/.test(e.target.value) && setCapacity(e.target.value)} />}
           </Field>
-          <Field label="Class teacher" className="sm:col-span-2">
+          <Field label="Class teacher (in-charge)" className="sm:col-span-2"
+            hint="Marks attendance and approves leave and gate passes for this section. Each teacher can be in charge of one class.">
             {(a) => (
               <Select value={teacher} onValueChange={(v) => setTeacher(String(v))}>
                 <SelectTrigger id={a.id} className="w-full"><SelectValue>{teacher === "none" ? "Not assigned" : teacherName ?? "Loading…"}</SelectValue></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Not assigned</SelectItem>
-                  {teachers.data?.data.map((t) => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}
+                  {teachers.data?.data.map((t) => {
+                    const busy = inCharge.get(t.id);
+                    return (
+                      <SelectItem key={t.id} value={t.id} disabled={Boolean(busy)}>
+                        {t.full_name}{busy && <span className="ml-auto pl-3 text-xs text-muted-foreground">In charge of {busy}</span>}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             )}
@@ -310,7 +324,7 @@ function ClassesPage() {
         </Stagger>
       )}
       <ClassDialog open={dialog.open} editing={dialog.editing} onOpenChange={(o) => setDialog((d) => ({ ...d, open: o }))} />
-      <SectionDialog target={sectionTarget} onClose={() => setSectionTarget(null)} />
+      <SectionDialog target={sectionTarget} classes={classes.data ?? []} onClose={() => setSectionTarget(null)} />
       <ConfirmDialog
         open={Boolean(deleting)}
         onOpenChange={(o) => !o && setDeleting(null)}

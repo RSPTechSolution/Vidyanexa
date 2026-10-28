@@ -58,15 +58,20 @@ async def build_me(db: AsyncSession, user: User) -> MeOut:
     return me
 
 
-async def _find_user(db: AsyncSession, email: str, school_slug: str | None) -> tuple[User | None, School | None]:
-    school = None
+async def _find_user(db: AsyncSession, email: str, school_slug: str | None = None) -> tuple[User | None, School | None]:
+    """The account for an email. People sign in with their email alone: it has at most one active account across
+    Vidyanexa. Failing that, a deactivated one (so the person is told it's disabled). `school_slug` is still accepted from
+    older app versions, and only narrows the search."""
+    stmt = select(User).where(User.email == email.lower(), User.deleted_at.is_(None))
     if school_slug:
         school = await db.scalar(select(School).where(School.slug == school_slug))
         if not school:
             return None, None
-    stmt = select(User).where(User.email == email.lower(), User.deleted_at.is_(None))
-    stmt = stmt.where(User.school_id == school.id) if school else stmt.where(User.school_id.is_(None))
-    return await db.scalar(stmt), school
+        stmt = stmt.where(User.school_id == school.id)
+    user = await db.scalar(stmt.order_by(User.is_active.desc(), User.updated_at.desc()).limit(1))
+    if not user:
+        return None, None
+    return user, await db.get(School, user.school_id) if user.school_id else None
 
 
 async def _issue_tokens(db: AsyncSession, user: User, *, ip: str | None, user_agent: str | None) -> TokenPair:
@@ -181,13 +186,16 @@ async def _find_for_otp(db: AsyncSession, identifier: str, school_slug: str | No
         user, _ = await _find_user(db, ident, school_slug)
         return user
     phone = normalise(ident)
-    if not phone or not school_slug:
-        return None  # phone sign-in needs the school
-    school = await db.scalar(select(School).where(School.slug == school_slug))
-    if not school:
+    if not phone:
         return None
-    rows = (await db.scalars(select(User).where(User.school_id == school.id, User.deleted_at.is_(None), User.phone.isnot(None),
-                                                func.right(func.regexp_replace(User.phone, r"\D", "", "g"), 10) == phone[-10:]))).all()
+    stmt = select(User).where(User.deleted_at.is_(None), User.is_active.is_(True), User.phone.isnot(None),
+                              func.right(func.regexp_replace(User.phone, r"\D", "", "g"), 10) == phone[-10:])
+    if school_slug:
+        school = await db.scalar(select(School).where(School.slug == school_slug))
+        if not school:
+            return None
+        stmt = stmt.where(User.school_id == school.id)
+    rows = (await db.scalars(stmt.limit(2))).all()
     return rows[0] if len(rows) == 1 else None  # a shared number can't say whose account it is: use email instead
 
 

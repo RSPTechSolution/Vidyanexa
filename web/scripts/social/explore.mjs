@@ -7,7 +7,6 @@ const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: Number(width), height: 844 } });
 await page.goto("http://localhost:3000/login");
 await page.waitForLoadState("networkidle");
-await page.getByLabel("School ID").fill("demo");
 await page.getByLabel("Email").fill(`${who}@demo.com`);
 await page.getByRole("textbox", { name: "Password" }).fill("Demo@1234");
 await page.getByRole("button", { name: "Sign in" }).click();

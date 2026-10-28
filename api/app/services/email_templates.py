@@ -167,7 +167,7 @@ def apply_brand(msg: Email, school) -> None:
     msg.reply_to = school.email or None
 
 
-def welcome(*, to: str, name: str, role_label: str, school_name: str, school_slug: str, password: str) -> Email:
+def welcome(*, to: str, name: str, role_label: str, school_name: str, password: str) -> Email:
     first = escape(first_name(name))
     return _build(
         to=to, to_name=name, kind="welcome", school=school_name,
@@ -175,19 +175,36 @@ def welcome(*, to: str, name: str, role_label: str, school_name: str, school_slu
         title=f"Welcome, {first_name(name)}",
         intro=[f"Hello {first}, an account has been created for you at <b>{escape(school_name)}</b> as <b>{escape(role_label)}</b>.",
                "Use these details to sign in on the website or in the Vidyanexa app:"],
-        rows=[("School ID", school_slug), ("Email", to), ("Temporary password", password)],
+        rows=[("Email", to), ("Temporary password", password)],
         button=("Sign in", f"{settings.APP_URL}/login"),
         outro=["You'll be asked to choose your own password the first time you sign in. Please don't share these details."])
 
 
-def password_set_by_school(*, to: str, name: str, school_name: str, school_slug: str, password: str) -> Email:
+def password_set_by_school(*, to: str, name: str, school_name: str, password: str) -> Email:
     return _build(
         to=to, to_name=name, kind="password_set", school=school_name, subject="Your Vidyanexa password was reset",
         title="Your password was reset",
         intro=[f"Hello {escape(first_name(name))}, the school office has set a new temporary password for your account."],
-        rows=[("School ID", school_slug), ("Email", to), ("Temporary password", password)],
+        rows=[("Email", to), ("Temporary password", password)],
         button=("Sign in", f"{settings.APP_URL}/login"),
         outro=["You'll choose your own password when you sign in. If you didn't ask for this, contact the school office."])
+
+
+def account_closure(*, to: str, name: str, school_name: str, approved: bool, note: str | None, closed: list[str]) -> Email:
+    if approved:
+        return _build(
+            to=to, to_name=name, kind="account_closure", school=school_name, subject=f"Your accounts at {school_name} are closed",
+            title="Accounts closed",
+            intro=[f"Hello {escape(first_name(name))}, {escape(school_name)} has closed the accounts you asked about. "
+                   "Their records stay with the school (for certificates and history), but these logins no longer work:"],
+            rows=[("Email", e) for e in closed] + ([("Note from the school", note)] if note else []),
+            outro=["Your new school can now add you with the same email. All the best for the move!"])
+    return _build(
+        to=to, to_name=name, kind="account_closure", school=school_name, subject=f"Your account closure request at {school_name}",
+        title="Request declined",
+        intro=[f"Hello {escape(first_name(name))}, {escape(school_name)} didn't approve your request to close your accounts."],
+        rows=[("Note from the school", note)] if note else None,
+        outro=["Please contact the school office for details."])
 
 
 def password_reset(*, to: str, name: str, school_name: str | None, token: str, minutes: int) -> Email:
@@ -221,13 +238,13 @@ def signup_code(*, to: str, name: str, school_name: str, code: str, minutes: int
         outro=["If you didn't sign up, you can ignore this email: nothing is set up until the code is entered."])
 
 
-def school_ready(*, to: str, name: str, school_name: str, school_slug: str, trial_days: int) -> Email:
+def school_ready(*, to: str, name: str, school_name: str, trial_days: int) -> Email:
     return _build(
         to=to, to_name=name, kind="school_ready", school=school_name, subject=f"{school_name} is ready on Vidyanexa",
         title="Your school is ready",
         intro=[f"Hello {escape(first_name(name))}, your email is confirmed and <b>{escape(school_name)}</b> is set up.",
-               f"Your {trial_days}-day free trial starts today. Keep these details: everyone at your school signs in with the School ID."],
-        rows=[("School ID", school_slug), ("Your sign-in", to)],
+               f"Your {trial_days}-day free trial starts today. Everyone at your school signs in with their own email and password."],
+        rows=[("Your sign-in", to)],
         button=("Open your school", f"{settings.APP_URL}/dashboard"),
         outro=["Next: add your classes, then your staff and students. The checklist on your dashboard walks you through it.",
                "Questions? Just reply to this email."])

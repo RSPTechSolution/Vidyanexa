@@ -99,7 +99,7 @@ function SchoolProfilePage() {
         <Card>
           <CardHeader>
             <CardTitle>Details</CardTitle>
-            <CardDescription>School ID: <code className="font-mono text-foreground">{school.data?.slug ?? "…"}</code> — staff use this to sign in.</CardDescription>
+            <CardDescription>School ID: <code className="font-mono text-foreground">{school.data?.slug ?? "…"}</code>, used in your school&apos;s web links such as the admissions form. Everyone signs in with their own email.</CardDescription>
           </CardHeader>
           <CardContent>
             {school.isLoading ? (

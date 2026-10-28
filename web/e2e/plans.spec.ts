@@ -104,7 +104,7 @@ test("contact form enquiries reach the platform admin", async ({ page, browser }
 
   const ctx = await browser.newContext();
   const admin = await ctx.newPage();
-  await login(admin, DEMO.superAdmin.email, DEMO.superAdmin.password, null);
+  await login(admin, DEMO.superAdmin.email, DEMO.superAdmin.password);
   await expect(admin).toHaveURL(/\/dashboard/);
   await admin.goto("/platform/leads");
   const row = admin.getByRole("row").filter({ hasText: name });
@@ -123,7 +123,6 @@ test("someone who never entered the sign-up code is asked for it when they sign 
   expect(res.status()).toBe(201);
 
   await page.goto("/login");
-  await page.getByLabel("School ID").fill(slug);
   await page.getByLabel("Email").fill(email);
   await page.getByRole("textbox", { name: "Password" }).fill("Unconfirmed1");
   await page.getByRole("button", { name: "Sign in" }).click();

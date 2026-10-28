@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db, set_tenant
 from app.core.errors import Forbidden, Unauthorized
-from app.core.permissions import Role, has_permission
+from app.core.permissions import PREVIEW_MODULES, Role, has_permission, preview_modules_for
 from app.core.security import decode_access_token, decode_download_token
 from app.models import School, User, UserSession
 
@@ -111,15 +111,20 @@ def require_super_admin():
 
 
 async def enabled_modules(db: AsyncSession, school_id: uuid.UUID) -> list[str]:
-    """Modules the school has switched on AND its plan includes."""
+    """Modules the school has switched on AND its plan includes (preview modules: only where the platform allows them)."""
     from app.models import SchoolModule
     school = await db.get(School, school_id)
     if not school:
         return []
     rows = await db.scalars(select(SchoolModule.module).where(
         SchoolModule.school_id == school_id, SchoolModule.is_enabled.is_(True)))
-    allowed = set(school.plan.modules)
+    allowed = available_modules(school)
     return sorted(m for m in rows.all() if m in allowed)
+
+
+def available_modules(school: School) -> set[str]:
+    """What the school may switch on: its plan's modules, less preview modules unless the platform has allowed them."""
+    return (set(school.plan.modules) - PREVIEW_MODULES) | preview_modules_for(school.settings)
 
 
 def require_module(module: str):

@@ -3,7 +3,7 @@ import { expect, test } from "./fixtures";
 import { DEMO, apiAs, login } from "./helpers";
 
 test("platform admin checks health, backs up, and posts a banner schools can see", async ({ page, browser }) => {
-  await login(page, DEMO.superAdmin.email, DEMO.superAdmin.password, null);
+  await login(page, DEMO.superAdmin.email, DEMO.superAdmin.password);
   await expect(page).toHaveURL(/\/(dashboard|platform)/);
   await page.goto("/platform/system");
   await expect(page.getByText("Database", { exact: true })).toBeVisible();

@@ -21,8 +21,8 @@ async def _subscription(db, school_id) -> SubscriptionOut:
     school = await school_service.get_school(db, school_id)
     view = billing_service.subscription_view(school, await billing_service.usage(db, school_id))
     return SubscriptionOut(
-        **{**view, "plan": PlanOut.model_validate(view["plan"])},
-        available_plans=[PlanOut.model_validate(p) for p in await billing_service.public_plans(db)],
+        **{**view, "plan": PlanOut.for_schools(view["plan"])},
+        available_plans=[PlanOut.for_schools(p) for p in await billing_service.public_plans(db)],
         gst_rate=pricing.GST_RATE, online_payment=settings.PAYMENT_GATEWAY != "none", test_mode=settings.PAYMENT_GATEWAY == "test",
     )
 

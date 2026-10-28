@@ -196,7 +196,7 @@ function BillingPage() {
             </div>
             <p className="font-heading text-3xl font-semibold">{s.plan.name}</p>
             <p className="text-sm text-muted-foreground"><span className="font-semibold text-foreground tabular">{price.headline}</span>{price.unit}</p>
-            <p className="text-xs text-muted-foreground">{price.withTax}</p>
+            <p className="text-xs text-muted-foreground">{price.total}</p>
             {s.current_period_end && s.status === "active" && <p className="pt-2 text-xs text-muted-foreground">Paid until {formatDate(s.current_period_end)}</p>}
             {payOnline && (
               <Button className="mt-3 w-full" variant={s.status === "active" ? "outline" : "default"} onClick={() => setBuying(asTarget(s.plan))}>
@@ -224,7 +224,7 @@ function BillingPage() {
         <div>
           <h2 className="text-xl font-bold">Change plan</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {s.online_payment ? "Pay online for the plan you want; it starts straight away. Prices are shown with GST." : s.can_self_change ? "During your trial, changes apply immediately." : "Pick a plan and our team will contact you to complete the change."}
+            {s.online_payment ? "Pay online for the plan you want; it starts straight away." : s.can_self_change ? "During your trial, changes apply immediately." : "Pick a plan and our team will contact you to complete the change."}
           </p>
         </div>
         <CycleToggle value={activeCycle} onChange={setCycle} />
@@ -300,7 +300,7 @@ function BillingPage() {
         title={s.can_self_change ? `Switch to ${target?.name}?` : `Request ${target?.name}?`}
         description={
           s.can_self_change
-            ? `Your school moves to ${target?.name} for the rest of the trial (then ${inr(target?.monthly ?? 0)}/month + GST). Modules not in the new plan will be switched off.`
+            ? `Your school moves to ${target?.name} for the rest of the trial (then ${inr(target?.monthly ?? 0)}/month). Modules not in the new plan will be switched off.`
             : `We'll send your request to the Vidyanexa team, who will contact you to complete the change.`
         }
         confirmLabel={s.can_self_change ? "Switch plan" : "Send request"}

@@ -266,6 +266,16 @@ async def signup(db: AsyncSession, data, *, ip: str | None) -> tuple[School, Use
         await db.delete(taken)
         await db.flush()
 
+    # The same goes for an earlier sign-up with this email that was never confirmed (under another school ID).
+    for user in (await db.scalars(select(User).where(User.email == data.email.lower(), User.deleted_at.is_(None),
+                                                     User.is_active.is_(True), User.verified_at.is_(None)))).all():
+        earlier = await db.get(School, user.school_id) if user.school_id else None
+        if earlier and (earlier.settings or {}).get("awaiting_verification"):
+            await db.delete(earlier)
+    await db.flush()
+    from app.services.account_service import ensure_email_free
+    await ensure_email_free(db, data.email, school_id=None)
+
     if data.plan_code == "custom":
         try:
             q = pricing.quote(data.custom_modules or [], data.custom_students or 0)

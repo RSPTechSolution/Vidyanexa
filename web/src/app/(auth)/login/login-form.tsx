@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { VerifyCode } from "@/components/auth/verify-code";
@@ -14,14 +14,12 @@ import { Input } from "@/components/ui/input";
 import { ApiError, authRequest } from "@/lib/api/client";
 import { useHydrated } from "@/lib/use-hydrated";
 
+// People sign in with their email alone: an email has one active account across Vidyanexa.
 const schema = z.object({
-  school_slug: z.string().trim().max(100),
   email: z.string().trim().min(1, "Enter your email").email("Enter a valid email"),
   password: z.string().min(1, "Enter your password"),
 });
 type Values = z.infer<typeof schema>;
-
-const SLUG_KEY = "eduvia.lastSchool";
 
 function safeNext(next: string | null) {
   return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
@@ -36,38 +34,23 @@ export function LoginForm() {
   // A school that signed itself up but hasn't confirmed its email yet: finish that here.
   const [confirm, setConfirm] = useState<{ email: string; slug: string } | null>(null);
   const {
-    register, handleSubmit, setValue, formState: { errors, isSubmitting },
+    register, handleSubmit, formState: { errors, isSubmitting },
   } = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { school_slug: "", email: "", password: "" },
+    defaultValues: { email: "", password: "" },
   });
-
-  // Remember the last school ID on this device (read after mount to keep hydration stable).
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(SLUG_KEY);
-      if (saved) setValue("school_slug", saved);
-    } catch {
-      /* storage unavailable */
-    }
-  }, [setValue]);
 
   const onSubmit = async (v: Values) => {
     setError(null);
     try {
-      await authRequest("/api/auth/login", { ...v, school_slug: v.school_slug || null });
-      try {
-        localStorage.setItem(SLUG_KEY, v.school_slug);
-      } catch {
-        /* ignore */
-      }
+      await authRequest("/api/auth/login", v);
       // Full navigation so server components render with the new session cookie.
       setRedirecting(true);
       window.location.assign(safeNext(new URLSearchParams(window.location.search).get("next")));
     } catch (e) {
       if (e instanceof ApiError && e.code === "ACCOUNT_NOT_VERIFIED") {
         const d = (e.details ?? {}) as { email?: string; school_slug?: string };
-        return setConfirm({ email: d.email ?? v.email, slug: d.school_slug ?? v.school_slug });
+        return setConfirm({ email: d.email ?? v.email, slug: d.school_slug ?? "" });
       }
       setError(e instanceof ApiError ? e.message : "Could not reach the server. Check your connection and try again.");
     }
@@ -82,9 +65,6 @@ export function LoginForm() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      <Field label="School ID" hint="Given to you by your school. Leave blank if you are a platform admin." error={errors.school_slug?.message}>
-        {(a) => <Input {...a} {...register("school_slug")} autoComplete="organization" placeholder="e.g. greenvalley" autoCapitalize="none" spellCheck={false} />}
-      </Field>
       <Field label="Email" error={errors.email?.message} required>
         {(a) => <Input {...a} {...register("email")} type="email" autoComplete="username" inputMode="email" />}
       </Field>

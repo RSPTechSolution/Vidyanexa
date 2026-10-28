@@ -14,7 +14,6 @@ async function dashboard(browser, theme) {
   await page.goto(`${WEB}/login`);
   await page.getByRole("button", { name: "Sign in" }).waitFor();
   await page.waitForFunction(() => !document.querySelector("button[type=submit]")?.hasAttribute("disabled"));
-  await page.getByLabel("School ID").fill("demo");
   await page.getByLabel("Email").fill("admin@demo.com");
   await page.getByRole("textbox", { name: "Password", exact: true }).fill("Demo@1234");
   await page.getByRole("button", { name: "Sign in" }).click();
@@ -39,7 +38,7 @@ async function parentApp(browser) {
   await page.waitForTimeout(2500);
   await page.evaluate(() => document.querySelector("flt-semantics-placeholder")?.click());
   await page.waitForTimeout(800);
-  for (const [name, value] of [[/School ID/, "demo"], [/Email/, "parent@demo.com"], [/Password/, "Demo@1234"]]) {
+  for (const [name, value] of [[/Email/, "parent@demo.com"], [/Password/, "Demo@1234"]]) {
     await page.getByRole("textbox", { name }).click();
     await page.waitForTimeout(250);
     await page.keyboard.type(value, { delay: 15 });

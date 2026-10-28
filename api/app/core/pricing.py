@@ -5,7 +5,7 @@ always quote the same number.
 """
 from dataclasses import dataclass
 
-from app.core.permissions import MODULES
+from app.core.permissions import MODULES, PREVIEW_MODULES
 
 GST_RATE = 0.18
 TRIAL_DAYS = 14
@@ -68,7 +68,7 @@ def student_charge(students: int) -> int:
 
 def quote(modules: list[str], students: int) -> Quote:
     """Price a custom plan. Unknown modules raise ValueError; core modules are always added."""
-    unknown = sorted(set(modules) - set(MODULES))
+    unknown = sorted(set(modules) - (set(MODULES) - PREVIEW_MODULES))  # preview modules aren't on sale
     if unknown:
         raise ValueError(f"Unknown modules: {', '.join(unknown)}")
     if not MIN_STUDENTS <= students <= MAX_SELF_SERVE_STUDENTS:
@@ -151,7 +151,7 @@ PRESET_PLANS = [
             "Everything in Pro",
             "Unlimited students and staff",
             "AI assistant for school data",
-            "Hostel, inventory, gate security and CCTV",
+            "Inventory and gate security",
             "Custom domain and white-label branding",
             "Dedicated success manager",
         ],

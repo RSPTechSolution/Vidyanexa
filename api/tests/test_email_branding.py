@@ -26,7 +26,7 @@ async def test_a_school_email_carries_the_school_branding(db, school):
     school.logo_url = "https://apis.vidyanexa.com/api/v1/files/public/logo-1"
     await db.commit()
     CONSOLE_OUTBOX.clear()
-    msg = t.welcome(to="priya@example.com", name="Priya Verma", role_label="Teacher", school_name=school.name, school_slug=school.slug, password="Kx7-mQ2p")
+    msg = t.welcome(to="priya@example.com", name="Priya Verma", role_label="Teacher", school_name=school.name, password="Kx7-mQ2p")
     await email_service.queue(db, msg, school_id=school.id)
 
     sent = CONSOLE_OUTBOX[-1]

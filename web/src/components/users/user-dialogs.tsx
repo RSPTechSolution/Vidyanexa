@@ -171,7 +171,7 @@ export function UserFormDialog({ open, onOpenChange, user, forStudent, onCreated
         <DialogHeader>
           <DialogTitle>{editing ? "Edit user" : forStudent ? `Create a login for ${forStudent.name}` : "Add user"}</DialogTitle>
           <DialogDescription>
-            {editing ? "Role changes take effect the next time they sign in." : "They'll sign in with your school ID, this email and the temporary password."}
+            {editing ? "Role changes take effect the next time they sign in." : "They'll sign in with this email and the temporary password."}
           </DialogDescription>
         </DialogHeader>
         <form id="user-form" onSubmit={handleSubmit(submit)} noValidate className="grid gap-4 sm:grid-cols-2">

@@ -32,7 +32,6 @@ async function signedIn(browser, who) {
   const ctx = await browser.newContext({ viewport: PHONE });
   const page = await ctx.newPage();
   await page.goto(`${BASE}/login`, { waitUntil: "networkidle" });
-  await page.getByLabel("School ID").fill("demo");
   await page.getByLabel("Email").fill(`${who}@demo.com`);
   await page.getByRole("textbox", { name: "Password" }).fill("Demo@1234");
   await page.getByRole("button", { name: "Sign in" }).click();

@@ -16,7 +16,7 @@ class ProfileScreen extends ConsumerWidget {
       context: context,
       builder: (c) => AlertDialog(
         title: const Text('Sign out?'),
-        content: const Text("You'll need your school ID, email and password to sign in again."),
+        content: const Text("You'll need your email and password to sign in again."),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
           FilledButton(onPressed: () => Navigator.pop(c, true), style: FilledButton.styleFrom(minimumSize: const Size(0, 40)), child: const Text('Sign out')),

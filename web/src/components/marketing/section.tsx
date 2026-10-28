@@ -49,7 +49,6 @@ export function GlowBackdrop({ className }: { className?: string }) {
 
 export const PRICING_FAQ = [
   { q: "Is there a free trial?", a: "Yes. Every plan, including custom plans, starts with a 14-day free trial. No card is needed, and you can switch plans as often as you like during the trial." },
-  { q: "Are prices inclusive of GST?", a: "No. All prices are in Indian rupees and exclude 18% GST, which is added to your invoice." },
   { q: "What happens if we grow past our plan's limits?", a: "You'll see a clear message when you reach your student or staff limit, and you can upgrade at any time. Nothing is deleted and existing users keep working." },
   { q: "How is a custom plan priced?", a: "A small platform fee, plus the modules you choose, plus a per-student charge that gets cheaper as you grow. The price on the builder is exactly what you'll be billed." },
   { q: "Can we pay yearly?", a: "Yes. Paying yearly gives you two months free compared with paying monthly." },

@@ -62,7 +62,6 @@ test("deep link survives sign-in", async ({ page }) => {
   await page.goto("/settings/audit");
   await expect(page).toHaveURL(/\/login\?next=%2Fsettings%2Faudit/);
   await expect(page.getByRole("button", { name: "Sign in" })).toBeEnabled();
-  await page.getByLabel("School ID").fill(DEMO.slug);
   await page.getByLabel("Email").fill(DEMO.admin);
   await page.getByRole("textbox", { name: "Password", exact: true }).fill(DEMO.password);
   await page.getByRole("button", { name: "Sign in" }).click();
@@ -82,7 +81,6 @@ test("teacher cannot see or open admin pages", async ({ page }) => {
 test("forgot password responds the same for any email", async ({ page }) => {
   await page.goto("/forgot-password");
   await expect(page.getByRole("button", { name: "Send reset link" })).toBeEnabled();
-  await page.getByLabel("School ID").fill(DEMO.slug);
   await page.getByLabel("Email").fill("someone-unknown@demo.com");
   await page.getByRole("button", { name: "Send reset link" }).click();
   await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();

@@ -1,7 +1,6 @@
 import { Check, Minus } from "lucide-react";
 import type { Plan } from "@/lib/api/types";
-import { formatMoney, inr } from "@/lib/format";
-import { withGst } from "@/lib/gst";
+import { inr } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /** Plan-by-plan comparison of limits and every module. */
@@ -11,8 +10,8 @@ export function ComparisonTable({ plans, modules }: { plans: Plan[]; modules: { 
   const yes = <Check className="mx-auto size-4.5 text-success" aria-label="Included" />;
   const no = <Minus className="mx-auto size-4 text-muted-foreground/50" aria-label="Not included" />;
   const rows: { label: string; render: (p: Plan) => React.ReactNode }[] = [
-    { label: "Price (monthly)", render: (p) => <span className="tabular"><span className="font-semibold">{inr(p.price_monthly)}</span> + GST<span className="block text-xs text-muted-foreground">{formatMoney(withGst(p.price_monthly).total)} with GST</span></span> },
-    { label: "Price (yearly)", render: (p) => <span className="tabular">{inr(p.price_yearly)} + GST<span className="block text-xs text-muted-foreground">{formatMoney(withGst(p.price_yearly).total)} with GST</span></span> },
+    { label: "Price (monthly)", render: (p) => <span className="font-semibold tabular">{inr(p.price_monthly)}</span> },
+    { label: "Price (yearly)", render: (p) => <span className="tabular">{inr(p.price_yearly)}</span> },
     { label: "Students", render: (p) => (p.max_students === null ? "Unlimited" : p.max_students.toLocaleString("en-IN")) },
     { label: "Staff accounts", render: (p) => (p.max_staff === null ? "Unlimited" : p.max_staff.toLocaleString("en-IN")) },
     { label: "Document storage", render: (p) => `${p.storage_gb} GB` },

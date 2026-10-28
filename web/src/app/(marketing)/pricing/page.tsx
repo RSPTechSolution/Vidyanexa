@@ -24,7 +24,7 @@ export default async function PricingPage() {
             <p className="text-sm font-medium text-primary">Pricing</p>
             <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight text-balance sm:text-5xl">School management software pricing: plans that grow with your school</h1>
             <p className="mt-5 text-lg text-muted-foreground">
-              Every plan includes the parent, staff and driver apps, daily backups and a {catalog.trial_days}-day free trial. Prices in INR, excluding GST.
+              Every plan includes the parent, staff and driver apps, daily backups and a {catalog.trial_days}-day free trial. Prices in INR.
             </p>
           </div>
           <PricingView plans={plans} catalog={catalog} />

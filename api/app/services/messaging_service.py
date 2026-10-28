@@ -3,7 +3,7 @@ import uuid
 from collections import Counter
 from datetime import UTC, datetime, time, timedelta
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, literal, or_, select
 from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -57,14 +57,23 @@ async def contacts(db: AsyncSession, user: User) -> list[Contact]:
         return out
     if user.role not in STAFF_ROLES:
         return []
-    q = (select(Student, User, StudentGuardian.relationship).join(StudentGuardian, StudentGuardian.student_id == Student.id)
-         .join(User, User.id == StudentGuardian.user_id)
-         .where(Student.school_id == user.school_id, Student.status == "active", User.is_active.is_(True)))
+    # Each active student's parents, and the student too when they have their own login.
+    parents = (select(Student, User, StudentGuardian.relationship).join(StudentGuardian, StudentGuardian.student_id == Student.id)
+               .join(User, User.id == StudentGuardian.user_id))
+    selves = select(Student, User, literal("student")).join(User, User.id == Student.user_id)
+    sections = None
     if not has_permission(user.role, "attendance.manage"):  # teachers: families of the classes they teach
         own = set((await db.scalars(select(Section.id).where(Section.class_teacher_id == user.id))).all())
         taught = set((await db.scalars(select(TimetableEntry.section_id).where(TimetableEntry.teacher_id == user.id))).all())
-        q = q.where(Student.section_id.in_(own | taught))
-    for s, u, rel in (await db.execute(q.order_by(Student.first_name, Student.last_name))).all():
+        sections = own | taught
+    rows = []
+    for q in (parents, selves):
+        q = q.where(Student.school_id == user.school_id, Student.status == "active", User.is_active.is_(True), User.deleted_at.is_(None))
+        if sections is not None:
+            q = q.where(Student.section_id.in_(sections))
+        rows += (await db.execute(q)).all()
+    rows.sort(key=lambda r: (r[0].first_name, r[0].last_name, r[2] != "student", r[1].full_name))
+    for s, u, rel in rows:
         out.append(Contact(student_id=s.id, student_name=f"{s.first_name} {s.last_name}", user_id=u.id, name=u.full_name, role=rel.title()))
     return out
 

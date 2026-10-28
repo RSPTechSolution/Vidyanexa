@@ -156,6 +156,8 @@ async def create_user(db: AsyncSession, school_id: uuid.UUID, data: UserCreate, 
     email = data.email.lower()
     if await _email_taken(db, school_id, email):
         raise Conflict("A user with this email already exists", code="EMAIL_TAKEN")
+    from app.services.account_service import ensure_email_free
+    await ensure_email_free(db, email, school_id=school_id)  # people sign in by email alone: one active account each
     await billing_service.check_capacity(db, await db.get(School, school_id), data.role)
 
     # Role-specific requirements (e.g. parents need a child, drivers a licence).
@@ -234,6 +236,9 @@ async def update_user(db: AsyncSession, school_id: uuid.UUID, user_id: uuid.UUID
     # Taking up a new seat (reactivation or moving into a limited role) must fit the plan.
     new_role = changes.get("role", user.role)
     reactivating = changes.get("is_active") is True and not user.is_active
+    if reactivating:
+        from app.services.account_service import ensure_email_free
+        await ensure_email_free(db, user.email, school_id=school_id, user_id=user.id, field="is_active")
     if reactivating or (user.is_active and new_role != user.role):
         await billing_service.check_capacity(db, await db.get(School, school_id), new_role)
     for field, value in changes.items():

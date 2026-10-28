@@ -77,7 +77,7 @@ export const SOFTWARE = {
   url: SITE_URL,
   image: `${SITE_URL}${DEFAULT_OG}`,
   description:
-    "Cloud school management software (school ERP) for Indian schools: admissions, attendance, fee collection with receipts, exams and report cards, GPS bus tracking, HR and payroll, library, hostel, gate security, and parent, staff and driver apps.",
+    "Cloud school management software (school ERP) for Indian schools: admissions, attendance, fee collection with receipts, exams and report cards, GPS bus tracking, HR and payroll, library, gate security, and parent, staff and driver apps.",
   publisher: { "@id": `${SITE_URL}/#organization` },
   offers: {
     "@type": "AggregateOffer",

@@ -4,7 +4,8 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import Conflict, Forbidden, NotFound
-from app.core.permissions import MODULES, Role
+from app.core.deps import available_modules
+from app.core.permissions import MODULES, PREVIEW_MODULES, Role
 from app.core.security import hash_password
 from app.models import School, SchoolModule, User
 from app.schemas.common import PageMeta, PageParams
@@ -35,10 +36,12 @@ async def list_modules(db: AsyncSession, school_id: uuid.UUID) -> list[ModuleOut
     school = await get_school(db, school_id)
     rows = await db.scalars(select(SchoolModule).where(SchoolModule.school_id == school_id))
     switched_on = {m.module: m.is_enabled for m in rows.all()}
-    in_plan = set(school.plan.modules)
+    in_plan = available_modules(school)
     plans = await billing_service.public_plans(db)
     out = []
     for key, meta in MODULES.items():
+        if key in PREVIEW_MODULES and key not in in_plan:
+            continue  # not launched yet: only schools the platform has opened it to see it
         upgrade = None if key in in_plan else billing_service.cheapest_plan_with(plans, key)
         out.append(ModuleOut(module=key, label=meta["label"], in_plan=key in in_plan,
                              is_enabled=key in in_plan and switched_on.get(key, False),
@@ -47,10 +50,10 @@ async def list_modules(db: AsyncSession, school_id: uuid.UUID) -> list[ModuleOut
 
 
 async def set_module(db: AsyncSession, school_id: uuid.UUID, module: str, enabled: bool, *, actor_id: uuid.UUID) -> ModuleOut:
-    if module not in MODULES:
-        raise NotFound(f"Unknown module: {module}")
     school = await get_school(db, school_id)
-    if enabled and module not in school.plan.modules:
+    if module not in MODULES or (module in PREVIEW_MODULES and module not in available_modules(school)):
+        raise NotFound(f"Unknown module: {module}")
+    if enabled and module not in available_modules(school):
         raise Forbidden(f"{MODULES[module]['label']} isn't included in your {school.plan.name} plan. Upgrade to use it.",
                         code="PLAN_UPGRADE_REQUIRED", details={"module": module})
     row = await db.scalar(select(SchoolModule).where(SchoolModule.school_id == school_id, SchoolModule.module == module))
@@ -62,7 +65,23 @@ async def set_module(db: AsyncSession, school_id: uuid.UUID, module: str, enable
                                entity_type="module", entity_id=module, meta={"enabled": enabled})
     await db.flush()
     return ModuleOut(module=module, label=MODULES[module]["label"], is_enabled=enabled,
-                     in_plan=module in school.plan.modules)
+                     in_plan=module in available_modules(school))
+
+
+async def set_preview_modules(db: AsyncSession, school: School, modules: list[str], *, actor_id: uuid.UUID) -> list[str]:
+    """Platform owner only: open preview modules to one school (to test them), switched on straight away."""
+    chosen = sorted(set(modules) & PREVIEW_MODULES)
+    school.settings = {**(school.settings or {}), "preview_modules": chosen}
+    for module in chosen:
+        row = await db.scalar(select(SchoolModule).where(SchoolModule.school_id == school.id, SchoolModule.module == module))
+        if row:
+            row.is_enabled = True
+        else:
+            db.add(SchoolModule(school_id=school.id, module=module, is_enabled=True))
+    await audit_service.record(db, "school.preview_modules", school_id=school.id, user_id=actor_id,
+                               entity_type="school", entity_id=school.id, meta={"modules": chosen})
+    await db.flush()
+    return chosen
 
 
 async def list_schools(db: AsyncSession, page: PageParams, search: str | None,
@@ -82,6 +101,8 @@ async def create_school(db: AsyncSession, data: SchoolCreate, *, actor_id: uuid.
     """School + its first admin + default modules, all in the caller's transaction."""
     if await db.scalar(select(School.id).where(School.slug == data.slug)):
         raise Conflict("That school ID is already taken", code="SLUG_TAKEN")
+    from app.services.account_service import ensure_email_free
+    await ensure_email_free(db, data.admin_email, school_id=None, field="admin_email")
     plan = await billing_service.plan_by_code(db, data.plan_code, public_only=False)
     school = School(name=data.name, slug=data.slug, timezone=data.timezone,
                     currency=data.currency.upper(), language=data.language,
