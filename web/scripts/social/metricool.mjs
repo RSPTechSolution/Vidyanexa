@@ -2,7 +2,7 @@
 // Metricool can fetch it: web/public/social/, served at https://www.vidyanexa.com/social/ once the site is deployed.
 //
 //   node scripts/social/metricool.mjs                        → brand/social/metricool.csv
-//   node scripts/social/metricool.mjs --start 2026-10-26     first post date (then Mon/Wed/Fri)
+//   node scripts/social/metricool.mjs --start 2026-10-26     first post date (then Mon/Wed/Fri; dated posts keep their date)
 //   node scripts/social/metricool.mjs --template path.csv    fill the template downloaded from Metricool instead,
 //                                                            keeping its exact header row (safest if Metricool renames columns)
 //
@@ -27,10 +27,11 @@ const args = process.argv.slice(2);
 const opt = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined; };
 const start = new Date(`${opt("--start") ?? "2026-10-26"}T00:00:00`);
 
-// ---- the feed: "## N · Image|Reel · `posts/file.png`", then a ``` caption block, then "**Alt text:** …" ----
-const md = fs.readFileSync(FEED, "utf8");
-const posts = [...md.matchAll(/^## (\d+) · (Image|Reel) · `([^`]+)`\s*\n+```\n([\s\S]*?)\n```[\s\S]*?\*\*Alt text:\*\* (.+)$/gm)]
-  .map(([, n, kind, file, caption, alt]) => ({ n: Number(n), kind, file, caption: caption.trim(), alt: alt.trim() }));
+// ---- the feed: "## N · Image|Reel · `posts/file.png` [· YYYY-MM-DD]", then a ``` caption block, then "**Alt text:** …".
+// A post with a date keeps it (seasonal posts, a planned series); the others take the next Monday, Wednesday or Friday.
+const md = fs.readFileSync(FEED, "utf8").replace(/\r\n/g, "\n"); // Windows checkouts have CRLF
+const posts = [...md.matchAll(/^## (\d+) · (Image|Reel) · `([^`]+)`(?: · (\d{4}-\d{2}-\d{2}))?\s*\n+```\n([\s\S]*?)\n```[\s\S]*?\*\*Alt text:\*\* (.+)$/gm)]
+  .map(([, n, kind, file, on, caption, alt]) => ({ n: Number(n), kind, file, on, caption: caption.trim(), alt: alt.trim() }));
 if (posts.length === 0) throw new Error("No posts found in feed.md");
 
 // ---- dates: Monday, Wednesday, Friday ----
@@ -59,10 +60,12 @@ for (const p of posts) {
     p.cover = p.public.replace(/\.mp4$/, "-cover.jpg");
     execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-ss", COVER_AT, "-i", src, "-frames:v", "1", "-q:v", "2", path.join(PUBLIC_DIR, p.cover)]);
   }
+  if (p.on) { p.date = p.on; continue; }
   p.date = ymd(day);
   day.setDate(day.getDate() + 1);
   day = nextSlot(day);
 }
+posts.sort((a, b) => a.date.localeCompare(b.date) || a.n - b.n);
 
 // ---- columns (Metricool's template order; "don't delete or add columns") ----
 const range = (name, n) => Array.from({ length: n }, (_, i) => `${name} ${i + 1}`);

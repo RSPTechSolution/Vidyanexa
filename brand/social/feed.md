@@ -1,4 +1,4 @@
-# Vidyanexa Instagram feed: first 10 posts
+# Vidyanexa Instagram feed: posts 1–20
 
 Ten posts in posting order: the 5 images and the 5 attendance Reels, alternating. Each has its file, a caption written
 for school owners, principals and administrators, hashtags, tags and alt text. Copy everything inside a caption block
@@ -16,15 +16,15 @@ as it is.
 
 ## Scheduling with Metricool
 
-`brand/social/metricool.csv` holds all ten posts for Metricool's bulk import, scheduled Monday, Wednesday and Friday at
-7:30 pm from 26 October. Its media is served from www.vidyanexa.com/social/ (each Reel with a cover image), so the site
+`brand/social/metricool.csv` holds all twenty posts for Metricool's bulk import, at 7:30 pm. Posts 1–10 are scheduled
+Monday, Wednesday and Friday from 26 October; posts 11–20 keep the date in their heading (5 November to 4 December). Its media is served from www.vidyanexa.com/social/ (each Reel with a cover image), so the site
 must be deployed before importing. Rebuild the file after changing a caption here:
 `node scripts/social/metricool.mjs` (from `web/`; `--start 2026-11-02` moves the dates).
 
 1. In Metricool, set the brand's **timezone to Asia/Kolkata** (Settings → brand), so 19:30 means 7:30 pm in India.
 2. **Planning → ⋯ → Import CSV**, choose `metricool.csv`, and set the formats to match: date **YYYY-MM-DD**, time
    **24 hours (00:00:00)**, durations in **seconds**.
-3. Check the preview: ten Instagram posts, five as Reels with covers. Import.
+3. Check the preview: twenty Instagram posts, fifteen as Reels with covers. Import.
 4. Tags and the location aren't part of the CSV: open each scheduled post in Metricool to add the *Ludhiana, Punjab*
    location and any school tags before its date.
 
@@ -222,3 +222,174 @@ Schools in Ludhiana and across Punjab: DM "DEMO" or start free, link in bio.
 ```
 **Tags:** location Ludhiana, Punjab · up to two verified school accounts
 **Alt text:** Screen recording: the school's attendance overview, then the AI assistant listing students below 75% attendance.
+
+---
+
+# Feature Reels: 5 November to 4 December
+
+Ten Reels recorded from the app, one feature each, dated for the posting plan (Mon/Wed/Fri at 7:30 pm, plus Diwali and
+Children's Day). They follow the first ten posts, which end on 16 November. Files are in `brand/social/out/reels/`
+(`nov-*.mp4`). Each has a silent audio track, so add a trending sound in Instagram, or in Metricool's preview, before
+it goes out.
+
+## 11 · Reel · `reels/nov-1-diwali-notice.mp4` · 2026-11-05
+
+```
+Diwali holidays notice: ready in 10 seconds. 🪔
+
+Type one line to the AI assistant, "Write a notice about Diwali holidays from 7 to 10 November", and get a ready draft. Post it, and it's on every parent's phone at once.
+
+No typing, no printing, no WhatsApp forwards.
+
+Wishing every school, teacher and family a very Happy Diwali! ✨
+
+Try Vidyanexa free for 14 days: link in bio · DM "DEMO"
+
+#HappyDiwali #Diwali2026 #SchoolERP #Ludhiana #LudhianaSchools #Vidyanexa #SchoolManagementSoftware #AIinEducation #SchoolPrincipal #PunjabSchools #SchoolsInLudhiana #EdTechIndia
+```
+**Tags:** location Ludhiana, Punjab · up to two verified school accounts
+**Alt text:** Screen recording: a principal asks the AI assistant for a Diwali holidays notice, gets a draft, and the notice appears on a parent's phone.
+
+## 12 · Reel · `reels/nov-2-childrens-day.mp4` · 2026-11-14
+
+```
+Happy Children's Day! 🎈
+
+Every child is curious, kind and full of big dreams. Today schools across India celebrate them, and the message reaches every parent's phone the moment it's sent.
+
+To every teacher who believes in their students: thank you. 💛
+
+Vidyanexa: bringing schools and families closer, every day.
+
+#ChildrensDay #BalDiwas #HappyChildrensDay #SchoolERP #Ludhiana #LudhianaSchools #Vidyanexa #ParentApp #SchoolsInLudhiana #PunjabSchools #SchoolManagementSoftware
+```
+**Tags:** location Ludhiana, Punjab · up to two verified school accounts
+**Alt text:** Screen recording: a parent opens a notification from school and reads the "Happy Children's Day" message from the principal.
+
+## 13 · Reel · `reels/nov-3-fee-day.mp4` · 2026-11-18
+
+```
+Fee day without the queue. 🧾
+
+Parent paid by UPI? Find the student, tap "Collect payment", choose UPI, done. The receipt is made automatically, and the parent's phone shows "Fee received ₹10,000" straight away.
+
+No receipt books. No "did you get my payment?" calls.
+
+Free 14-day trial for your school: link in bio · DM "DEMO"
+
+#SchoolFees #SchoolERP #Ludhiana #LudhianaSchools #Vidyanexa #SchoolManagementSoftware #UPI #SchoolAdmin #SchoolAccounts #PunjabSchools #DigitalSchool
+```
+**Tags:** location Ludhiana, Punjab
+**Alt text:** Screen recording: the accounts team records a ₹10,000 UPI fee payment and makes a receipt; the next scene shows the father's phone with the "Fee received" alert.
+
+## 14 · Reel · `reels/nov-4-school-bus.mp4` · 2026-11-20
+
+```
+"Bus kahan pahunchi?" Parents can see for themselves. 🚌
+
+The driver's phone shares the bus's location, and parents watch it move on the map, live. When their child gets on, they're told at once.
+
+Fewer calls to the transport in-charge. Calmer mornings for everyone.
+
+Vidyanexa · school ERP with apps for parents, teachers and drivers. DM "DEMO" · link in bio
+
+#SchoolBus #SchoolTransport #SchoolSafety #SchoolERP #Ludhiana #LudhianaSchools #Vidyanexa #ParentApp #GPSTracking #SchoolsInLudhiana #SchoolManagementSoftware
+```
+**Tags:** location Ludhiana, Punjab
+**Alt text:** Screen recording: a parent's phone showing the school bus moving along its route on a live map, then "Got on the bus" when the child boards.
+
+## 15 · Reel · `reels/nov-5-principal-745.mp4` · 2026-11-23
+
+```
+POV: it's 7:45 am and you already know how today is going. ☕
+
+Who's present and absent, fees collected, staff on leave, notices, sign-ins: your whole school on one screen, before the first bell.
+
+Principals and school owners: book a free 15-minute demo. DM "DEMO" · trial link in bio
+
+#SchoolPrincipal #POV #SchoolLeadership #SchoolOwner #SchoolERP #Ludhiana #LudhianaSchools #Vidyanexa #SchoolManagementSoftware #CBSESchool #PunjabSchools
+```
+**Tags:** location Ludhiana, Punjab · up to two verified school accounts
+**Alt text:** Screen recording: the principal's dashboard at 7:45 am, scrolling through today's attendance, fees, staff and sign-in activity.
+
+## 16 · Reel · `reels/nov-6-homework-done.mp4` · 2026-11-25
+
+```
+Homework, done. ✅
+
+The teacher sets tonight's homework in a few taps. It's on every parent's phone straight away. Done at home? One tap on "Mark as done", and the teacher sees it.
+
+No more "Ma'am, my child didn't write the homework in the diary."
+
+Free 14-day trial: link in bio · DM "DEMO"
+
+#Homework #SchoolERP #Ludhiana #LudhianaSchools #Vidyanexa #ParentApp #Teachers #SchoolManagementSoftware #SchoolsInLudhiana #DigitalSchool #EdTechIndia
+```
+**Tags:** location Ludhiana, Punjab
+**Alt text:** Screen recording: a teacher sets "Fractions practice: Exercise 6.1" for Class 5–A; a parent sees it and marks it done.
+
+## 17 · Reel · `reels/nov-7-gate-pass.mp4` · 2026-11-27
+
+```
+No gate pass, no exit. 🔐
+
+Early pickup? The parent asks from their phone. The class teacher approves. The family gets a one-time code, and the guard checks it at the gate: right child, right person, right time.
+
+Every exit recorded. Peace of mind for parents and schools.
+
+Vidyanexa: gate passes, visitors and campus safety. DM "DEMO" · link in bio
+
+#SchoolSafety #ChildSafety #GatePass #SchoolSecurity #SchoolERP #Ludhiana #LudhianaSchools #Vidyanexa #SchoolManagementSoftware #SchoolPrincipal #PunjabSchools
+```
+**Tags:** location Ludhiana, Punjab · up to two verified school accounts
+**Alt text:** Screen recording: a parent requests an early pickup, the class teacher approves, the parent gets a 6-digit code, and the security guard checks it at the gate.
+
+## 18 · Reel · `reels/nov-8-who-hasnt-paid.mp4` · 2026-11-30
+
+```
+Who hasn't paid the fee? Just ask. 💬
+
+"Fee defaulters in Class 9": the AI assistant answers in seconds, with names, amounts and due dates. Then one tap sends a polite reminder to every family that's pending.
+
+No registers. No awkward phone calls.
+
+Try it with your own school: free 14-day trial, link in bio
+
+#SchoolFees #FeeReminder #AIinEducation #SchoolERP #Ludhiana #LudhianaSchools #Vidyanexa #SchoolManagementSoftware #SchoolAdmin #SchoolOwner #PunjabSchools
+```
+**Tags:** location Ludhiana, Punjab
+**Alt text:** Screen recording: the AI assistant lists Class 9 students with overdue fees, then the accounts team opens fee reminders for every pending family.
+
+## 19 · Reel · `reels/nov-9-leave-from-sofa.mp4` · 2026-12-02
+
+```
+Child unwell? Leave applied from the sofa. 🛋️
+
+No handwritten note, no call to the office. The parent sends a leave request from the app, and the class teacher approves it with a "Get well soon" note. It's marked as leave, not absent.
+
+Small things that make parents love their school. ❤️
+
+DM "DEMO" · Free 14-day trial, link in bio
+
+#ParentApp #LeaveApplication #SchoolERP #Ludhiana #LudhianaSchools #Vidyanexa #Parents #SchoolManagementSoftware #SchoolsInLudhiana #Teachers #DigitalSchool
+```
+**Tags:** location Ludhiana, Punjab
+**Alt text:** Screen recording: a parent asks for a day's sick leave for Aarav, the class teacher approves with a note, and the parent sees it approved.
+
+## 20 · Reel · `reels/nov-10-school-in-2-minutes.mp4` · 2026-12-04
+
+```
+Your school, set up in 2 minutes. 🚀
+
+School name, your details, confirm your email with a code, and you're in: attendance, fees, homework, transport, exams and more, ready to use.
+
+✅ Free for 14 days
+✅ No card needed
+✅ Apps for parents, teachers and drivers
+
+Start now: link in bio · or DM "DEMO" and we'll set it up with you.
+
+#SchoolERP #SchoolManagementSoftware #Ludhiana #LudhianaSchools #Vidyanexa #SchoolOwner #SchoolPrincipal #SchoolsInLudhiana #PunjabSchools #EdTechIndia #FreeTrial
+```
+**Tags:** location Ludhiana, Punjab · up to two verified school accounts
+**Alt text:** Screen recording: a new school, Sunrise Academy in Ludhiana, signs up, confirms the email with a code and lands on its own dashboard.

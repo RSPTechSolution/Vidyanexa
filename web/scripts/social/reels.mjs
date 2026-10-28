@@ -102,11 +102,18 @@ function director(page, t0, captions) {
 async function record(browser, seg, timeline) {
   const ctx = await browser.newContext({
     // Recordings are captured at the viewport's size (not its pixel density), so record 1:1 and scale in the edit.
-    viewport: PHONE, storageState: await signedIn(browser, seg.as),
+    // as: null records someone not signed in (the public site, sign-up).
+    viewport: PHONE, storageState: seg.as ? await signedIn(browser, seg.as) : undefined,
     recordVideo: { dir: WORK, size: PHONE },
   });
   await ctx.addInitScript(TOUCHES);
   const page = await ctx.newPage();
+  // clock: "07:45" shows the page as if it were that time today (greetings, "today" labels), with timers still running.
+  if (seg.clock) {
+    const [h, m] = seg.clock.split(":").map(Number);
+    const t = new Date(); t.setHours(h, m, 0, 0);
+    await page.clock.setFixedTime(t);
+  }
   const tVideo = Date.now();
   await page.goto(`${BASE}${seg.url}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(seg.settle ?? 900);
@@ -193,7 +200,7 @@ for (const mod of modules.filter((m) => !onlyModule || m === onlyModule)) {
     if (onlyIndex && Number(onlyIndex) !== i + 1) continue;
     const outFile = path.join(OUT, `${mod}-${i + 1}-${story.slug}.mp4`);
     process.stdout.write(`${path.basename(outFile)} … `);
-    if (story.before) story.before(); else if (before) before(story); // the data each reel starts from
+    if (story.before) await story.before(); else if (before) await before(story); // the data each reel starts from
     const timeline = [];
     for (const seg of story.segments) await record(browser, seg, timeline);
     const secs = await compose(browser, story, timeline, outFile);
