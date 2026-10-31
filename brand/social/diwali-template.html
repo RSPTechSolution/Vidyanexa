@@ -1,0 +1,157 @@
+<!doctype html>
+<!-- Diwali feed posts (1080x1350), rendered by web/scripts/social/diwali.mjs. Parameters arrive in the hash as
+     URL-encoded JSON: layout (hero | offer | greeting), kicker, title (*gold words*), sub, pill, plans, foot. -->
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: Cinzel; src: url("../../web/src/fonts/Cinzel-SemiBold.ttf"); font-weight: 600; }
+* { box-sizing: border-box; margin: 0; }
+body { width: 1080px; height: 1350px; overflow: hidden; color: #F7F2E8; font-family: "Segoe UI", Arial, sans-serif; }
+.page { position: relative; height: 100%; padding: 120px 84px 0; overflow: hidden;
+  background:
+    radial-gradient(620px 520px at 50% 108%, rgba(255,170,60,.42), transparent 70%),
+    radial-gradient(760px 520px at 100% 0%, rgba(184,137,60,.30), transparent 62%),
+    radial-gradient(600px 600px at 0% 40%, rgba(150,40,90,.22), transparent 65%),
+    linear-gradient(180deg, #0F1A31 0%, #15233F 55%, #24233A 100%); }
+.brand { display: flex; align-items: center; gap: 16px; position: relative; z-index: 3; }
+.brand img { width: 56px; }
+.word { font-family: Cinzel; font-weight: 600; font-size: 30px; letter-spacing: .08em; }
+.kicker { margin-top: 52px; font-size: 24px; letter-spacing: .24em; color: #E2BE74; font-weight: 700; position: relative; z-index: 3; }
+h1 { margin-top: 18px; font-family: Georgia, serif; font-size: 82px; line-height: 1.05; letter-spacing: -.01em; max-width: 900px; position: relative; z-index: 3; }
+h1 em { font-style: normal; color: #F1C76E; text-shadow: 0 0 34px rgba(255,190,90,.45); }
+.sub { margin-top: 26px; font-size: 31px; line-height: 1.45; color: #D6D2C8; max-width: 860px; position: relative; z-index: 3; }
+.pill { display: inline-flex; align-items: center; gap: 14px; margin-top: 40px; padding: 20px 32px; border-radius: 999px; font-size: 30px; font-weight: 700;
+  color: #15233F; background: linear-gradient(90deg, #F1C76E, #E2A94C); box-shadow: 0 18px 40px -12px rgba(241,199,110,.55); position: relative; z-index: 3; }
+.foot { position: absolute; left: 84px; right: 84px; bottom: 46px; display: flex; justify-content: space-between; font-size: 23px; color: #CFC8B8; letter-spacing: .03em; z-index: 3; }
+.foot b { color: #F7F2E8; }
+
+/* string lights across the top */
+.lights { position: absolute; left: 0; top: 0; width: 1080px; height: 110px; z-index: 2; }
+/* rangoli in two corners */
+.rangoli { position: absolute; width: 520px; height: 520px; opacity: .42; z-index: 1; }
+.rangoli.r1 { right: -250px; top: 690px; }
+.rangoli.r2 { left: -240px; bottom: -170px; opacity: .3; }
+.offer-layout .rangoli.r1 { top: 250px; right: -270px; }
+.greeting-layout .rangoli.r1 { left: 270px; right: auto; top: 715px; width: 540px; height: 540px; opacity: .3; }
+.greeting-layout .rangoli.r2 { display: none; }
+/* the row of diyas at the bottom */
+.diyas { position: absolute; left: 0; right: 0; bottom: 104px; display: flex; justify-content: center; align-items: flex-end; gap: 46px; z-index: 2; }
+.diya { position: relative; }
+.diya .glow { position: absolute; left: 50%; top: -40px; width: 230px; height: 230px; transform: translateX(-50%); border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,196,90,.55), rgba(255,140,40,.12) 45%, transparent 70%); }
+.sparkle { position: absolute; z-index: 2; color: #F1C76E; }
+.points { margin-top: 46px; display: grid; gap: 18px; position: relative; z-index: 3; }
+.points div { display: flex; align-items: center; gap: 16px; font-size: 29px; color: #EDE7DA; }
+.points b { display: inline-flex; width: 40px; height: 40px; border-radius: 50%; align-items: center; justify-content: center;
+  background: rgba(241,199,110,.16); border: 1.5px solid rgba(241,199,110,.6); color: #F1C76E; font-size: 22px; }
+
+/* offer layout */
+.offer-layout h1 { font-size: 74px; }
+.big { margin-top: 30px; display: flex; align-items: baseline; gap: 22px; position: relative; z-index: 3; }
+.big .n { font-family: Georgia, serif; font-size: 190px; line-height: .9; color: #F1C76E; text-shadow: 0 0 50px rgba(255,190,90,.5); }
+.big .t { font-family: Georgia, serif; font-size: 62px; line-height: 1.05; }
+.big .t small { display: block; font-family: "Segoe UI", Arial, sans-serif; font-size: 28px; color: #D6D2C8; margin-top: 10px; }
+.plans { margin-top: 44px; display: grid; gap: 16px; max-width: 720px; position: relative; z-index: 3; }
+.plan { display: flex; align-items: center; justify-content: space-between; padding: 22px 30px; border-radius: 22px;
+  background: rgba(247,242,232,.07); border: 1.5px solid rgba(241,199,110,.35); backdrop-filter: blur(2px); }
+.plan .name { font-size: 32px; font-weight: 700; }
+.plan .name span { display: block; font-size: 21px; font-weight: 400; color: #CFC8B8; margin-top: 4px; }
+.plan .price { text-align: right; font-size: 38px; font-weight: 700; color: #F1C76E; }
+.plan .price span { display: block; font-size: 21px; font-weight: 400; color: #CFC8B8; margin-top: 4px; }
+.offer-layout .diyas { bottom: 96px; justify-content: flex-end; padding-right: 70px; gap: 30px; }
+
+/* greeting layout: centred */
+.greeting-layout { text-align: center; }
+.greeting-layout .brand { justify-content: center; }
+.greeting-layout h1 { margin: 120px auto 0; font-size: 128px; max-width: none; }
+.greeting-layout .kicker { margin-top: 70px; }
+.greeting-layout .sub { margin: 34px auto 0; }
+.greeting-layout .diyas { bottom: 150px; }
+.greeting-layout .foot { justify-content: center; }
+</style></head>
+<body><div class="page" id="page">
+  <svg class="lights" viewBox="0 0 1080 110" id="lights"></svg>
+  <svg class="rangoli r1" viewBox="-100 -100 200 200" id="r1"></svg>
+  <svg class="rangoli r2" viewBox="-100 -100 200 200" id="r2"></svg>
+  <div class="brand"><img src="../png/vidyanexa-crest-reverse.png" alt=""><div class="word">VIDYANEXA</div></div>
+  <div class="kicker" id="kicker"></div>
+  <h1 id="title"></h1>
+  <div id="body"></div>
+  <div class="diyas" id="diyas"></div>
+  <div class="foot" id="foot"></div>
+</div>
+<script>
+  const p = JSON.parse(decodeURIComponent(location.hash.slice(1) || "{}"));
+  const gold = (s) => (s || "").replace(/\*(.+?)\*/g, "<em>$1</em>");
+  const layout = p.layout || "hero";
+  document.getElementById("page").classList.add(`${layout}-layout`);
+  document.getElementById("kicker").textContent = p.kicker || "";
+  document.getElementById("title").innerHTML = gold(p.title);
+
+  // Body by layout
+  let body = "";
+  if (layout === "offer") {
+    body = `<div class="big"><div class="n">2</div><div class="t">months free<small>${p.sub || ""}</small></div></div>`
+      + `<div class="plans">${(p.plans || []).map((x) => `<div class="plan"><div class="name">${x.name}<span>${x.note}</span></div>`
+      + `<div class="price">${x.price}<span>${x.per}</span></div></div>`).join("")}</div>`;
+  } else {
+    body = `${p.sub ? `<p class="sub">${p.sub}</p>` : ""}${p.pill ? `<div class="pill">${p.pill}</div>` : ""}`
+      + (p.points ? `<div class="points">${p.points.map((x) => `<div><b>✓</b>${x}</div>`).join("")}</div>` : "");
+  }
+  document.getElementById("body").innerHTML = body;
+  document.getElementById("foot").innerHTML = p.foot || "<b>vidyanexa.com</b><span>Free 14-day trial · no card needed</span>";
+
+  // String lights: a sagging wire with glowing bulbs in warm colours.
+  const L = document.getElementById("lights");
+  const colours = ["#FFCF6B", "#FF8A3D", "#FF5E7E", "#FFE29A", "#7FD1FF"];
+  let lights = "";
+  for (let s = 0; s < 3; s++) {
+    const x0 = s * 360, x1 = x0 + 360;
+    lights += `<path d="M${x0} 8 Q ${x0 + 180} 92 ${x1} 8" stroke="#3B3A50" stroke-width="2" fill="none"/>`;
+    for (let i = 1; i < 9; i++) {
+      const t = i / 9, x = x0 + 360 * t, y = 8 + 2 * (1 - t) * t * 84 + 10;
+      const c = colours[(i + s) % colours.length];
+      lights += `<circle cx="${x}" cy="${y}" r="16" fill="${c}" opacity=".22"/><circle cx="${x}" cy="${y}" r="7" fill="${c}"/>`;
+    }
+  }
+  L.innerHTML = lights;
+
+  // Rangoli: rings of petals.
+  const rangoli = () => {
+    let g = "";
+    const rings = [[8, 78, 22, "#E2BE74"], [12, 58, 15, "#FF8A3D"], [10, 38, 12, "#D94A7A"], [8, 20, 8, "#F1C76E"]];
+    for (const [n, r, len, c] of rings) {
+      for (let i = 0; i < n; i++) {
+        const a = (360 / n) * i;
+        g += `<ellipse cx="0" cy="${-r}" rx="${len / 2.4}" ry="${len}" fill="${c}" opacity=".85" transform="rotate(${a})"/>`;
+      }
+    }
+    g += `<circle r="9" fill="#F7F2E8"/><circle r="92" fill="none" stroke="#E2BE74" stroke-width="1.5" stroke-dasharray="3 6"/>`;
+    for (let i = 0; i < 24; i++) g += `<circle cx="0" cy="-97" r="2.4" fill="#F1C76E" transform="rotate(${i * 15})"/>`;
+    return g;
+  };
+  document.getElementById("r1").innerHTML = rangoli();
+  document.getElementById("r2").innerHTML = rangoli();
+
+  // Diyas: clay lamp, gold rim, a flame with its glow.
+  const diya = (w) => `<div class="diya" style="width:${w}px"><div class="glow" style="width:${w * 1.7}px;height:${w * 1.7}px;top:${-w * 0.45}px"></div>
+    <svg viewBox="0 0 120 110" width="${w}" style="position:relative">
+      <defs>
+        <radialGradient id="fl" cx="50%" cy="70%" r="60%"><stop offset="0" stop-color="#FFF6C8"/><stop offset=".45" stop-color="#FFD15C"/><stop offset="1" stop-color="#FF7A1A"/></radialGradient>
+        <linearGradient id="clay" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D2733A"/><stop offset="1" stop-color="#7E3418"/></linearGradient>
+      </defs>
+      <path d="M60 6 C 70 22, 74 34, 60 50 C 46 34, 50 22, 60 6 Z" fill="url(#fl)"/>
+      <path d="M60 24 C 64 32, 65 38, 60 46 C 55 38, 56 32, 60 24 Z" fill="#FFF9E0"/>
+      <path d="M8 58 Q 60 54 112 58 Q 104 98 60 102 Q 16 98 8 58 Z" fill="url(#clay)"/>
+      <path d="M8 58 Q 60 54 112 58 Q 60 70 8 58 Z" fill="#E2BE74"/>
+      <path d="M22 76 Q 60 86 98 76" stroke="#F1C76E" stroke-width="3" fill="none" opacity=".8"/>
+      <circle cx="40" cy="88" r="3" fill="#F1C76E"/><circle cx="60" cy="92" r="3" fill="#F1C76E"/><circle cx="80" cy="88" r="3" fill="#F1C76E"/>
+    </svg></div>`;
+  const sizes = layout === "offer" ? [92, 120] : layout === "greeting" ? [96, 120, 170, 120, 96] : [84, 110, 140, 110, 84];
+  document.getElementById("diyas").innerHTML = sizes.map(diya).join("");
+
+  // Sparkles scattered (fixed positions, so every render matches).
+  const spots = [[160, 210, 26], [930, 190, 34], [990, 620, 22], [1000, 440, 20], [880, 960, 28], [600, 985, 18], [310, 1010, 22], [760, 760, 16]];
+  const star = (x, y, s) => `<svg class="sparkle" style="left:${x}px;top:${y}px" width="${s}" height="${s}" viewBox="-10 -10 20 20"><path d="M0 -10 L2 -2 L10 0 L2 2 L0 10 L-2 2 L-10 0 L-2 -2 Z" fill="currentColor"/></svg>`;
+  document.getElementById("page").insertAdjacentHTML("beforeend", spots.map((s) => star(...s)).join(""));
+</script>
+</body></html>

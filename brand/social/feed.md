@@ -1,4 +1,4 @@
-# Vidyanexa Instagram feed: posts 1–20
+# Vidyanexa Instagram feed
 
 Ten posts in posting order: the 5 images and the 5 attendance Reels, alternating. Each has its file, a caption written
 for school owners, principals and administrators, hashtags, tags and alt text. Copy everything inside a caption block
@@ -16,15 +16,15 @@ as it is.
 
 ## Scheduling with Metricool
 
-`brand/social/metricool.csv` holds all twenty posts for Metricool's bulk import, at 7:30 pm. Posts 1–10 are scheduled
-Monday, Wednesday and Friday from 26 October; posts 11–20 keep the date in their heading (5 November to 4 December). Its media is served from www.vidyanexa.com/social/ (each Reel with a cover image), so the site
+`brand/social/metricool.csv` holds all the posts below for Metricool's bulk import, at 7:30 pm. Posts 1–10 are scheduled
+Monday, Wednesday and Friday from 26 October; posts 11 onwards keep the date in their heading. Its media is served from www.vidyanexa.com/social/ (each Reel with a cover image), so the site
 must be deployed before importing. Rebuild the file after changing a caption here:
 `node scripts/social/metricool.mjs` (from `web/`; `--start 2026-11-02` moves the dates).
 
 1. In Metricool, set the brand's **timezone to Asia/Kolkata** (Settings → brand), so 19:30 means 7:30 pm in India.
 2. **Planning → ⋯ → Import CSV**, choose `metricool.csv`, and set the formats to match: date **YYYY-MM-DD**, time
    **24 hours (00:00:00)**, durations in **seconds**.
-3. Check the preview: twenty Instagram posts, fifteen as Reels with covers. Import.
+3. Check the preview: one row per post below, Reels with covers. Import.
 4. Tags and the location aren't part of the CSV: open each scheduled post in Metricool to add the *Ludhiana, Punjab*
    location and any school tags before its date.
 
@@ -393,3 +393,80 @@ Start now: link in bio · or DM "DEMO" and we'll set it up with you.
 ```
 **Tags:** location Ludhiana, Punjab · up to two verified school accounts
 **Alt text:** Screen recording: a new school, Sunrise Academy in Ludhiana, signs up, confirms the email with a code and lands on its own dashboard.
+
+---
+
+# Diwali posts: 1 to 8 November
+
+Four image posts for Diwali week (Diwali is Sunday 8 November), made by `node scripts/social/diwali.mjs` from
+`brand/social/diwali-template.html`. They're on days without another post. The "Diwali offer" is what every school already gets: a free
+14-day trial with no card, and 2 months free when paying yearly. There's no end date, so don't add one. Check the
+yearly prices on post 22 match the live pricing page before it goes out.
+
+## 21 · Image · `posts/diwali-1-light-up.png` · 2026-11-01
+
+```
+This Diwali, light up your school. 🪔✨
+
+Attendance, fees, exams, transport and a parent app: your whole school on one system, set up in minutes.
+
+✅ Free for 14 days, no card needed
+✅ Apps for parents, teachers and drivers
+✅ Made for Indian schools, priced in rupees
+
+Diwali offer: start free today. Link in bio, or DM "DEMO" for a 15-minute walkthrough.
+
+#DiwaliOffer #Diwali2026 #HappyDiwali #SchoolERP #SchoolManagementSoftware #Ludhiana #LudhianaSchools #Vidyanexa #SchoolOwner #SchoolPrincipal #PunjabSchools #EdTechIndia
+```
+**Tags:** location Ludhiana, Punjab · up to two verified school accounts
+**Alt text:** A festive navy poster with string lights, rangoli and five glowing diyas: "Diwali offer. This Diwali, light up your school," with a "Start free today" button and three benefits.
+
+## 22 · Image · `posts/diwali-2-offer.png` · 2026-11-03
+
+```
+Diwali offer: 2 months free. 🎁
+
+Pay yearly and use Vidyanexa for 12 months while paying for 10.
+
+Basic: ₹2,499/month, billed yearly (up to 300 students)
+Pro: ₹6,666/month, billed yearly (up to 1,500 students)
+Max: ₹14,999/month, billed yearly (unlimited students)
+
+Try it free for 14 days first, no card needed. Link in bio · DM "DEMO"
+
+#DiwaliOffer #DiwaliSale #Diwali2026 #SchoolERP #SchoolManagementSoftware #Ludhiana #LudhianaSchools #Vidyanexa #SchoolFees #SchoolOwner #PunjabSchools
+```
+**Tags:** location Ludhiana, Punjab
+**Alt text:** A Diwali offer poster: "Pay yearly, get 2 months free. Pay for 10 months, use all 12," with yearly prices for the Basic, Pro and Max plans, beside diyas and a rangoli.
+
+## 23 · Image · `posts/diwali-3-shubh-aarambh.png` · 2026-11-07
+
+```
+Shubh aarambh. 🪔
+
+Diwali is when new account books are opened, and new beginnings are made. Make this the year your school moves its registers, fee books and notices to one simple system.
+
+✅ Your school, set up in 2 minutes
+✅ Import students and staff from a spreadsheet
+✅ Fees, receipts and reminders from day one
+
+Start free for 14 days: link in bio · DM "DEMO"
+
+#ShubhAarambh #ShubhDeepavali #Diwali2026 #NewBeginnings #SchoolERP #SchoolManagementSoftware #Ludhiana #LudhianaSchools #Vidyanexa #SchoolsInLudhiana #DigitalSchool
+```
+**Tags:** location Ludhiana, Punjab · up to two verified school accounts
+**Alt text:** A Diwali poster reading "Shubh aarambh. New account books. A new way to run your school," with a "Your school, set up in 2 minutes" button, string lights and diyas.
+
+## 24 · Image · `posts/diwali-4-greeting.png` · 2026-11-08
+
+```
+Happy Diwali from Team Vidyanexa! 🪔✨
+
+May this festival of lights bring joy, learning and success to every student, teacher and family.
+
+To all the schools, principals and teachers who light up young minds every day: thank you. 💛
+
+#HappyDiwali #ShubhDeepavali #Diwali2026 #FestivalOfLights #Vidyanexa #Ludhiana #LudhianaSchools #Teachers #Schools #Punjab
+```
+**Tags:** location Ludhiana, Punjab · up to two verified school accounts
+**Alt text:** A greeting card reading "Wishing you a Happy Diwali," with a rangoli, five glowing diyas and string lights, signed Team Vidyanexa.
