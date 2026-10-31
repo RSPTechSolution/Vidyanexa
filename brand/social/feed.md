@@ -470,3 +470,68 @@ To all the schools, principals and teachers who light up young minds every day: 
 ```
 **Tags:** location Ludhiana, Punjab · up to two verified school accounts
 **Alt text:** A greeting card reading "Wishing you a Happy Diwali," with a rangoli, five glowing diyas and string lights, signed Team Vidyanexa.
+
+---
+
+# Diwali Reels: 2 to 10 November
+
+Three Reels in the Diwali look, recorded on the public website: `node scripts/social/reels.mjs diwali`. The first two go
+out at 12:30 pm, on days that already have an evening post. Each has a silent audio track; add a festive trending
+sound in Instagram, or in Metricool's preview.
+
+## 25 · Reel · `reels/diwali-1-light-up.mp4` · 2026-11-02 12:30
+
+```
+This Diwali, light up your school. 🪔✨
+
+Attendance, fees, exams, transport and apps for parents, teachers and drivers: your whole school in one place.
+
+Diwali offer: start free today.
+✅ 14 days free
+✅ No card needed
+✅ Set up in minutes
+
+Link in bio · DM "DEMO"
+
+#DiwaliOffer #Diwali2026 #HappyDiwali #SchoolERP #SchoolManagementSoftware #Ludhiana #LudhianaSchools #Vidyanexa #SchoolOwner #SchoolsInLudhiana #EdTechIndia
+```
+**Tags:** location Ludhiana, Punjab · up to two verified school accounts
+**Alt text:** Screen recording in a festive frame of string lights and diyas: the Vidyanexa website scrolls through its modules, then opens the free trial sign-up.
+
+## 26 · Reel · `reels/diwali-2-two-months-free.mp4` · 2026-11-04 12:30
+
+```
+Diwali offer: pay yearly, get 2 months free. 🎁
+
+Watch the price drop when you switch to yearly:
+Basic ₹2,999 → ₹2,499/month
+Pro ₹6,666/month
+Max ₹14,999/month (unlimited students)
+
+Pay for 10 months, use all 12. Try it free for 14 days first, no card needed.
+
+Link in bio · DM "DEMO"
+
+#DiwaliOffer #DiwaliSale #Diwali2026 #SchoolERP #SchoolManagementSoftware #Ludhiana #LudhianaSchools #Vidyanexa #SchoolFees #SchoolOwner #PunjabSchools
+```
+**Tags:** location Ludhiana, Punjab
+**Alt text:** Screen recording in a festive frame: the pricing page switches from monthly to yearly, and the Basic plan drops from ₹2,999 to ₹2,499 a month; then the Pro and Max prices.
+
+## 27 · Reel · `reels/diwali-3-custom-plan.mp4` · 2026-11-10
+
+```
+Your school, your plan. 🧩
+
+Don't need every module? Build your own plan:
+1️⃣ Enter your number of students
+2️⃣ Pick only the modules you need
+3️⃣ See your price update as you go
+
+Pay only for what your school uses, and start free for 14 days.
+
+Build yours: link in bio · DM "DEMO"
+
+#CustomPlan #SchoolERP #SchoolManagementSoftware #Ludhiana #LudhianaSchools #Vidyanexa #SchoolOwner #SchoolPrincipal #SchoolsInLudhiana #PunjabSchools #EdTechIndia
+```
+**Tags:** location Ludhiana, Punjab · up to two verified school accounts
+**Alt text:** Screen recording in a festive frame: the custom plan builder set to 650 students, Examinations, Transport and AI Assistant switched on, the monthly price updating, then the free trial sign-up with the custom plan chosen.

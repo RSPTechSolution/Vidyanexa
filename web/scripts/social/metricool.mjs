@@ -27,11 +27,11 @@ const args = process.argv.slice(2);
 const opt = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined; };
 const start = new Date(`${opt("--start") ?? "2026-10-26"}T00:00:00`);
 
-// ---- the feed: "## N · Image|Reel · `posts/file.png` [· YYYY-MM-DD]", then a ``` caption block, then "**Alt text:** …".
+// ---- the feed: "## N · Image|Reel · `posts/file.png` [· YYYY-MM-DD [HH:MM]]", then a ``` caption block, then "**Alt text:** …".
 // A post with a date keeps it (seasonal posts, a planned series); the others take the next Monday, Wednesday or Friday.
 const md = fs.readFileSync(FEED, "utf8").replace(/\r\n/g, "\n"); // Windows checkouts have CRLF
-const posts = [...md.matchAll(/^## (\d+) · (Image|Reel) · `([^`]+)`(?: · (\d{4}-\d{2}-\d{2}))?\s*\n+```\n([\s\S]*?)\n```[\s\S]*?\*\*Alt text:\*\* (.+)$/gm)]
-  .map(([, n, kind, file, on, caption, alt]) => ({ n: Number(n), kind, file, on, caption: caption.trim(), alt: alt.trim() }));
+const posts = [...md.matchAll(/^## (\d+) · (Image|Reel) · `([^`]+)`(?: · (\d{4}-\d{2}-\d{2})(?: (\d{2}:\d{2}))?)?\s*\n+```\n([\s\S]*?)\n```[\s\S]*?\*\*Alt text:\*\* (.+)$/gm)]
+  .map(([, n, kind, file, on, at, caption, alt]) => ({ n: Number(n), kind, file, on, time: at ? `${at}:00` : TIME, caption: caption.trim(), alt: alt.trim() }));
 if (posts.length === 0) throw new Error("No posts found in feed.md");
 
 // ---- dates: Monday, Wednesday, Friday ----
@@ -65,7 +65,7 @@ for (const p of posts) {
   day.setDate(day.getDate() + 1);
   day = nextSlot(day);
 }
-posts.sort((a, b) => a.date.localeCompare(b.date) || a.n - b.n);
+posts.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time) || a.n - b.n);
 
 // ---- columns (Metricool's template order; "don't delete or add columns") ----
 const range = (name, n) => Array.from({ length: n }, (_, i) => `${name} ${i + 1}`);
@@ -105,7 +105,7 @@ const norm = (h) => h.toLowerCase().replace(/\(.*?\)/g, "").replace(/twitter\/x/
 const NETWORKS = ["facebook", "twitter", "linkedin", "gmb", "gbp", "instagram", "pinterest", "tiktok", "youtube", "threads", "bluesky"];
 function row(p) {
   const v = {
-    text: p.caption, date: p.date, time: TIME, draft: "FALSE",
+    text: p.caption, date: p.date, time: p.time, draft: "FALSE",
     pictureurl1: `${PUBLIC_URL}/${p.public}`, alttextpicture1: p.alt,
     instagramposttype: p.kind === "Reel" ? "REEL" : "POST",
     instagramshowreelonfeed: p.kind === "Reel" ? "TRUE" : "",
@@ -121,5 +121,5 @@ const cell = (s) => (/[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
 const csv = [headers, ...posts.map(row)].map((r) => r.map((x) => cell(String(x))).join(",")).join("\r\n") + "\r\n";
 fs.writeFileSync(OUT, "﻿" + csv, "utf8"); // BOM: Excel and Metricool both read it as UTF-8 (emojis, ₹)
 
-for (const p of posts) console.log(`${p.date} ${TIME.slice(0, 5)}  ${p.kind.padEnd(5)}  ${PUBLIC_URL}/${p.public}${p.cover ? `  (cover ${p.cover})` : ""}`);
+for (const p of posts) console.log(`${p.date} ${p.time.slice(0, 5)}  ${p.kind.padEnd(5)}  ${PUBLIC_URL}/${p.public}${p.cover ? `  (cover ${p.cover})` : ""}`);
 console.log(`\n${posts.length} posts → ${path.relative(root, OUT)}${opt("--template") ? " (headers from your template)" : ""}`);

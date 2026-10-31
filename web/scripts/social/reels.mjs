@@ -146,9 +146,10 @@ function ffmpeg(args) {
 
 async function compose(browser, story, timeline, outFile) {
   const id = path.basename(outFile, ".mp4");
-  const bg = await layer(browser, `${id}-bg`, { layer: "bg", kicker: story.kicker, title: story.title });
-  const frame = await layer(browser, `frame`, { layer: "frame" });
-  const end = await layer(browser, `${id}-end`, { layer: "end", line: story.endLine });
+  const theme = story.theme; // "diwali" for the festive look
+  const bg = await layer(browser, `${id}-bg`, { layer: "bg", kicker: story.kicker, title: story.title, theme });
+  const frame = await layer(browser, `frame-${theme ?? "brand"}`, { layer: "frame", theme });
+  const end = await layer(browser, `${id}-end`, { layer: "end", line: story.endLine, cta: story.cta, theme });
 
   // 1. The recording: each segment trimmed to its action, joined, at 30 fps.
   const joined = path.join(WORK, `${id}-screen.mp4`);
@@ -166,7 +167,7 @@ async function compose(browser, story, timeline, outFile) {
   }
   const total = offset + END_CARD;
   const capFiles = [];
-  for (const [i, c] of caps.entries()) capFiles.push(await layer(browser, `${id}-cap${i}`, { layer: "caption", caption: c.text }));
+  for (const [i, c] of caps.entries()) capFiles.push(await layer(browser, `${id}-cap${i}`, { layer: "caption", caption: c.text, theme }));
 
   // 3. Stack: background, the screen in the phone, the bezel, captions fading in and out, then the closing card.
   const args = ["-loop", "1", "-t", total.toFixed(2), "-i", bg, "-i", joined, "-loop", "1", "-t", total.toFixed(2), "-i", frame];

@@ -4,7 +4,8 @@
      #layer=frame   the phone bezel, transparent where the screen is
      #layer=caption one step caption (transparent around it)
      #layer=end     the closing card
-     Parameters come in the hash as URL-encoded JSON: #{"layer":"bg","kicker":"ATTENDANCE","title":"…","em":"…"} -->
+     Parameters come in the hash as URL-encoded JSON: #{"layer":"bg","kicker":"ATTENDANCE","title":"…","em":"…"}
+     theme: "diwali" gives the festive look of the Diwali posts (brand/social/diwali-template.html); cta sets the end button. -->
 <html><head><meta charset="utf-8">
 <style>
 @font-face { font-family: Cinzel; src: url("../../web/src/fonts/Cinzel-SemiBold.ttf"); font-weight: 600; }
@@ -43,6 +44,37 @@ h1 em { font-style: normal; color: #B8893C; }
 .end .cta { display: inline-block; margin-top: 70px; padding: 30px 54px; border-radius: 60px; background: #B8893C; color: #15233F; font-size: 40px; font-weight: 700; }
 .end .url { margin-top: 34px; font-size: 34px; letter-spacing: .04em; }
 [hidden] { display: none !important; }
+
+/* ---- Diwali theme ---- */
+.diwali body { color: #F7F2E8; }
+.diwali .bg { background:
+    radial-gradient(700px 520px at 50% 104%, rgba(255,170,60,.40), transparent 70%),
+    radial-gradient(800px 600px at 100% 0%, rgba(184,137,60,.32), transparent 62%),
+    radial-gradient(700px 700px at 0% 45%, rgba(150,40,90,.22), transparent 65%),
+    linear-gradient(180deg, #0F1A31 0%, #15233F 55%, #24233A 100%); }
+.diwali .brand { top: 122px; }
+.diwali .kicker { top: 226px; color: #E2BE74; }
+.diwali h1 { top: 270px; font-size: 64px; }
+.diwali h1 em { color: #F1C76E; text-shadow: 0 0 34px rgba(255,190,90,.45); }
+.diwali .foot { color: #CFC8B8; }
+.diwali .foot b { color: #F7F2E8; }
+.diwali .phone { box-shadow: 0 0 0 3px #E2BE74, 0 0 60px rgba(241,199,110,.25); }
+.diwali .phone-shadow { box-shadow: 0 60px 120px -30px rgba(0,0,0,.7); }
+.diwali .pill { background: #15233F; border: 2px solid #E2BE74; box-shadow: 0 24px 60px -10px rgba(0,0,0,.6), 0 0 40px rgba(241,199,110,.25); }
+.diwali .pill .tick { background: #F1C76E; }
+.diwali .end { background:
+    radial-gradient(700px 520px at 50% 100%, rgba(255,170,60,.40), transparent 70%),
+    radial-gradient(900px 700px at 50% 30%, rgba(184,137,60,.30), transparent 65%), #13203A; }
+.diwali .end .cta { background: linear-gradient(90deg, #F1C76E, #E2A94C); box-shadow: 0 20px 50px -12px rgba(241,199,110,.6); }
+.end > div:not(.deco) { position: relative; z-index: 1; }
+.deco { position: absolute; inset: 0; pointer-events: none; }
+.deco .lights { position: absolute; left: 0; top: 0; width: 1080px; height: 110px; }
+.deco .rangoli { position: absolute; width: 560px; height: 560px; opacity: .38; }
+.deco .diyas { position: absolute; display: flex; align-items: flex-end; gap: 22px; }
+.deco .diya { position: relative; }
+.deco .glow { position: absolute; left: 50%; transform: translateX(-50%); border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,196,90,.55), rgba(255,140,40,.12) 45%, transparent 70%); }
+.deco .sparkle { position: absolute; color: #F1C76E; }
 </style></head>
 <body>
 <div id="bg" hidden>
@@ -64,10 +96,55 @@ h1 em { font-style: normal; color: #B8893C; }
 </div></div></div>
 <script>
   const p = JSON.parse(decodeURIComponent(location.hash.slice(1) || "{}"));
-  document.getElementById(p.layer || "bg").hidden = false;
+  const layer = document.getElementById(p.layer || "bg");
+  layer.hidden = false;
+  if (p.cta) document.querySelector(".end .cta").textContent = p.cta;
+  if (p.theme === "diwali") {
+    document.documentElement.classList.add("diwali");
+    if (p.layer === "bg") layer.querySelector(".bg").insertAdjacentHTML("afterend", decorations("bg"));
+    if (p.layer === "end") layer.querySelector(".end").insertAdjacentHTML("afterbegin", decorations("end"));
+  }
   if (p.kicker) document.getElementById("kicker").textContent = p.kicker;
   if (p.title) document.getElementById("title").innerHTML = p.title.replace(/\*(.+?)\*/g, "<em>$1</em>");
   if (p.caption) document.getElementById("ctext").innerHTML = p.caption.replace(/\*(.+?)\*/g, "<b>$1</b>");
   if (p.line) document.getElementById("eline").textContent = p.line;
+
+  // The Diwali decorations: string lights, rangoli, diyas and sparkles (as in diwali-template.html), placed around the phone.
+  function decorations(where) {
+    const colours = ["#FFCF6B", "#FF8A3D", "#FF5E7E", "#FFE29A", "#7FD1FF"];
+    let lights = "";
+    for (let s = 0; s < 3; s++) {
+      const x0 = s * 360;
+      lights += `<path d="M${x0} 8 Q ${x0 + 180} 92 ${x0 + 360} 8" stroke="#3B3A50" stroke-width="2" fill="none"/>`;
+      for (let i = 1; i < 9; i++) {
+        const t = i / 9, x = x0 + 360 * t, y = 8 + 2 * (1 - t) * t * 84 + 10, c = colours[(i + s) % colours.length];
+        lights += `<circle cx="${x}" cy="${y}" r="16" fill="${c}" opacity=".22"/><circle cx="${x}" cy="${y}" r="7" fill="${c}"/>`;
+      }
+    }
+    let petals = "";
+    for (const [n, r, len, c] of [[8, 78, 22, "#E2BE74"], [12, 58, 15, "#FF8A3D"], [10, 38, 12, "#D94A7A"], [8, 20, 8, "#F1C76E"]]) {
+      for (let i = 0; i < n; i++) petals += `<ellipse cx="0" cy="${-r}" rx="${len / 2.4}" ry="${len}" fill="${c}" transform="rotate(${(360 / n) * i})"/>`;
+    }
+    petals += `<circle r="9" fill="#F7F2E8"/><circle r="92" fill="none" stroke="#E2BE74" stroke-width="1.5" stroke-dasharray="3 6"/>`;
+    const rangoli = (style) => `<svg class="rangoli" style="${style}" viewBox="-100 -100 200 200">${petals}</svg>`;
+    const diya = (w) => `<div class="diya" style="width:${w}px"><div class="glow" style="width:${w * 1.7}px;height:${w * 1.7}px;top:${-w * 0.45}px"></div>
+      <svg viewBox="0 0 120 110" width="${w}" style="position:relative"><defs>
+        <radialGradient id="fl" cx="50%" cy="70%" r="60%"><stop offset="0" stop-color="#FFF6C8"/><stop offset=".45" stop-color="#FFD15C"/><stop offset="1" stop-color="#FF7A1A"/></radialGradient>
+        <linearGradient id="clay" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D2733A"/><stop offset="1" stop-color="#7E3418"/></linearGradient></defs>
+        <path d="M60 6 C 70 22, 74 34, 60 50 C 46 34, 50 22, 60 6 Z" fill="url(#fl)"/><path d="M60 24 C 64 32, 65 38, 60 46 C 55 38, 56 32, 60 24 Z" fill="#FFF9E0"/>
+        <path d="M8 58 Q 60 54 112 58 Q 104 98 60 102 Q 16 98 8 58 Z" fill="url(#clay)"/><path d="M8 58 Q 60 54 112 58 Q 60 70 8 58 Z" fill="#E2BE74"/>
+        <path d="M22 76 Q 60 86 98 76" stroke="#F1C76E" stroke-width="3" fill="none" opacity=".8"/>
+        <circle cx="40" cy="88" r="3" fill="#F1C76E"/><circle cx="60" cy="92" r="3" fill="#F1C76E"/><circle cx="80" cy="88" r="3" fill="#F1C76E"/></svg></div>`;
+    const star = (x, y, s) => `<svg class="sparkle" style="left:${x}px;top:${y}px" width="${s}" height="${s}" viewBox="-10 -10 20 20"><path d="M0 -10 L2 -2 L10 0 L2 2 L0 10 L-2 2 L-10 0 L-2 -2 Z" fill="currentColor"/></svg>`;
+    if (where === "end") {
+      return `<div class="deco"><svg class="lights" viewBox="0 0 1080 110">${lights}</svg>${rangoli("left:-280px;top:260px")}${rangoli("right:-280px;bottom:380px")}
+        <div class="diyas" style="left:0;right:0;bottom:130px;justify-content:center;gap:40px">${[90, 120, 160, 120, 90].map(diya).join("")}</div>
+        ${[[160, 240, 30], [900, 260, 36], [120, 1300, 24], [940, 1180, 28], [520, 190, 20]].map((x) => star(...x)).join("")}</div>`;
+    }
+    return `<div class="deco"><svg class="lights" viewBox="0 0 1080 110">${lights}</svg>${rangoli("left:-360px;top:980px")}${rangoli("right:-360px;top:560px")}
+      <div class="diyas" style="left:24px;bottom:160px;flex-direction:column;align-items:center;gap:34px">${[110, 150].map(diya).join("")}</div>
+      <div class="diyas" style="right:24px;bottom:160px;flex-direction:column;align-items:center;gap:34px">${[110, 150].map(diya).join("")}</div>
+      ${[[140, 470, 26], [930, 200, 34], [80, 760, 20], [980, 900, 24], [110, 1150, 22], [960, 1260, 18]].map((x) => star(...x)).join("")}</div>`;
+  }
 </script>
 </body></html>
