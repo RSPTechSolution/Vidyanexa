@@ -221,10 +221,31 @@ The parent, staff and driver apps talk to `PUBLIC_URL/api/v1`. Build them with t
 
 ```sh
 cd mobile
-flutter build apk --dart-define=FLAVOR=parent --dart-define=API_URL=https://your-address
+flutter build apk --flavor parent --dart-define=FLAVOR=parent --dart-define=API_URL=https://your-address
 ```
 
-Repeat with `FLAVOR=staff` and `FLAVOR=driver`.
+Repeat with `staff` and `driver`. The Android app IDs are `com.vidyanexa.parent`, `com.vidyanexa.staff` and
+`com.vidyanexa.driver`.
+
+## Push notifications
+
+Every in-app notification (absence, fee receipt, notice, message, leave decision and the rest) is also pushed to the
+person's phone through Firebase Cloud Messaging. It's free.
+
+1. **Firebase project.** At console.firebase.google.com, create a project (Google Analytics not needed).
+2. **The three apps.** In the project, add three Android apps with the package names `com.vidyanexa.parent`,
+   `com.vidyanexa.staff` and `com.vidyanexa.driver`. Download each one's `google-services.json` into
+   `mobile/android/app/src/parent/`, `.../src/staff/` and `.../src/driver/`. These files aren't secret and are committed.
+   A flavor built without its file runs with push off.
+3. **Server key.** Project settings → Service accounts → **Generate new private key**. This file *is* secret: never
+   commit it, paste it in chat, or email it. Copy it to the server as `infra/compose/secrets/firebase.json`:
+   `scp -i vidyanexa-api.pem firebase-key.json ubuntu@apis.vidyanexa.com:~/vidyanexa/infra/compose/secrets/firebase.json`.
+4. **Turn it on.** In `.env.api` set `PUSH_PROVIDER=fcm` and `FIREBASE_CREDENTIALS_FILE=/run/secrets/firebase.json`, then
+   `docker compose -f docker-compose.api.yml --env-file .env.api up -d --build`.
+5. **Rebuild the apps** (above) and sign in. The phone asks to allow notifications; after that, anything that appears
+   under the bell also arrives as a push. **Platform → System → Health** shows push as live.
+
+iOS needs an Apple Developer account and an APNs key uploaded to Firebase (Project settings → Cloud Messaging).
 
 ## Getting found on Google (SEO)
 

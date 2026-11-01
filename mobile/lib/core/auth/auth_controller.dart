@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/api_client.dart';
 import '../api/offline.dart';
 import '../config/app_config.dart';
+import '../push/push.dart';
 import 'models.dart';
 import 'token_store.dart';
 
@@ -137,6 +138,7 @@ class AuthController extends AsyncNotifier<AuthState> {
   }
 
   Future<void> _signOutQuietly() async {
+    await ref.read(pushProvider).signingOut(); // while still signed in
     try {
       await _api.post('/auth/logout');
     } catch (e) {

@@ -46,6 +46,7 @@ services:
       CORS_ORIGINS: ${APP_URL}
     volumes:
       - api_storage:/data/storage    # backups, and uploaded files when STORAGE_BACKEND=local
+      - ./secrets:/run/secrets:ro     # firebase.json (push notifications), kept out of git
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }

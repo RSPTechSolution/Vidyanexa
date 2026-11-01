@@ -1,5 +1,7 @@
 plugins {
     id("com.android.application")
+    // Firebase (push notifications): reads android/app/src/<flavor>/google-services.json.
+    id("com.google.gms.google-services")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -10,12 +12,13 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true // needed by flutter_local_notifications
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
     defaultConfig {
-        applicationId = "com.eduvia.app"
+        applicationId = "com.vidyanexa.parent"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -37,17 +40,17 @@ android {
     productFlavors {
         create("parent") {
             dimension = "app"
-            applicationId = "com.eduvia.app"
+            applicationId = "com.vidyanexa.parent"
             resValue("string", "app_name", "Vidyanexa")
         }
         create("staff") {
             dimension = "app"
-            applicationId = "com.eduvia.staff"
+            applicationId = "com.vidyanexa.staff"
             resValue("string", "app_name", "Vidyanexa Staff")
         }
         create("driver") {
             dimension = "app"
-            applicationId = "com.eduvia.driver"
+            applicationId = "com.vidyanexa.driver"
             resValue("string", "app_name", "Vidyanexa Driver")
         }
     }
@@ -69,4 +72,13 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+// A flavor without its google-services.json still builds: the app then runs with push notifications off.
+googleServices {
+    missingGoogleServicesStrategy = com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy.WARN
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
