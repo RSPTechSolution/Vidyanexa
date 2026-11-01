@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "963882941296",
+    "project_id": "vidyanexa-de260",
+    "storage_bucket": "vidyanexa-de260.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:963882941296:android:a72b132ffc807bba386db5",
+        "android_client_info": {
+          "package_name": "com.vidyanexa.parent"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCzxYy4oIrSB4KNPqIl4_-cQIDV7MQb1Zw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
