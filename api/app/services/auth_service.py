@@ -19,7 +19,7 @@ from app.services import audit_service
 from app.services import notify
 
 log = logging.getLogger("eduvia.auth")
-INVALID = "Invalid email, password or school"
+INVALID = "Invalid email or password"
 
 
 def _now() -> datetime:

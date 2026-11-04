@@ -79,26 +79,24 @@ void main() {
       await pumpApp(tester, FakeApi(), MemoryTokenStore());
       await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
       await tester.pump();
-      expect(find.text('Enter your school ID'), findsOneWidget);
       expect(find.text('Enter your email'), findsOneWidget);
       expect(find.text('Enter your password'), findsOneWidget);
     });
 
     testWidgets('wrong password shows the server message', (tester) async {
-      final fake = FakeApi()..on('POST /auth/login', (_) => (401, FakeApi.err('INVALID_CREDENTIALS', 'Invalid email, password or school')));
+      final fake = FakeApi()..on('POST /auth/login', (_) => (401, FakeApi.err('INVALID_CREDENTIALS', 'Invalid email or password')));
       await pumpApp(tester, fake, MemoryTokenStore());
-      await tester.enterText(find.widgetWithText(TextFormField, 'School ID'), 'demo');
+      expect(find.widgetWithText(TextFormField, 'School ID'), findsNothing); // email and password only
       await tester.enterText(find.widgetWithText(TextFormField, 'Email'), 'parent@demo.com');
       await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'wrong');
       await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
       await tester.pumpAndSettle();
-      expect(find.text('Invalid email, password or school'), findsOneWidget);
+      expect(find.text('Invalid email or password'), findsOneWidget);
     });
 
     testWidgets('successful sign-in lands on the home screen', (tester) async {
       final fake = FakeApi()..on('POST /auth/login', (_) => (200, FakeApi.ok({'tokens': tokensJson('1'), 'user': meJson()})));
       await pumpApp(tester, fake, MemoryTokenStore());
-      await tester.enterText(find.widgetWithText(TextFormField, 'School ID'), 'demo');
       await tester.enterText(find.widgetWithText(TextFormField, 'Email'), 'parent@demo.com');
       await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'Demo@1234');
       await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
@@ -124,12 +122,11 @@ void main() {
       await tester.ensureVisible(find.text('Use a one-time code instead'));
       await tester.tap(find.text('Use a one-time code instead'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.widgetWithText(TextField, 'School ID'), 'Demo');
       await tester.enterText(find.widgetWithText(TextField, 'Email or mobile number'), '98140 20001');
       await tester.pump();
       await tester.tap(find.text('Send me a code'));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(asked, {'identifier': '98140 20001', 'school_slug': 'demo'});
+      expect(asked, {'identifier': '98140 20001', 'school_slug': null});
       expect(find.textContaining('by SMS and email'), findsOneWidget);
       await tester.enterText(find.widgetWithText(TextField, 'Sign-in code'), '111111');
       await tester.pump();

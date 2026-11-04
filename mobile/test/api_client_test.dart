@@ -29,12 +29,12 @@ void main() {
   });
 
   test('server errors become ApiException with code and message', () async {
-    fake.on('POST /auth/login', (_) => (401, FakeApi.err('INVALID_CREDENTIALS', 'Invalid email, password or school')));
+    fake.on('POST /auth/login', (_) => (401, FakeApi.err('INVALID_CREDENTIALS', 'Invalid email or password')));
     expect(
       () => api.post('/auth/login', auth: false, body: {}),
       throwsA(isA<ApiException>()
           .having((e) => e.code, 'code', 'INVALID_CREDENTIALS')
-          .having((e) => e.message, 'message', 'Invalid email, password or school')),
+          .having((e) => e.message, 'message', 'Invalid email or password')),
     );
   });
 

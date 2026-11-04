@@ -175,7 +175,10 @@ class DayLessons extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: l == null ? null : color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border(left: BorderSide(color: color, width: 4), top: BorderSide(color: live ? scheme.primary : Colors.transparent, width: live ? 2 : 0)),
+                      // One coloured side only: Flutter can't round a border whose sides differ in colour or are hairlines.
+                      border: Border(left: BorderSide(color: color, width: 4)),
+                      // The period on now gets a ring instead.
+                      boxShadow: live ? [BoxShadow(color: scheme.primary, spreadRadius: 2)] : null,
                     ),
                     child: l == null
                         ? Text('${p.name} · free', style: TextStyle(color: scheme.onSurfaceVariant))
