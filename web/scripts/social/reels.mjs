@@ -55,7 +55,18 @@ const TOUCHES = `
   }, true);
   const s = document.createElement("style");
   s.textContent = "nextjs-portal{display:none!important} ::-webkit-scrollbar{display:none}";
-  document.documentElement.appendChild(s);
+  // The init script can run before <html> exists, so add the style once there is somewhere to put it.
+  const addStyle = () => (document.head || document.documentElement).appendChild(s);
+  if (document.documentElement) addStyle(); else document.addEventListener("DOMContentLoaded", addStyle);
+  // Next's dev badge lives in a shadow root whose own !important styles beat the rule above, so hide it from inside.
+  setInterval(() => document.querySelectorAll("nextjs-portal").forEach((e) => {
+    if (e.shadowRoot && !e.shadowRoot.querySelector("style[data-reel]")) {
+      const h = document.createElement("style");
+      h.dataset.reel = "1";
+      h.textContent = "#devtools-indicator, [data-nextjs-toast] { display: none !important; }";
+      e.shadowRoot.appendChild(h);
+    }
+  }), 50);
 `;
 
 /** Helpers each storyboard step gets: a paced page and a caption marker. */

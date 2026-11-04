@@ -1,0 +1,113 @@
+<!doctype html>
+<!-- Children's Day feed posts (1080x1350), rendered by web/scripts/social/childrens-day.mjs. Parameters arrive in the
+     hash as URL-encoded JSON: layout (greeting | hero), kicker, title (*crayon words*, _gold words_), sub, note, pill,
+     points, foot. Picture-book style: cream paper, hand-drawn children, a slight wobble on every line. -->
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: Cinzel; src: url("../../web/src/fonts/Cinzel-SemiBold.ttf"); font-weight: 600; }
+* { box-sizing: border-box; margin: 0; }
+body { width: 1080px; height: 1350px; overflow: hidden; color: #15233F; font-family: "Segoe UI", Arial, sans-serif; }
+.page { position: relative; height: 100%; padding: 140px 84px 0; overflow: hidden;
+  background: radial-gradient(900px 700px at 50% 30%, #FFF9EC, #FBF0DC 70%, #F6E6C9); }
+.layer { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.grain { position: absolute; inset: 0; z-index: 5; pointer-events: none; mix-blend-mode: multiply; opacity: .5; }
+.brand, .kicker, h1, .sub, .pill, .points, .foot, .note { position: relative; z-index: 3; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand img { width: 52px; }
+.word { font-family: Cinzel; font-weight: 600; font-size: 28px; letter-spacing: .08em; color: #15233F; }
+.kicker { margin-top: 40px; font-size: 23px; letter-spacing: .24em; color: #B07A2A; font-weight: 700; }
+h1 { margin-top: 14px; font-family: Georgia, serif; font-size: 80px; line-height: 1.06; letter-spacing: -.01em; max-width: 900px; color: #15233F; }
+h1 em { font-style: normal; color: #C48A2C; }
+h1 .kid { font-family: "Ink Free", "Segoe Print", "Comic Sans MS", cursive; font-weight: 700; letter-spacing: 0; filter: url(#rough); }
+h1 .kid span { display: inline-block; }
+.sub { margin-top: 22px; font-size: 29px; line-height: 1.45; color: #4A5165; max-width: 860px; }
+.note { font-family: "Ink Free", "Segoe Print", cursive; font-weight: 700; font-size: 36px; color: #E8505B; }
+.pill { display: inline-flex; margin-top: 36px; padding: 18px 30px; border-radius: 999px; font-size: 28px; font-weight: 700; color: #FFF9EC; background: #15233F; }
+.points { margin-top: 36px; display: grid; gap: 16px; }
+.points div { display: flex; align-items: center; gap: 16px; font-size: 28px; color: #2A3350; }
+.points b { display: inline-flex; width: 38px; height: 38px; border-radius: 50%; align-items: center; justify-content: center; font-size: 21px; color: #fff; filter: url(#rough); }
+.foot { position: absolute; left: 84px; right: 84px; bottom: 40px; display: flex; justify-content: space-between; font-size: 23px; color: #EAF6E4; letter-spacing: .03em; }
+.foot b { color: #fff; }
+
+.greeting-layout { text-align: center; }
+.greeting-layout .brand { justify-content: center; }
+.greeting-layout h1 { margin: 14px auto 0; font-size: 96px; line-height: 1; max-width: none; }
+.greeting-layout h1 .kid { font-size: 150px; display: block; margin: 4px 0 0; line-height: 1.05; }
+.greeting-layout .sub { margin: 26px auto 0; max-width: 660px; }
+.greeting-layout .note { margin-top: 14px; }
+.greeting-layout .foot { justify-content: center; }
+.hero-layout h1 .kid { font-size: 96px; }
+.hero-layout .sub { max-width: 720px; }
+</style></head>
+<body><div class="page" id="page">
+  <svg width="0" height="0" style="position:absolute">
+    <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="3.2"/></filter>
+    <filter id="rough2"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="2"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter>
+    <filter id="paper"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3" seed="4"/><feColorMatrix values="0 0 0 0 .55  0 0 0 0 .45  0 0 0 0 .3  0 0 0 .22 0"/></filter>
+  </svg>
+  <svg class="layer" viewBox="0 0 1080 1350" id="art"></svg>
+  <div class="brand"><img src="../png/vidyanexa-crest.png" alt=""><div class="word">VIDYANEXA</div></div>
+  <div class="kicker" id="kicker"></div>
+  <h1 id="title"></h1>
+  <div id="body"></div>
+  <svg class="layer" viewBox="0 0 1080 1350" id="front" style="z-index:4"></svg>
+  <div class="foot" id="foot" style="z-index:6"></div>
+  <svg class="grain" viewBox="0 0 1080 1350"><rect width="1080" height="1350" filter="url(#paper)"/></svg>
+</div>
+<script src="art/kids.js"></script>
+<script>
+  const p = JSON.parse(decodeURIComponent(location.hash.slice(1) || "{}"));
+  const layout = p.layout || "hero";
+  // crayon box, picked to read on cream paper
+  document.getElementById("page").classList.add(`${layout}-layout`);
+  document.getElementById("kicker").textContent = p.kicker || "";
+  document.getElementById("title").innerHTML = fmt(p.title);
+  const tick = [K.green, K.blue, K.red];
+  document.getElementById("body").innerHTML = (p.sub ? `<p class="sub">${p.sub}</p>` : "")
+    + (p.note ? `<div class="note">${p.note}</div>` : "")
+    + (p.pill ? `<div class="pill">${p.pill}</div>` : "")
+    + (p.points ? `<div class="points">${p.points.map((x, i) => `<div><b style="background:${tick[i % 3]}">✓</b>${x}</div>`).join("")}</div>` : "");
+  document.getElementById("foot").innerHTML = p.foot || "<b>vidyanexa.com</b><span>Free 14-day trial · no card needed</span>";
+
+  let back = "", front = "";
+
+  if (layout === "greeting") {
+    back += bunting(22, 30) + cloud(150, 220, .9) + cloud(950, 300, .75);
+    back += doodleStar(300, 120 + 120, 16, K.purple, 10) + heart(800, 230, 1.4, K.pink, 12) + swirl(840, 160, K.blue) + doodleStar(1000, 520, 20, K.orange, -8) + heart(70, 470, 1.6, K.red, -14);
+    back += hill(1150) + tufts([[90, 1210], [300, 1188], [610, 1206], [760, 1224], [1000, 1196]]);
+    back += flower(60, 1180, K.pink) + flower(1030, 1170, K.purple) + flower(p.baby ? 290 : 480, 1200, K.orange);
+    const Y = 1218, s = .98;
+    // with the baby sitting in front, the four children spread out to make room for her
+    const X = p.baby ? [185, 385, 695, 895] : [215, 430, 648, 865];
+    // 1 girl with braids, holding three balloons
+    const g1 = { skin: SKIN[0], hair: "braids", ribbon: K.red, top: K.pink, dress: true, eyes: "happy", mouth: "open", l: [-60, -280], r: [40, -112], shoes: "#C2394A" };
+    const h1 = hand(X[0], Y, s, g1.l);
+    back += balloon(110, 650, 44, K.red, h1) + balloon(190, 590, 40, K.blue, h1) + balloon(60, 790, 38, K.yellow, h1);
+    // 4 boy with school bag, flying a kite
+    const g4 = { skin: SKIN[2], hair: "short", top: K.green, bottom: "#2E4A7A", bag: K.orange, eyes: "dot", mouth: "smile", l: [-40, -112], r: [64, -268] };
+    const h4 = hand(X[3], Y, s, g4.r);
+    back += kite(990, 640, .9, K.purple, K.yellow, h4);
+    front += child(X[0], Y, s, g1);
+    front += child(X[1], Y, s, { skin: SKIN[1], hair: "patka", patka: K.orange, top: K.blue, bottom: "#24365E", eyes: "dot", mouth: "open", l: [-40, -112], r: [62, -284], badge: K.yellow });
+    front += child(X[2], Y - 26, s, { skin: SKIN[3], hair: "bun", ribbon: K.yellow, top: K.purple, dress: true, eyes: "happy", mouth: "open", l: [-66, -282], r: [66, -282], socks: true, shoes: "#4B3B8F" }) + jump(X[2], Y - 20);
+    front += child(X[3], Y, s, g4);
+    // the baby sits in front, outside the wobble filter so her face stays crisp (drawing is 300x354, shown small so she reads as a baby next to the older children)
+    var babyArt = p.baby ? `<image href="art/baby.svg" x="${540 - 92}" y="${1250 - 217}" width="184" height="217"/>` : "";
+  } else {
+    back += bunting(18, 22) + sun(935, 245, 54) + cloud(760, 160, .6);
+    back += doodleStar(700, 330, 16, K.purple, 10) + heart(1010, 470, 1.4, K.pink, 12) + swirl(560, 140, K.green);
+    back += hill(1150) + tufts([[90, 1210], [380, 1194], [600, 1210], [1000, 1196]]) + flower(520, 1196, K.pink) + flower(1040, 1176, K.orange);
+    const Y = 1218, s = 1.02;
+    const g2 = { skin: SKIN[2], hair: "braids", ribbon: K.yellow, top: K.red, dress: true, eyes: "happy", mouth: "open", l: [-40, -112], r: [62, -282], shoes: "#B0303D" };
+    const h2 = hand(935, Y, s, g2.r);
+    back += balloon(990, 650, 42, K.blue, h2) + balloon(1035, 760, 36, K.green, h2) + balloon(925, 760, 38, K.orange, h2);
+    back += plane(560, 880, .62, -16, "M300 924 C 340 850, 420 950, 470 900 S 530 860, 562 896");
+    front += child(236, Y, s, { skin: SKIN[1], hair: "patka", patka: K.purple, top: K.yellow, bottom: "#24365E", eyes: "happy", mouth: "open", l: [-40, -112], r: [62, -288], badge: K.red });
+    front += child(745, Y, s, { skin: SKIN[0], hair: "short", top: K.blue, bottom: "#2E4A7A", bag: K.green, eyes: "dot", mouth: "open", l: [-62, -276], r: [42, -112] });
+    front += child(935, Y, s, g2);
+    back += doodleStar(560, 1060, 18, K.orange, -10) + heart(110, 960, 1.5, K.red, -12);
+  }
+  document.getElementById("art").innerHTML = `<g filter="url(#rough)">${back}</g>`;
+  document.getElementById("front").innerHTML = `<g filter="url(#rough)">${front}</g>${typeof babyArt === "string" ? babyArt : ""}`;
+</script>
+</body></html>

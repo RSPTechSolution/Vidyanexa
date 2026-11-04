@@ -1,0 +1,187 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="30 -10 700 1135" width="700" height="1135">
+  <!-- Picture-book portrait of the baby in cute_baby.jpeg, drawn in the photo's own coordinates (720x1280) so the
+       face, hair, pose and clothes line up with it: round face with full cheeks, wet hair combed up into a top-knot
+       with a pink flower clip, big dark eyes, button nose, small closed mouth, black-thread necklace, cream
+       polka-dot "squish" romper, bead bracelets and anklets, sitting cross-legged on a blue blanket. -->
+  <defs>
+    <pattern id="dots" width="34" height="30" patternUnits="userSpaceOnUse" patternTransform="rotate(-8)">
+      <circle cx="6" cy="6" r="3.6" fill="#DE6F55"/><circle cx="23" cy="21" r="3.6" fill="#DE6F55"/>
+    </pattern>
+    <radialGradient id="face" cx="48%" cy="58%" r="60%">
+      <stop offset="0" stop-color="#DCA581"/><stop offset=".7" stop-color="#D09572"/><stop offset="1" stop-color="#BE805D"/>
+    </radialGradient>
+    <radialGradient id="limb" cx="45%" cy="40%" r="70%">
+      <stop offset="0" stop-color="#D29873"/><stop offset="1" stop-color="#B9795A"/>
+    </radialGradient>
+    <radialGradient id="eye" cx="50%" cy="45%" r="55%">
+      <stop offset="0" stop-color="#3B2620"/><stop offset=".7" stop-color="#1C120F"/><stop offset="1" stop-color="#0D0807"/>
+    </radialGradient>
+    <clipPath id="romperClip"><path id="romperPath" d="M245 452 L288 448 Q300 560 370 606 Q440 588 468 446 L506 452 Q520 515 546 560 Q570 680 602 790 Q628 832 600 852 Q520 902 380 926 Q240 920 160 884 Q128 862 150 822 Q174 742 200 680 Q214 650 226 640 Q232 560 245 452 Z"/></clipPath>
+    <linearGradient id="hair" x1="0" y1="80" x2="0" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1E1411"/><stop offset=".55" stop-color="#241814" stop-opacity=".92"/><stop offset=".85" stop-color="#2A1C17" stop-opacity=".55"/><stop offset="1" stop-color="#2A1C17" stop-opacity=".25"/>
+    </linearGradient>
+  </defs>
+
+  <!-- blanket -->
+  <ellipse cx="380" cy="1040" rx="345" ry="82" fill="#1E5C8A"/>
+  <ellipse cx="380" cy="1040" rx="318" ry="66" fill="none" stroke="#2F77A8" stroke-width="4" stroke-dasharray="3 12" stroke-linecap="round"/>
+  <g stroke="#2F77A8" stroke-width="5" stroke-linecap="round" fill="none" opacity=".8">
+    <path d="M60 1000 q12 -8 24 0"/><path d="M640 985 q12 -8 24 0"/><path d="M600 1060 q12 -8 24 0"/><path d="M120 1080 q12 -8 24 0"/><path d="M690 1040 q10 -6 20 0"/>
+  </g>
+
+  <!-- thighs under the bloomers -->
+  <path d="M150 860 Q380 940 610 830 Q640 900 560 940 Q500 975 440 990 Q380 1000 320 1000 Q230 996 180 960 Q140 920 150 860 Z" fill="#BF8160"/>
+  <path d="M250 975 Q340 990 430 975" stroke="#A86B4D" stroke-width="3" fill="none" opacity=".45"/>
+  <!-- leg on the right (behind), shin running in to the ankle -->
+  <path d="M520 838 C600 798 702 828 686 906 C676 962 610 998 500 1006 C458 1009 434 990 440 965 C446 944 470 939 500 934 C560 924 590 904 585 884 Z" fill="url(#limb)"/>
+  <path d="M640 870 Q660 900 650 930" stroke="#A86B4D" stroke-width="3" fill="none" opacity=".5"/>
+  <!-- black bead anklet with a gold bead -->
+  <g fill="#1A1416"><circle cx="415" cy="968" r="5"/><circle cx="426" cy="972" r="5"/><circle cx="437" cy="976" r="5"/><circle cx="448" cy="981" r="5"/><circle cx="459" cy="986" r="5"/></g>
+  <circle cx="469" cy="991" r="5.5" fill="#D9A93F"/>
+
+  <!-- leg on the left: thigh, knee out to the side, shin across the front, foot on top with toes to the right -->
+  <path d="M205 850 C122 838 60 880 62 950 C64 1012 132 1050 252 1060 L330 1062 C382 1070 420 1110 480 1112 C520 1114 536 1090 526 1068 C516 1040 482 1010 432 1000 C392 980 352 984 322 982 C252 976 196 962 176 940 C166 924 186 900 216 890 Z" fill="url(#limb)"/>
+  <path d="M95 930 Q110 960 140 972" stroke="#A86B4D" stroke-width="3" fill="none" opacity=".5"/>
+  <path d="M352 1010 Q440 1000 500 1050" stroke="#E2B08E" stroke-width="10" fill="none" stroke-linecap="round" opacity=".55"/>
+  <g fill="#D7A07D" stroke="#B47A5A" stroke-width="2">
+    <ellipse cx="514" cy="1062" rx="12" ry="10"/><ellipse cx="520" cy="1082" rx="11" ry="9"/><ellipse cx="510" cy="1100" rx="10" ry="8.5"/><ellipse cx="492" cy="1110" rx="9" ry="7.5"/>
+  </g>
+  <!-- black-and-white bead anklet -->
+  <g stroke="#1A1416" stroke-width="1.5">
+    <circle cx="288" cy="1058" r="6.5" fill="#1A1416"/><circle cx="298" cy="1049" r="6.5" fill="#F7F3EE"/><circle cx="308" cy="1041" r="6.5" fill="#1A1416"/>
+    <circle cx="318" cy="1033" r="6.5" fill="#F7F3EE"/><circle cx="329" cy="1026" r="6.5" fill="#1A1416"/><circle cx="340" cy="1020" r="6.5" fill="#F7F3EE"/>
+    <circle cx="352" cy="1015" r="6.5" fill="#1A1416"/><circle cx="364" cy="1012" r="6.5" fill="#F7F3EE"/>
+  </g>
+
+  <!-- chest skin showing in the scoop neck, and the shadow under the chin -->
+  <path d="M250 450 L490 450 Q470 560 370 612 Q280 560 250 450 Z" fill="#C2855F"/>
+  <ellipse cx="362" cy="488" rx="92" ry="22" fill="#9E6447" opacity=".55"/>
+
+  <!-- romper -->
+  <use href="#romperPath" fill="#F4DFAF"/>
+  <g clip-path="url(#romperClip)">
+    <rect x="100" y="420" width="560" height="540" fill="url(#dots)"/>
+    <path d="M150 792 Q380 840 606 786" stroke="#E6C88C" stroke-width="5" fill="none"/>
+    <path d="M150 800 Q380 848 606 794" stroke="#FFF2CF" stroke-width="3" fill="none" opacity=".7"/>
+    <path d="M200 840 Q230 880 225 915 M300 860 Q320 890 315 925 M450 860 Q440 890 448 920 M540 830 Q530 860 540 880" stroke="#E2C080" stroke-width="3" fill="none" opacity=".8"/>
+    <path d="M226 640 Q300 700 330 760" stroke="#E2C080" stroke-width="3" fill="none" opacity=".6"/>
+  </g>
+  <!-- ribbed trim on the straps and neck -->
+  <path d="M245 452 Q232 560 226 640 M288 448 Q300 560 370 606 Q440 588 468 446 M506 452 Q520 515 546 560" stroke="#E4C584" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <path d="M245 452 Q232 560 226 640 M288 448 Q300 560 370 606 Q440 588 468 446 M506 452 Q520 515 546 560" stroke="#F8E8C2" stroke-width="2" fill="none" stroke-dasharray="2 6"/>
+  <!-- the print: rainbow with a cloud, a little pink dino, "squish" -->
+  <g transform="translate(372 672) rotate(-8)">
+    <path d="M-34 10 A34 34 0 0 1 34 10" stroke="#E8559A" stroke-width="9" fill="none"/>
+    <path d="M-23 10 A23 23 0 0 1 23 10" stroke="#9C5BC9" stroke-width="7" fill="none"/>
+    <path d="M-13 10 A13 13 0 0 1 13 10" stroke="#3DAA6E" stroke-width="5" fill="none"/>
+    <path d="M-44 22 q-6 -16 10 -16 q6 -12 20 -4 q14 -6 16 8 q12 4 4 14 Z" fill="#E8559A"/>
+  </g>
+  <g transform="translate(468 660) rotate(-8)">
+    <path d="M-34 22 Q-40 -10 -6 -18 Q28 -22 34 6 Q38 24 20 26 L-20 28 Z" fill="none" stroke="#E8559A" stroke-width="4"/>
+    <path d="M-20 -14 l6 -10 l6 8 M-2 -19 l6 -10 l6 8 M14 -18 l7 -8 l4 10" fill="#3DAA6E" stroke="#3DAA6E" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="-8" cy="2" r="3" fill="#2B2238"/><circle cx="12" cy="2" r="3" fill="#2B2238"/>
+    <ellipse cx="-16" cy="12" rx="5" ry="3" fill="#F29BB4"/><ellipse cx="22" cy="12" rx="5" ry="3" fill="#F29BB4"/>
+  </g>
+  <text transform="translate(440 790) rotate(-9)" text-anchor="middle" font-family="Ink Free, Comic Sans MS, cursive" font-weight="700" font-size="62" letter-spacing="1">
+    <tspan fill="#EE7FA6">s</tspan><tspan fill="#9C5BC9">q</tspan><tspan fill="#3DAA6E">u</tspan><tspan fill="#E8559A">i</tspan><tspan fill="#9C5BC9">s</tspan><tspan fill="#3DAA6E">h</tspan>
+  </text>
+  <g fill="#3DAA6E"><path transform="translate(342 728) scale(.6)" d="M0 -10 L3 -3 L10 0 L3 3 L0 10 L-3 3 L-10 0 L-3 -3 Z"/><path transform="translate(352 800) scale(.5)" d="M0 -10 L3 -3 L10 0 L3 3 L0 10 L-3 3 L-10 0 L-3 -3 Z"/></g>
+
+  <!-- arm on the left, hanging down to the blanket, black bead bracelet -->
+  <path d="M248 468 C192 468 150 500 125 560 C100 630 94 720 100 790 C100 832 120 852 150 850 C176 848 180 822 170 802 C180 742 205 690 226 645 Z" fill="url(#limb)"/>
+  <path d="M120 700 Q130 690 142 700" stroke="#A86B4D" stroke-width="3" fill="none" opacity=".55"/>
+  <path d="M96 826 C90 852 108 872 136 874 C160 876 176 862 172 840 C168 822 120 816 96 826 Z" fill="#C2855F"/>
+  <path d="M112 868 l-4 10 M128 872 l-2 10 M144 870 l0 9" stroke="#C2855F" stroke-width="9" stroke-linecap="round"/>
+  <path d="M95 805 Q130 822 170 812" stroke="#1A1416" stroke-width="7" stroke-dasharray="0.1 10" stroke-linecap="round" fill="none"/>
+  <!-- arm on the right, bent, hand lifted with the fingers open -->
+  <path d="M500 455 C546 460 576 500 588 560 C598 600 600 628 610 640 L640 625 C662 614 692 620 702 640 C712 662 700 690 670 696 C640 700 600 690 575 680 C555 670 548 640 545 600 C542 580 540 565 540 560 Z" fill="url(#limb)"/>
+  <g stroke="#C98C66" stroke-width="16" stroke-linecap="round">
+    <path d="M690 632 L712 642"/><path d="M698 654 L718 664"/><path d="M692 676 L708 690"/><path d="M640 626 L650 604"/>
+  </g>
+  <g stroke="#A86B4D" stroke-width="2" fill="none" opacity=".6"><path d="M690 632 L712 642 M698 654 L718 664 M692 676 L708 690"/></g>
+  <path d="M590 632 Q600 655 596 684" stroke="#1A1416" stroke-width="3.5" fill="none"/>
+
+  <!-- ears -->
+  <ellipse cx="224" cy="338" rx="24" ry="38" fill="#C2845F" transform="rotate(-8 224 338)"/>
+  <path d="M230 312 Q210 338 228 366" stroke="#9E6447" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <ellipse cx="500" cy="336" rx="15" ry="30" fill="#BD805C"/>
+
+  <!-- head: round, full cheeks, small soft chin -->
+  <path d="M234 300 C226 180 290 88 366 88 C446 88 506 170 500 300 C503 360 499 402 486 426 C470 456 430 478 366 482 C300 482 262 458 246 426 C234 400 233 360 234 300 Z" fill="url(#face)"/>
+  <path d="M318 474 Q366 486 414 474" stroke="#A86B4D" stroke-width="3" fill="none" opacity=".5"/>
+
+  <!-- hair: thin and wet, combed up from all sides into the top-knot -->
+  <path d="M230 312 C214 190 282 84 366 80 C452 80 516 182 504 300 C496 284 490 272 480 264 Q462 246 444 246 Q424 234 402 240 Q382 228 362 236 Q342 228 322 240 Q300 234 284 248 Q264 244 252 264 Q240 288 230 312 Z" fill="url(#hair)"/>
+  <!-- scalp showing through the thin hair at the temples -->
+  <path d="M250 250 Q262 196 300 160 Q290 210 296 244 Q272 240 250 250 Z" fill="#B98264" opacity=".35"/>
+  <path d="M484 252 Q474 200 440 166 Q448 214 444 244 Q466 242 484 252 Z" fill="#B98264" opacity=".3"/>
+  <!-- wet strands: uneven, all pulled towards the top-knot -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M258 262 C268 200 300 140 346 94" stroke="#3E2E28" stroke-width="3"/>
+    <path d="M288 252 C300 196 322 140 352 92" stroke="#121010" stroke-width="5"/>
+    <path d="M318 246 C326 190 340 136 356 92" stroke="#4E3C35" stroke-width="2.4"/>
+    <path d="M350 240 C352 186 356 132 360 92" stroke="#121010" stroke-width="4"/>
+    <path d="M382 238 C380 184 372 134 364 92" stroke="#5A463E" stroke-width="2.2"/>
+    <path d="M414 244 C406 190 390 138 368 94" stroke="#121010" stroke-width="5"/>
+    <path d="M446 250 C432 196 406 142 372 96" stroke="#4E3C35" stroke-width="2.6"/>
+    <path d="M476 262 C458 204 424 150 378 98" stroke="#121010" stroke-width="4"/>
+    <path d="M240 292 C246 220 284 150 342 98" stroke="#121010" stroke-width="4"/>
+    <path d="M496 290 C484 220 444 156 382 100" stroke="#3E2E28" stroke-width="3"/>
+    <path d="M300 200 C312 160 330 128 350 100" stroke="#6A564C" stroke-width="1.8" opacity=".8"/>
+    <path d="M430 206 C418 166 398 134 372 102" stroke="#6A564C" stroke-width="1.8" opacity=".8"/>
+  </g>
+  <!-- wisps on the forehead and by the ears -->
+  <g stroke="#231814" stroke-linecap="round" fill="none">
+    <path d="M262 258 Q256 278 266 294" stroke-width="3"/><path d="M280 250 Q276 268 284 280" stroke-width="2"/><path d="M314 244 Q310 262 318 272" stroke-width="2"/><path d="M372 238 Q376 256 370 266" stroke-width="2"/><path d="M392 240 Q398 258 392 270" stroke-width="2"/><path d="M432 246 Q440 262 436 276" stroke-width="2"/><path d="M296 252 Q292 272 300 284" stroke-width="2.5"/>
+    <path d="M330 250 Q334 266 328 278" stroke-width="2.2"/><path d="M412 250 Q420 266 414 278" stroke-width="2.2"/>
+    <path d="M452 258 Q462 272 458 288" stroke-width="2.5"/>
+    <path d="M236 300 Q230 330 238 350" stroke-width="4"/>
+    <path d="M498 290 Q518 330 510 372 Q506 392 516 408" stroke-width="4"/><path d="M490 296 Q506 330 500 360" stroke-width="3"/>
+  </g>
+  <!-- the top-knot: one tuft gathered at the crown, leaning back to the left -->
+  <path d="M336 92 C326 66 304 46 284 34 C304 36 318 42 328 40 C324 24 326 10 336 0 C342 14 348 24 356 30 C364 18 378 10 394 10 C382 26 374 50 372 92 Z" fill="#1E1411"/>
+  <g stroke="#4B3A33" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".8"><path d="M348 88 Q336 50 304 40"/><path d="M354 88 Q346 40 338 10"/><path d="M362 88 Q366 44 384 18"/></g>
+  <g transform="translate(352 60)">
+    <ellipse cx="0" cy="-13" rx="9" ry="12" fill="#E8879A"/><ellipse cx="13" cy="-2" rx="12" ry="9" fill="#E8879A"/>
+    <ellipse cx="7" cy="12" rx="9" ry="11" fill="#E8879A" transform="rotate(-30 7 12)"/><ellipse cx="-8" cy="12" rx="9" ry="11" fill="#E8879A" transform="rotate(30 -8 12)"/>
+    <ellipse cx="-13" cy="-2" rx="12" ry="9" fill="#E8879A"/><circle r="7" fill="#C9576E"/>
+  </g>
+
+  <!-- face -->
+  <path d="M266 290 Q294 280 328 294 M390 292 Q424 278 454 288" stroke="#5E3F33" stroke-width="4.5" fill="none" stroke-linecap="round" opacity=".38"/>
+  <!-- soft shadow under the eyes -->
+  <path d="M276 346 Q304 358 334 344 M388 344 Q418 356 448 344" stroke="#B37552" stroke-width="5" fill="none" opacity=".35" stroke-linecap="round"/>
+  <!-- eyes: big, round, wide open, looking straight ahead -->
+  <path d="M273 327 Q304 297 336 325 Q304 355 273 327 Z" fill="#F4ECE4"/>
+  <circle cx="305" cy="327" r="23" fill="url(#eye)"/>
+  <circle cx="313" cy="318" r="6.5" fill="#fff"/><circle cx="298" cy="334" r="2.2" fill="#fff" opacity=".8"/>
+  <path d="M272 326 Q302 294 337 323" stroke="#1A0F0C" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M276 306 Q304 288 334 304 M388 302 Q418 286 448 302" stroke="#9E6447" stroke-width="2.5" fill="none" opacity=".5"/>
+  <path d="M278 340 Q304 352 332 339" stroke="#8E5A44" stroke-width="2" fill="none" opacity=".5"/>
+  <path d="M387 325 Q418 295 450 323 Q418 353 387 325 Z" fill="#F4ECE4"/>
+  <circle cx="417" cy="325" r="23" fill="url(#eye)"/>
+  <circle cx="425" cy="316" r="6.5" fill="#fff"/><circle cx="410" cy="332" r="2.2" fill="#fff" opacity=".8"/>
+  <path d="M386 324 Q418 292 451 322" stroke="#1A0F0C" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M390 338 Q418 350 446 337" stroke="#8E5A44" stroke-width="2" fill="none" opacity=".5"/>
+  <!-- broad button nose with round wings -->
+  <path d="M344 336 Q340 356 338 364 M378 336 Q382 356 384 364" stroke="#B37552" stroke-width="3" fill="none" opacity=".35" stroke-linecap="round"/>
+  <circle cx="338" cy="378" r="12" fill="#C98C66"/><circle cx="386" cy="378" r="12" fill="#C98C66"/>
+  <ellipse cx="362" cy="370" rx="27" ry="20" fill="#D8A27D"/>
+  <ellipse cx="356" cy="362" rx="9" ry="6" fill="#E6B793" opacity=".8"/>
+  <path d="M328 376 Q332 392 348 390 Q362 396 376 390 Q392 392 396 376" stroke="#9E6447" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="349" cy="384" rx="6.5" ry="4" fill="#6E3E2C"/><ellipse cx="375" cy="384" rx="6.5" ry="4" fill="#6E3E2C"/>
+  <!-- full cheeks -->
+  <ellipse cx="276" cy="400" rx="36" ry="26" fill="#E08A78" opacity=".28"/><ellipse cx="452" cy="398" rx="36" ry="26" fill="#E08A78" opacity=".28"/>
+  <!-- small closed mouth, upper lip with a soft bow -->
+  <path d="M358 396 L358 412" stroke="#B37552" stroke-width="3" opacity=".35"/>
+  <path d="M334 426 Q346 412 357 417 Q363 413 369 417 Q380 412 392 426 Q363 424 334 426 Z" fill="#A65651"/>
+  <path d="M340 427 Q363 446 386 427 Q363 431 340 427 Z" fill="#B8696A"/>
+  <ellipse cx="363" cy="434" rx="8" ry="3" fill="#CF8682" opacity=".7"/>
+  <path d="M332 428 Q348 424 363 425 Q378 424 394 428" stroke="#6E302E" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  <path d="M345 450 Q363 456 381 450" stroke="#A86B4D" stroke-width="2.5" fill="none" opacity=".45"/>
+
+  <!-- black-thread necklace with a small silver bead -->
+  <path d="M268 462 Q330 520 410 546 M456 452 Q432 500 412 540" stroke="#141012" stroke-width="3" fill="none"/>
+  <path d="M410 546 Q404 566 398 582" stroke="#141012" stroke-width="2.5" fill="none"/>
+  <ellipse cx="411" cy="544" rx="8" ry="6" fill="#DDE1E7" stroke="#8C93A0" stroke-width="1.5"/>
+</svg>

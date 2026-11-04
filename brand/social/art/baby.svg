@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -14 300 354" width="300" height="354">
+  <!-- Picture-book baby for the Children's Day posts: top-knot with a pink flower clip, black-thread necklace,
+       yellow polka-dot "squish" romper, bead bracelets and anklets, sitting on a blue blanket.
+       (A detailed portrait traced from the photo is in baby-portrait.svg.) -->
+  <defs>
+    <clipPath id="romper"><path d="M112 190 L128 190 Q150 216 172 190 L188 190 Q200 206 204 232 L224 286 Q150 308 76 286 L96 232 Q100 206 112 190 Z"/></clipPath>
+    <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="4" r="1.9" fill="#E8735B"/><circle cx="12" cy="12" r="1.9" fill="#E8735B"/>
+    </pattern>
+  </defs>
+
+  <!-- blanket -->
+  <ellipse cx="150" cy="318" rx="146" ry="22" fill="#2273A3"/>
+  <path d="M20 316 Q150 300 280 316" stroke="#4E97C4" stroke-width="3" fill="none" stroke-dasharray="2 8" stroke-linecap="round"/>
+
+  <!-- little hearts floating up beside her -->
+  <path transform="translate(262 150) rotate(14) scale(1.3)" d="M0 8 C -14 -2 -12 -14 -4 -14 C 0 -14 0 -10 0 -9 C 0 -10 0 -14 4 -14 C 12 -14 14 -2 0 8 Z" fill="#EE6FAE"/>
+  <path transform="translate(282 112) rotate(-10) scale(.8)" d="M0 8 C -14 -2 -12 -14 -4 -14 C 0 -14 0 -10 0 -9 C 0 -10 0 -14 4 -14 C 12 -14 14 -2 0 8 Z" fill="#E8505B"/>
+  <path transform="translate(30 132) rotate(-14) scale(.9)" d="M0 8 C -14 -2 -12 -14 -4 -14 C 0 -14 0 -10 0 -9 C 0 -10 0 -14 4 -14 C 12 -14 14 -2 0 8 Z" fill="#F5C53A"/>
+
+  <!-- skin under the scoop neck -->
+  <path d="M118 188 Q150 176 182 188 L178 214 Q150 222 122 214 Z" fill="#CF9670"/>
+  <!-- romper: vest and bloomers -->
+  <path d="M112 190 L128 190 Q150 216 172 190 L188 190 Q200 206 204 232 L224 286 Q150 308 76 286 L96 232 Q100 206 112 190 Z" fill="#FBE3A6"/>
+  <g clip-path="url(#romper)">
+    <rect x="60" y="180" width="180" height="140" fill="url(#dots)"/>
+    <path d="M76 266 Q150 284 224 266" stroke="#EFCB7E" stroke-width="3" fill="none"/>
+  </g>
+  <path d="M112 190 L128 190 Q150 216 172 190 L188 190" stroke="#EFCB7E" stroke-width="5" fill="none" stroke-linejoin="round"/>
+  <!-- print: rainbow, little dino, "squish" -->
+  <g transform="translate(118 232)">
+    <path d="M-14 6 A14 14 0 0 1 14 6" stroke="#EE6FAE" stroke-width="4" fill="none"/>
+    <path d="M-9 6 A9 9 0 0 1 9 6" stroke="#F5C53A" stroke-width="3.5" fill="none"/>
+    <circle cx="-10" cy="9" r="5" fill="#E8505B"/><circle cx="2" cy="10" r="5" fill="#E8505B"/>
+  </g>
+  <g transform="translate(178 230)">
+    <path d="M-12 8 Q-14 -6 0 -8 Q12 -8 12 4 Q14 10 6 10 L-8 10 Z" fill="#F7A7C8"/>
+    <path d="M-6 -8 l3 -5 l3 5 M2 -8 l3 -5 l3 5" fill="#3DB57E"/>
+    <circle cx="4" cy="-1" r="1.6" fill="#2B2238"/>
+  </g>
+  <text x="150" y="262" text-anchor="middle" font-family="Ink Free, Comic Sans MS, cursive" font-weight="700" font-size="20" letter-spacing="1">
+    <tspan fill="#E8505B">s</tspan><tspan fill="#9566E0">q</tspan><tspan fill="#3DB57E">u</tspan><tspan fill="#E8505B">i</tspan><tspan fill="#EE6FAE">s</tspan><tspan fill="#3DB57E">h</tspan>
+  </text>
+
+  <!-- legs, crossed, feet meeting in front (right foot resting on the left) -->
+  <path d="M104 282 Q40 284 56 306 Q76 322 118 318" stroke="#D9A27C" stroke-width="30" stroke-linecap="round" fill="none"/>
+  <path d="M196 282 Q260 284 244 306 Q224 322 184 316" stroke="#D29A73" stroke-width="30" stroke-linecap="round" fill="none"/>
+  <path d="M64 296 Q78 306 96 306" stroke="#C48660" stroke-width="2.5" fill="none" opacity=".55"/>
+  <path d="M236 296 Q222 306 204 306" stroke="#BF8058" stroke-width="2.5" fill="none" opacity=".55"/>
+  <path d="M118 306 Q146 304 156 314 Q160 326 140 330 Q120 332 114 322 Z" fill="#E2AE88"/>
+  <g fill="#E8B894"><circle cx="157" cy="312" r="4.2"/><circle cx="160" cy="320" r="3.8"/><circle cx="157" cy="327" r="3.4"/></g>
+  <path d="M186 302 Q156 300 146 310 Q142 322 162 326 Q182 328 188 318 Z" fill="#DCA67F"/>
+  <g fill="#E6B58F"><circle cx="145" cy="308" r="4.2"/><circle cx="142" cy="316" r="3.8"/><circle cx="145" cy="323" r="3.4"/></g>
+  <!-- anklets: black-and-white beads on the left, black with a gold bead on the right -->
+  <g stroke="#1E1A22" stroke-width="1">
+    <circle cx="114" cy="304" r="3.4" fill="#1E1A22"/><circle cx="112" cy="311" r="3.4" fill="#fff"/><circle cx="111" cy="318" r="3.4" fill="#1E1A22"/>
+    <circle cx="112" cy="325" r="3.4" fill="#fff"/><circle cx="115" cy="331" r="3.2" fill="#1E1A22"/>
+  </g>
+  <g fill="#1E1A22"><circle cx="190" cy="300" r="2.8"/><circle cx="192" cy="307" r="2.8"/><circle cx="192" cy="314" r="2.8"/></g>
+  <circle cx="190" cy="321" r="3" fill="#D9A93F"/>
+
+  <!-- arms: one resting on the leg, one lifted with open fingers, as if waving -->
+  <path d="M104 202 Q84 236 82 270" stroke="#D9A27C" stroke-width="27" stroke-linecap="round" fill="none"/>
+  <circle cx="82" cy="274" r="14" fill="#D9A27C"/>
+  <path d="M71 256 Q82 262 94 257" stroke="#1E1A22" stroke-width="4" stroke-dasharray="1 4.5" stroke-linecap="round" fill="none"/>
+  <path d="M196 202 Q218 226 234 240" stroke="#D29A73" stroke-width="26" stroke-linecap="round" fill="none"/>
+  <circle cx="240" cy="243" r="13" fill="#D29A73"/>
+  <g stroke="#D29A73" stroke-width="7" stroke-linecap="round"><path d="M248 236 l8 -8"/><path d="M252 243 l10 -2"/><path d="M250 250 l8 5"/></g>
+  <path d="M222 238 Q230 228 238 232" stroke="#1E1A22" stroke-width="3.5" stroke-dasharray="1 4.5" stroke-linecap="round" fill="none"/>
+
+  <!-- neck and necklace -->
+  <rect x="136" y="168" width="28" height="26" rx="10" fill="#CF9670"/>
+  <path d="M130 186 Q140 204 150 214 Q160 204 170 186" stroke="#1E1A22" stroke-width="2" fill="none"/>
+  <ellipse cx="150" cy="216" rx="4" ry="3" fill="#D9DDE4" stroke="#8C93A0" stroke-width="1"/>
+
+  <!-- head -->
+  <circle cx="80" cy="116" r="13" fill="#D29A73"/><circle cx="220" cy="116" r="13" fill="#D29A73"/>
+  <ellipse cx="150" cy="112" rx="72" ry="70" fill="#DCA67F"/>
+  <!-- hair: thin baby hair with wisps on the forehead, and a little top-knot -->
+  <path d="M82 100 C80 52 116 38 150 38 C186 38 222 52 218 100 Q206 80 186 74 Q166 70 150 72 Q132 70 114 74 Q94 80 82 100 Z" fill="#2A1A14"/>
+  <g stroke="#2A1A14" stroke-linecap="round" fill="none">
+    <path d="M114 74 Q108 82 110 90" stroke-width="2.6"/><path d="M134 71 Q130 80 134 86" stroke-width="2.4"/>
+    <path d="M152 71 Q150 80 156 86" stroke-width="2.4"/><path d="M172 72 Q178 80 174 88" stroke-width="2.4"/>
+    <path d="M188 76 Q194 84 192 92" stroke-width="2.6"/>
+    <path d="M84 98 Q80 112 84 124" stroke-width="3"/><path d="M216 98 Q220 114 214 128" stroke-width="3"/>
+  </g>
+  <g stroke="#2A1A14" stroke-linecap="round" fill="none" stroke-width="6">
+    <path d="M150 42 Q140 30 132 26"/><path d="M150 42 Q146 26 146 16"/><path d="M150 42 Q156 26 160 16"/><path d="M150 42 Q162 30 170 26"/>
+  </g>
+  <!-- pink flower clip -->
+  <g transform="translate(151 40) scale(.8)">
+    <circle cx="0" cy="-8" r="6" fill="#EE6FAE"/><circle cx="8" cy="-2" r="6" fill="#EE6FAE"/><circle cx="5" cy="7" r="6" fill="#EE6FAE"/>
+    <circle cx="-5" cy="7" r="6" fill="#EE6FAE"/><circle cx="-8" cy="-2" r="6" fill="#EE6FAE"/><circle r="4.5" fill="#C9447F"/>
+  </g>
+
+  <!-- face: big sparkly eyes, rosy cheeks, a happy little smile -->
+  <path d="M114 100 Q124 95 134 100 M166 100 Q176 95 186 100" stroke="#3A2620" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".55"/>
+  <ellipse cx="124" cy="120" rx="13" ry="14.5" fill="#1E1416"/><ellipse cx="176" cy="120" rx="13" ry="14.5" fill="#1E1416"/>
+  <circle cx="129" cy="114" r="4.8" fill="#fff"/><circle cx="181" cy="114" r="4.8" fill="#fff"/>
+  <circle cx="119" cy="126" r="2.2" fill="#fff" opacity=".85"/><circle cx="171" cy="126" r="2.2" fill="#fff" opacity=".85"/>
+  <circle cx="126" cy="126" r="1.2" fill="#fff" opacity=".7"/><circle cx="178" cy="126" r="1.2" fill="#fff" opacity=".7"/>
+  <!-- tiny lashes -->
+  <path d="M111 112 l-5 -4 M113 108 l-3 -5 M189 112 l5 -4 M187 108 l3 -5" stroke="#1E1416" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M145 139 Q150 144 155 139" stroke="#B87757" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  <ellipse cx="102" cy="146" rx="15" ry="11" fill="#F27A7A" opacity=".55"/><ellipse cx="198" cy="146" rx="15" ry="11" fill="#F27A7A" opacity=".55"/>
+  <circle cx="98" cy="143" r="2.2" fill="#fff" opacity=".6"/><circle cx="194" cy="143" r="2.2" fill="#fff" opacity=".6"/>
+  <path d="M138 154 Q150 168 162 154 Q150 158 138 154 Z" fill="#B04A55"/>
+  <path d="M144 160 Q150 164 156 160 Q150 158 144 160 Z" fill="#F08C8C"/>
+</svg>

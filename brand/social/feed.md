@@ -250,7 +250,7 @@ Try Vidyanexa free for 14 days: link in bio · DM "DEMO"
 **Tags:** location Ludhiana, Punjab · up to two verified school accounts
 **Alt text:** Screen recording: a principal asks the AI assistant for a Diwali holidays notice, gets a draft, and the notice appears on a parent's phone.
 
-## 12 · Reel · `reels/nov-2-childrens-day.mp4` · 2026-11-14
+## 12 · Reel · `reels/childrens-1-happy-childrens-day.mp4` · 2026-11-14
 
 ```
 Happy Children's Day! 🎈
@@ -264,7 +264,7 @@ Vidyanexa: bringing schools and families closer, every day.
 #ChildrensDay #BalDiwas #HappyChildrensDay #SchoolERP #Ludhiana #LudhianaSchools #Vidyanexa #ParentApp #SchoolsInLudhiana #PunjabSchools #SchoolManagementSoftware
 ```
 **Tags:** location Ludhiana, Punjab · up to two verified school accounts
-**Alt text:** Screen recording: a parent opens a notification from school and reads the "Happy Children's Day" message from the principal.
+**Alt text:** Screen recording in a picture-book Children's Day frame (bunting, balloons, a kite and hand-drawn children on a green hill): a parent opens a notification from school and reads the "Happy Children's Day" message from the principal. It ends on a card with four children and a baby under "Happy Children's Day".
 
 ## 13 · Reel · `reels/nov-3-fee-day.mp4` · 2026-11-18
 
@@ -535,3 +535,46 @@ Build yours: link in bio · DM "DEMO"
 ```
 **Tags:** location Ludhiana, Punjab · up to two verified school accounts
 **Alt text:** Screen recording in a festive frame: the custom plan builder set to 650 students, Examinations, Transport and AI Assistant switched on, the monthly price updating, then the free trial sign-up with the custom plan chosen.
+
+# Children's Day posts: 13 and 14 November
+
+Two image posts (1080×1350) for Bal Diwas, made from `brand/social/childrens-day-template.html` with
+`node web/scripts/social/childrens-day.mjs`. They sit around the Children's Day Reel (#12, 14 November at 7:30 pm):
+the offer-led post goes the evening before, the greeting on the morning of the day.
+
+## 28 · Image · `posts/childrens-day-1-greeting.png` · 2026-11-14 09:00
+
+```
+Happy Children's Day! 🎈✨
+
+To every curious mind, every big dream and every little hand that keeps a classroom alive: today is all about you.
+
+And to every teacher and parent who helps them grow: thank you. 💛
+
+Keep wondering. Keep shining.
+
+— Team Vidyanexa
+
+#ChildrensDay #BalDiwas #HappyChildrensDay #ChildrensDay2026 #14November #Vidyanexa #Ludhiana #LudhianaSchools #SchoolsInLudhiana #PunjabSchools #Teachers #Students
+```
+**Tags:** location Ludhiana, Punjab · up to two verified school accounts
+**Alt text:** A picture-book illustration on cream paper: four smiling children stand on a green hill under colourful bunting, with a little baby sitting cross-legged on a blue blanket in front of them, a pink flower clip in her top-knot and tiny hearts around her. A girl with braids holds balloons, a boy in an orange patka waves, a girl jumps with her arms up, and a boy with a school bag flies a kite. It reads "14 November · Bal Diwas. Happy Children's Day", with "Children's" in multicoloured crayon letters, and "Keep wondering. Keep shining." Signed Team Vidyanexa.
+
+## 29 · Image · `posts/childrens-day-2-more-time.png` · 2026-11-13 12:30
+
+```
+Less time on registers. More time for children. 🖍️
+
+This Children's Day, give your teachers back the hours they spend on paperwork:
+✅ Attendance in 10 seconds
+✅ Parents told the moment it matters
+✅ Fees, notices and homework on one app
+
+Because the best part of school is the children, not the registers.
+
+Try Vidyanexa free for 14 days, no card needed: link in bio · DM "DEMO"
+
+#ChildrensDay #BalDiwas #SchoolERP #SchoolManagementSoftware #Vidyanexa #Ludhiana #LudhianaSchools #SchoolPrincipal #Teachers #PunjabSchools #EdTechIndia #SmartSchool
+```
+**Tags:** location Ludhiana, Punjab
+**Alt text:** A picture-book illustration on cream paper with bunting and a smiling sun. On a green hill, a boy in a purple patka throws a paper plane, a boy with a school bag waves, and a girl with braids holds balloons. It reads "Less time on registers. More time for children." with three ticks: attendance in 10 seconds, parents told the moment it matters, fees, notices and homework on one app. Footer: vidyanexa.com, free 14-day trial, no card needed.
