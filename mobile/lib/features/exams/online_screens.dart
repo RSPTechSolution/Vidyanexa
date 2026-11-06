@@ -1,3 +1,4 @@
+import '../notices/create_screens.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -338,6 +339,16 @@ class LiveClassesScreen extends ConsumerWidget {
     final s = statusColors(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Live classes')),
+      floatingActionButton: ref.watch(meProvider)?.can('live.manage') == true
+          ? FloatingActionButton.extended(
+              icon: const Icon(Icons.videocam_outlined),
+              label: const Text('Schedule'),
+              onPressed: () async {
+                final done = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => const NewLiveClassScreen()));
+                if (done == true) ref.invalidate(liveProvider);
+              },
+            )
+          : null,
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(liveProvider.future),
         child: AsyncView(

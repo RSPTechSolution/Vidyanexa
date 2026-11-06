@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:intl/intl.dart';
 
 import '../../core/api/api_client.dart';
@@ -16,6 +17,60 @@ final conversationsProvider = FutureProvider.autoDispose<List<Map<String, dynami
   return (await ref.watch(apiClientProvider).get<List<Map<String, dynamic>>>('/chat/conversations', parse: _list)).data;
 });
 
+/// Matches a name, the child's name or the role, ignoring case.
+bool _matches(String query, List<Object?> fields) {
+  final q = query.trim().toLowerCase();
+  return q.isEmpty || fields.any((f) => f != null && f.toString().toLowerCase().contains(q));
+}
+
+/// Who to write to, with a search box (a school has hundreds of parents).
+class _ContactPicker extends StatefulWidget {
+  const _ContactPicker({required this.contacts});
+  final List<Map<String, dynamic>> contacts;
+
+  @override
+  State<_ContactPicker> createState() => _ContactPickerState();
+}
+
+class _ContactPickerState extends State<_ContactPicker> {
+  String _q = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final shown = [for (final x in widget.contacts) if (_matches(_q, [x['name'], x['student_name'], x['role']])) x];
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.85,
+      maxChildSize: 0.95,
+      builder: (c, scroll) => Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: TextField(
+            autofocus: true,
+            decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search by name or child'),
+            onChanged: (v) => setState(() => _q = v),
+          ),
+        ),
+        Expanded(
+          child: shown.isEmpty
+              ? const EmptyPanel(icon: Icons.search_off, title: 'Nobody matches', message: "Try part of the name, or the child's name.")
+              : ListView.builder(
+                  controller: scroll,
+                  itemCount: shown.length,
+                  itemBuilder: (_, i) => ListTile(
+                    title: Text(shown[i]['name'] as String),
+                    subtitle: Text('${shown[i]['role']} · ${shown[i]['student_name']}'),
+                    onTap: () => Navigator.pop(context, shown[i]),
+                  ),
+                ),
+        ),
+      ]),
+    );
+  }
+}
+
+final _messageSearch = StateProvider.autoDispose<String>((ref) => '');
+
 class MessagesScreen extends ConsumerWidget {
   const MessagesScreen({super.key});
 
@@ -25,16 +80,10 @@ class MessagesScreen extends ConsumerWidget {
     final picked = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
       builder: (c) => contacts.isEmpty
           ? const EmptyPanel(icon: Icons.people_outline, title: 'There is nobody to message yet')
-          : ListView(children: [
-              for (final x in contacts)
-                ListTile(
-                  title: Text(x['name'] as String),
-                  subtitle: Text('${x['role']} · ${x['student_name']}'),
-                  onTap: () => Navigator.pop(c, x),
-                ),
-            ]),
+          : _ContactPicker(contacts: contacts),
     );
     if (picked == null || !context.mounted) return;
     final text = TextEditingController();
@@ -71,13 +120,26 @@ class MessagesScreen extends ConsumerWidget {
           value: async,
           loading: const SkeletonList(count: 8),
           onRetry: () => ref.invalidate(conversationsProvider),
-          builder: (list) => list.isEmpty
-              ? ListView(children: const [EmptyPanel(icon: Icons.forum_outlined, title: 'No messages yet', message: 'Write to a teacher or a parent.')])
-              : ListView.separated(
-                  itemCount: list.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
+          builder: (all) {
+            if (all.isEmpty) {
+              return ListView(children: const [EmptyPanel(icon: Icons.forum_outlined, title: 'No messages yet', message: 'Write to a teacher or a parent.')]);
+            }
+            final q = ref.watch(_messageSearch);
+            final list = [for (final c in all) if (_matches(q, [c['other_name'], c['student_name'], c['last_message']])) c];
+            return ListView.separated(
+                  itemCount: list.length + 1,
+                  separatorBuilder: (_, i) => i == 0 ? const SizedBox.shrink() : const Divider(height: 1),
                   itemBuilder: (context, i) {
-                    final c = list[i];
+                    if (i == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                        child: TextField(
+                          decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search messages'),
+                          onChanged: (v) => ref.read(_messageSearch.notifier).state = v,
+                        ),
+                      );
+                    }
+                    final c = list[i - 1];
                     final unread = (c['unread'] as num).toInt();
                     return ListTile(
                       leading: CircleAvatar(child: Text((c['other_name'] as String).characters.first)),
@@ -90,7 +152,8 @@ class MessagesScreen extends ConsumerWidget {
                       },
                     );
                   },
-                ),
+                );
+          },
         ),
       ),
     );

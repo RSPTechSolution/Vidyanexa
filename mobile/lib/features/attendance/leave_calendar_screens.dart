@@ -1,3 +1,4 @@
+import '../notices/create_screens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -289,6 +290,16 @@ class CalendarScreen extends ConsumerWidget {
         };
     return Scaffold(
       appBar: AppBar(title: const Text('School calendar')),
+      floatingActionButton: ref.watch(meProvider)?.can('calendar.manage') == true
+          ? FloatingActionButton.extended(
+              icon: const Icon(Icons.add),
+              label: const Text('Add'),
+              onPressed: () async {
+                final done = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => const NewEventScreen()));
+                if (done == true) ref.invalidate(calendarProvider);
+              },
+            )
+          : null,
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(calendarProvider.future),
         child: AsyncView(

@@ -4,6 +4,7 @@ import 'package:eduvia/core/auth/token_store.dart';
 import 'package:eduvia/core/config/app_config.dart';
 import 'package:eduvia/features/attendance/attendance_screens.dart';
 import 'package:eduvia/features/exams/exam_screens.dart';
+import 'package:eduvia/core/router/app_router.dart';
 import 'package:eduvia/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -573,4 +574,90 @@ void main() {
     expect(left, isTrue);
     expect(find.text('Left school'), findsOneWidget);
   });
+
+  testWidgets('messages: search the conversations and the people to write to', (tester) async {
+    Map<String, dynamic> conv(String id, String name, String child) => {'id': id, 'student_id': 's1', 'student_name': child, 'other_id': 'o$id',
+        'other_name': name, 'other_role': 'Teacher', 'last_message': 'Hello', 'last_message_at': '2026-10-08T10:00:00Z', 'unread': 0};
+    final fake = FakeApi()
+      ..on('GET /auth/me', (_) => (200, FakeApi.ok(meJson()..['modules'] = ['communication'])))
+      ..on('GET /chat/conversations', (_) => (200, FakeApi.ok([conv('c1', 'Priya Verma', 'Aarav Patel'), conv('c2', 'Rakesh Gill', 'Diya Patel')])))
+      ..on('GET /chat/contacts', (_) => (200, FakeApi.ok([
+            for (final (n, c) in [('Priya Verma', 'Aarav Patel'), ('Rakesh Gill', 'Diya Patel'), ('Meena Arora', 'Diya Patel')])
+              {'user_id': n, 'student_id': 's1', 'name': n, 'role': 'Teacher', 'student_name': c},
+          ])));
+    final c = container(fake);
+    await pump(tester, c);
+    c.read(routerProvider).push('/messages');
+    await tester.pumpAndSettle();
+    expect(find.text('Rakesh Gill'), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextField, 'Search messages'), 'aarav');
+    await tester.pump();
+    expect(find.text('Priya Verma'), findsOneWidget);
+    expect(find.text('Rakesh Gill'), findsNothing);
+
+    await tester.tap(find.text('New'));
+    await tester.pumpAndSettle();
+    final sheet = find.byType(DraggableScrollableSheet);
+    expect(find.descendant(of: sheet, matching: find.text('Meena Arora')), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextField, 'Search by name or child'), 'mee');
+    await tester.pump();
+    expect(find.descendant(of: sheet, matching: find.text('Meena Arora')), findsOneWidget);
+    expect(find.descendant(of: sheet, matching: find.text('Priya Verma')), findsNothing);
+    await tester.enterText(find.widgetWithText(TextField, 'Search by name or child'), 'zzz');
+    await tester.pump();
+    expect(find.text('Nobody matches'), findsOneWidget);
+  });
+
+  testWidgets('a teacher posts a notice to their class from the app', (tester) async {
+    Map<String, dynamic>? posted;
+    final me = meJson(role: 'teacher')
+      ..['modules'] = ['communication']
+      ..['permissions'] = ['school.view', 'notices.post'];
+    final fake = FakeApi()
+      ..on('GET /auth/me', (_) => (200, FakeApi.ok(me)))
+      ..on('GET /notices', (_) => (200, FakeApi.ok([])))
+      ..on('GET /notices/unread-count', (_) => (200, FakeApi.ok({'count': 0})))
+      ..on('GET /notices/sections', (_) => (200, FakeApi.ok([{'id': 'sec5a', 'label': 'Class 5 – A'}])))
+      ..on('POST /notices', (req) {
+        posted = (req.data as Map).cast<String, dynamic>();
+        return (201, FakeApi.ok({}));
+      });
+    tester.view.physicalSize = const Size(1080, 3200); // the whole form on one screen
+    addTearDown(tester.view.reset);
+    final c = container(fake, flavor: AppFlavor.staff);
+    await pump(tester, c);
+    c.read(routerProvider).push('/notices');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New notice'));
+    await tester.pumpAndSettle();
+    expect(find.text('Everyone'), findsNothing); // teachers write only to their classes
+    await tester.enterText(find.byType(TextField).at(0), 'Science fair on Monday');
+    await tester.enterText(find.byType(TextField).at(1), 'Bring your models by 9 am.');
+    await tester.tap(find.text('Class 5 – A'));
+    await tester.pump();
+    await tester.tap(find.text('Post notice'));
+    await tester.pumpAndSettle();
+    expect(posted?['audience'], 'sections');
+    expect(posted?['section_ids'], ['sec5a']);
+    expect(posted?['title'], 'Science fair on Monday');
+  });
+
+  testWidgets('on a school holiday the home screen shows the school closed, not the classes', (tester) async {
+    final me = meJson(role: 'teacher')
+      ..['modules'] = ['academics', 'attendance']
+      ..['permissions'] = ['school.view', 'attendance.view', 'attendance.mark'];
+    final fake = FakeApi()
+      ..on('GET /auth/me', (_) => (200, FakeApi.ok(me)))
+      ..on('GET /calendar', (_) => (200, FakeApi.ok([{'title': 'Guru Nanak Jayanti', 'kind': 'holiday', 'start_date': '2026-11-05',
+            'end_date': '2026-11-05', 'description': null}])))
+      ..on('GET /timetable/my', (_) => (200, FakeApi.ok([{
+            'kind': 'teacher', 'title': 'Priya Verma', 'subtitle': null,
+            'periods': [{'id': 'p1', 'name': 'Period 1', 'start_time': '00:00:00', 'end_time': '23:59:00', 'is_break': false}],
+            'entries': [for (var d = 1; d <= 7; d++) {'day': d, 'period_id': 'p1', 'subject_name': 'Mathematics', 'subject_color': 'blue', 'teacher_name': null, 'section_label': 'Class 5 – A', 'room': null}],
+          }])));
+    await pump(tester, container(fake, flavor: AppFlavor.staff));
+    expect(find.text('School closed today: Guru Nanak Jayanti'), findsOneWidget);
+    expect(find.text('Mathematics'), findsNothing);
+  });
 }
+

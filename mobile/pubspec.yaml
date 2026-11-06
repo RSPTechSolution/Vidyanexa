@@ -124,6 +124,7 @@ flutter_launcher_icons:
   adaptive_icon_background: "#2F4A86"
   adaptive_icon_foreground: "assets/brand/launcher-foreground.png"
   adaptive_icon_monochrome: "assets/brand/launcher-monochrome.png"
+  adaptive_icon_foreground_inset: 0  # the PNG already sits in the safe zone
   web:
     generate: true
     image_path: "assets/brand/launcher.png"

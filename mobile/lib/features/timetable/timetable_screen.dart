@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/auth_controller.dart';
@@ -66,6 +67,15 @@ final myTimetablesProvider = FutureProvider.autoDispose<List<TimetableView>>((re
   return res.data;
 });
 
+/// Why the school is closed today (a holiday or vacation on the school calendar), or null on a school day.
+final schoolClosedTodayProvider = FutureProvider.autoDispose<String?>((ref) async {
+  final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+  final res = await ref.watch(apiClientProvider).get<List<Map<String, dynamic>>>('/calendar',
+      query: {'from': today, 'to': today}, parse: (d) => [for (final x in (d as List).cast<Map>()) x.cast<String, dynamic>()]);
+  final off = res.data.where((e) => e['kind'] == 'holiday' || e['kind'] == 'vacation');
+  return off.isEmpty ? null : off.first['title'] as String;
+});
+
 const subjectColors = {
   'blue': Color(0xFF2563EB), 'green': Color(0xFF059669), 'amber': Color(0xFFD97706), 'rose': Color(0xFFE11D48),
   'violet': Color(0xFF7C3AED), 'teal': Color(0xFF0D9488), 'orange': Color(0xFFEA580C), 'sky': Color(0xFF0284C7),
@@ -87,6 +97,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(myTimetablesProvider);
+    final closed = ref.watch(schoolClosedTodayProvider).value;
     return Scaffold(
       appBar: AppBar(title: const Text('Timetable')),
       body: RefreshIndicator(
@@ -110,7 +121,12 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                   onSelectionChanged: (s) => setState(() => day = s.first),
                 ),
               ),
-              DayLessons(view: v, day: day),
+              if (day == DateTime.now().weekday && closed != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: ClosedNote(reason: closed),
+                ),
+              DayLessons(view: v, day: day, closedToday: closed != null),
             ]);
           },
         ),
@@ -119,19 +135,38 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
   }
 }
 
+/// "School closed today: Guru Nanak Jayanti".
+class ClosedNote extends StatelessWidget {
+  const ClosedNote({super.key, required this.reason});
+  final String reason;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(children: [
+      Icon(Icons.lock_outline, size: 18, color: scheme.onSurfaceVariant),
+      const SizedBox(width: 8),
+      Expanded(child: Text('School closed today: $reason', style: TextStyle(color: scheme.onSurfaceVariant, fontWeight: FontWeight.w600))),
+    ]);
+  }
+}
+
 /// One day's periods as a list. Used on the Timetable tab and the home screen.
 class DayLessons extends StatelessWidget {
-  const DayLessons({super.key, required this.view, required this.day, this.compact = false});
+  const DayLessons({super.key, required this.view, required this.day, this.compact = false, this.closedToday = false});
   final TimetableView view;
   final int day;
   final bool compact;
+
+  /// Today is a holiday: no period is shown as "Now".
+  final bool closedToday;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final now = DateTime.now();
     final nowMin = now.hour * 60 + now.minute;
-    final isToday = now.weekday == day;
+    final isToday = now.weekday == day && !closedToday;
     // Stop after the day's last lesson (Saturdays and pre-primary are half days).
     final last = view.periods.lastIndexWhere((p) => view.at(day, p.id) != null);
     final rows = [
@@ -175,10 +210,9 @@ class DayLessons extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: l == null ? null : color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(14),
-                      // One coloured side only: Flutter can't round a border whose sides differ in colour or are hairlines.
-                      border: Border(left: BorderSide(color: color, width: 4)),
-                      // The period on now gets a ring instead.
-                      boxShadow: live ? [BoxShadow(color: scheme.primary, spreadRadius: 2)] : null,
+                      // Flutter can only round a border whose sides share one colour: the subject's colour on the left, or
+                      // all round in the accent for the period on now.
+                      border: live ? Border.all(color: scheme.primary, width: 2) : Border(left: BorderSide(color: color, width: 4)),
                     ),
                     child: l == null
                         ? Text('${p.name} · free', style: TextStyle(color: scheme.onSurfaceVariant))

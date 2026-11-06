@@ -284,7 +284,7 @@ class _FamilyCards extends ConsumerWidget {
                                 icon: mark == null ? Icons.hourglass_empty_rounded : Icons.event_available_rounded,
                                 color: mark == null ? scheme.onSurfaceVariant : statusColor(context, mark.status),
                                 title: 'Today',
-                                value: mark == null ? (today.weekday == 7 ? 'Holiday' : 'Not marked yet') : statusMeta[mark.status]!.label,
+                                value: mark == null ? (today.weekday == 7 || ref.watch(schoolClosedTodayProvider).value != null ? 'Holiday' : 'Not marked yet') : statusMeta[mark.status]!.label,
                                 onTap: () => context.go('/attendance'),
                               ),
                             ),
@@ -408,6 +408,7 @@ class _TodayLessons extends ConsumerWidget {
     final views = async.value;
     if (views == null || views.isEmpty) return const SizedBox.shrink();
     final v = views.first;
+    final closed = ref.watch(schoolClosedTodayProvider).value;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -419,7 +420,10 @@ class _TodayLessons extends ConsumerWidget {
         Card(
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: DayLessons(view: v, day: DateTime.now().weekday, compact: true),
+            // A holiday: no lessons today (the week is one tap away).
+            child: closed != null
+                ? Padding(padding: const EdgeInsets.all(16), child: ClosedNote(reason: closed))
+                : DayLessons(view: v, day: DateTime.now().weekday, compact: true),
           ),
         ),
       ],
@@ -437,6 +441,7 @@ class _AttendanceToTake extends ConsumerWidget {
     if (async.isLoading) return const SkeletonList(count: 1, height: 90, padding: EdgeInsets.only(bottom: 10));
     final list = async.value;
     if (list == null || list.isEmpty) return const SizedBox.shrink();
+    if (ref.watch(schoolClosedTodayProvider).value != null) return const SizedBox.shrink(); // a holiday: no attendance
     final pending = list.where((s) => !s.done).toList();
     final s = statusColors(context);
     return Column(

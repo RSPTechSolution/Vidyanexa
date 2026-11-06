@@ -1,3 +1,5 @@
+import 'create_screens.dart';
+import '../../core/auth/session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -118,8 +120,20 @@ class NoticesScreen extends ConsumerWidget {
     final async = ref.watch(noticesProvider);
     final s = statusColors(context);
     final scheme = Theme.of(context).colorScheme;
+    final me = ref.watch(meProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Notices')),
+      floatingActionButton: me != null && me.can('notices.post')
+          ? FloatingActionButton.extended(
+              icon: const Icon(Icons.campaign_outlined),
+              label: const Text('New notice'),
+              onPressed: () async {
+                final done = await Navigator.of(context).push<bool>(
+                    MaterialPageRoute(builder: (_) => NewNoticeScreen(anyAudience: me.can('notices.manage'))));
+                if (done == true) ref.invalidate(noticesProvider);
+              },
+            )
+          : null,
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(noticesProvider.future),
         child: AsyncView(
