@@ -1,0 +1,62 @@
+# Cloud builds of the iPhone apps (there is no Mac here). Codemagic (codemagic.io) builds the three apps on a Mac,
+# signs them with your Apple account and uploads them to TestFlight. Start a build by hand from the Codemagic page.
+# What to set up first, once: docs/IOS.md.
+workflows:
+  ios-testflight:
+    name: iPhone apps to TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+    working_directory: mobile
+    integrations:
+      # Codemagic → Team settings → Integrations → Developer Portal: the App Store Connect API key, saved as "Vidyanexa".
+      app_store_connect: Vidyanexa
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      groups:
+        # Codemagic → this app → Environment variables, group "ios":
+        #   CERTIFICATE_PRIVATE_KEY      (secret) the key for the distribution certificate, see docs/IOS.md
+        #   FIREBASE_IOS_API_KEY         API_KEY from any of the three GoogleService-Info.plist files
+        #   FIREBASE_IOS_APP_ID_PARENT   GOOGLE_APP_ID of the iOS app com.vidyanexa.parent in Firebase
+        #   FIREBASE_IOS_APP_ID_STAFF    … com.vidyanexa.staff
+        #   FIREBASE_IOS_APP_ID_DRIVER   … com.vidyanexa.driver
+        - ios
+      vars:
+        API_URL: https://apis.vidyanexa.com
+    scripts:
+      - name: Packages
+        script: flutter pub get
+      - name: Build the three apps and upload them to TestFlight
+        script: |
+          set -euo pipefail
+          keychain initialize
+          mkdir -p "$CM_BUILD_DIR/ipas"
+          for app in parent staff driver; do
+            case "$app" in
+              parent) bundle=com.vidyanexa.parent; name="Vidyanexa";        firebase="${FIREBASE_IOS_APP_ID_PARENT:-}" ;;
+              staff)  bundle=com.vidyanexa.staff;  name="Vidyanexa Staff";  firebase="${FIREBASE_IOS_APP_ID_STAFF:-}" ;;
+              driver) bundle=com.vidyanexa.driver; name="Vidyanexa Driver"; firebase="${FIREBASE_IOS_APP_ID_DRIVER:-}" ;;
+            esac
+            echo "=== $name ($bundle)"
+            # Which app this build is (read by ios/Flutter/Debug.xcconfig and Release.xcconfig).
+            printf 'APP_BUNDLE_ID = %s\nAPP_DISPLAY_NAME = %s\n' "$bundle" "$name" > ios/Flutter/Vidyanexa.xcconfig
+            # App Store signing: makes the certificate and profile in your Apple account the first time, reuses them after.
+            app-store-connect fetch-signing-files "$bundle" --type IOS_APP_STORE --create \
+              --certificate-key=@env:CERTIFICATE_PRIVATE_KEY
+            keychain add-certificates
+            xcode-project use-profiles
+            flutter build ipa --release \
+              --build-number="$PROJECT_BUILD_NUMBER" \
+              --dart-define=FLAVOR="$app" \
+              --dart-define=API_URL="$API_URL" \
+              --dart-define=FIREBASE_IOS_APP_ID="$firebase" \
+              --dart-define=FIREBASE_IOS_API_KEY="${FIREBASE_IOS_API_KEY:-}" \
+              --export-options-plist=/Users/builder/export_options.plist
+            cp build/ios/ipa/*.ipa "$CM_BUILD_DIR/ipas/vidyanexa-$app.ipa"
+            rm -rf build/ios/ipa
+            app-store-connect publish --path "$CM_BUILD_DIR/ipas/vidyanexa-$app.ipa" --testflight
+          done
+    artifacts:
+      - ipas/*.ipa
+      - /tmp/xcodebuild_logs/*.log

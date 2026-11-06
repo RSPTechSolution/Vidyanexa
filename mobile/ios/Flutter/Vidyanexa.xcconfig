@@ -1,0 +1,4 @@
+// Which of the three apps this build is. The cloud build (codemagic.yaml) rewrites these two lines per app;
+// the defaults build the parent app.
+APP_BUNDLE_ID = com.vidyanexa.parent
+APP_DISPLAY_NAME = Vidyanexa

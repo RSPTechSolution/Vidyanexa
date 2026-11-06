@@ -10,11 +10,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../auth/auth_controller.dart';
 import '../router/app_router.dart';
+import 'firebase_ios.dart';
 
 /// Push notifications through Firebase Cloud Messaging. After sign-in the phone's token is sent to the API
 /// (POST /notifications/devices), which pushes every in-app notification to it; sign-out removes it again.
 ///
-/// A build without its google-services.json (`android/app/src/<flavor>/`) has no Firebase: push stays off and the
+/// A build without its Firebase config (Android: `android/app/src/<flavor>/google-services.json`; iOS: firebase_ios.dart) has no Firebase: push stays off and the
 /// in-app notifications work as before.
 ///
 /// The classic FCM registration token is used (getToken, onTokenRefresh, deleteToken): the API sends to it with the
@@ -41,7 +42,10 @@ class Push {
     if (_started || kIsWeb) return;
     _started = true;
     try {
-      await Firebase.initializeApp();
+      // Android finds its config in the build; iOS gets it from the cloud build's settings (firebase_ios.dart).
+      final ios = Platform.isIOS ? iosFirebaseOptions() : null;
+      if (Platform.isIOS && ios == null) throw StateError('no FIREBASE_IOS_APP_ID in this build');
+      await Firebase.initializeApp(options: ios);
     } catch (e) {
       debugPrint('Push notifications off (no Firebase config in this build): $e');
       return;
