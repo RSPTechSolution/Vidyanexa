@@ -35,7 +35,11 @@ function Roster({ entryId, date }: { entryId: string; date: string }) {
         {q.data.marked && <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-semibold text-success">Taken</span>}
         <span className="ml-auto text-sm text-muted-foreground">{q.data.students.length - absent.size} here · {absent.size} missing</span>
       </div>
-      <p className="px-4 pt-3 text-xs text-muted-foreground">Tick who is missing. Students absent at the morning roll call are ticked already.</p>
+      <p className="px-4 pt-3 text-xs text-muted-foreground">
+        {/* Only promise the morning's absentees when the morning roll call has actually been taken. */}
+        Tick who is missing.{" "}
+        {q.data.students.some((s) => s.day_status) ? "Students absent at the morning roll call are ticked already." : "The morning roll call isn't taken yet."}
+      </p>
       <ul className="grid gap-1 p-3 sm:grid-cols-2">
         {q.data.students.map((s) => {
           const off = absent.has(s.student_id);
@@ -51,7 +55,7 @@ function Roster({ entryId, date }: { entryId: string; date: string }) {
           );
         })}
       </ul>
-      <div className="flex justify-end border-t p-3"><Button onClick={() => save.mutate()} loading={save.isPending} loadingText="Saving…"><Check aria-hidden />Save</Button></div>
+      <div className="flex justify-end border-t p-3"><Button onClick={() => save.mutate()} loading={save.isPending} loadingText="Saving…"><Check aria-hidden />{q.data.marked ? "Update" : "Save"}</Button></div>
     </div>
   );
 }
@@ -93,7 +97,7 @@ function PeriodsPage() {
         <EmptyState className="rounded-2xl border bg-card" illustration={<ClipboardList className="size-12 text-muted-foreground/60" aria-hidden />}
           title="No periods to take" description="Only the class teacher (incharge) takes period attendance, for the periods of their own class." />
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <div className="grid gap-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
           <ul className="space-y-2" aria-label="Your periods">
             {periods.data.map((p) => (
               <li key={p.entry_id}>
@@ -104,7 +108,10 @@ function PeriodsPage() {
                     <span className="block truncate text-sm font-medium">{p.section_label}{p.cover && <span className="ml-1 text-xs text-warning">(cover)</span>}</span>
                     <span className={cn("mt-0.5 inline-block rounded border px-1.5 text-[11px] font-semibold", colorOf(p.subject_color).cell)}>{p.subject_name}</span>
                   </span>
-                  {p.marked ? <span className="text-xs font-semibold text-success">{p.absent} out</span> : <span className="text-xs text-muted-foreground">Not taken</span>}
+                  {/* Green only when everyone was there: students missing is something to look at, not good news. */}
+                  {!p.marked ? <span className="text-xs text-muted-foreground">Not taken</span>
+                    : p.absent === 0 ? <span className="text-xs font-semibold text-success">All here</span>
+                    : <span className="text-xs font-semibold text-warning">{p.absent} out</span>}
                 </button>
               </li>
             ))}
