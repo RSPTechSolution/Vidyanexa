@@ -121,39 +121,55 @@ class _MyClassScreenState extends ConsumerState<MyClassScreen> {
                 ]),
               Text(c.label, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
               const SizedBox(height: 12),
-              Row(children: [
+              // Equal heights, whatever the phone's font size.
+              IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 _Stat(label: 'Attendance', value: c.marked ? '${c.present}/${c.students}' : 'Not taken', color: c.marked ? s.success : s.warning),
                 const SizedBox(width: 8),
                 _Stat(label: 'Leave', value: '${c.pendingLeave}', color: c.pendingLeave > 0 ? s.warning : scheme.onSurfaceVariant),
                 const SizedBox(width: 8),
                 _Stat(label: 'Gate passes', value: '${c.pendingGatePasses}', color: c.pendingGatePasses > 0 ? s.warning : scheme.onSurfaceVariant),
-              ]),
+              ])),
               if (c.feesEnabled) ...[
                 const SizedBox(height: 8),
+                // The amount gets the whole width (a button beside it squeezed "₹45,050" onto two lines with a big font).
                 Card(
-                  child: ListTile(
-                    leading: Icon(Icons.currency_rupee_rounded, color: c.studentsOverdue > 0 ? s.danger : s.success),
-                    title: Text(c.studentsOverdue > 0 ? '${inr(c.overdueAmount)} overdue' : 'No overdue fees'),
-                    subtitle: Text('${c.studentsOverdue} ${c.studentsOverdue == 1 ? 'student' : 'students'}'),
-                    trailing: c.studentsOverdue > 0
-                        ? TextButton(onPressed: reminding ? null : () => _remind(c), child: Text(reminding ? 'Sending…' : 'Remind parents'))
-                        : null,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 12, 8),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Row(children: [
+                        Icon(Icons.currency_rupee_rounded, color: c.studentsOverdue > 0 ? s.danger : s.success),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text(c.studentsOverdue > 0 ? '${inr(c.overdueAmount)} overdue' : 'No overdue fees',
+                                style: Theme.of(context).textTheme.titleMedium),
+                            Text('${c.studentsOverdue} ${c.studentsOverdue == 1 ? 'student' : 'students'}',
+                                style: TextStyle(color: scheme.onSurfaceVariant)),
+                          ]),
+                        ),
+                      ]),
+                      if (c.studentsOverdue > 0)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            onPressed: reminding ? null : () => _remind(c),
+                            icon: const Icon(Icons.notifications_active_outlined),
+                            label: Text(reminding ? 'Sending…' : 'Remind parents'),
+                          ),
+                        ),
+                    ]),
                   ),
                 ),
               ],
               const SizedBox(height: 12),
-              Row(children: [
-                Expanded(
-                  flex: 2,
-                  child: FilledButton.icon(
-                    onPressed: () => context.push(Uri(path: '/attendance/mark/${c.sectionId}', queryParameters: {'label': c.label}).toString()),
-                    icon: const Icon(Icons.fact_check_outlined),
-                    label: Text(c.marked ? 'Update attendance' : 'Take attendance'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(child: OutlinedButton.icon(onPressed: () => context.push('/leave'), icon: const Icon(Icons.event_busy_outlined), label: const Text('Leave'))),
-              ]),
+              // One under the other, full width: side by side they broke words ("Leav / e") with a big font.
+              FilledButton.icon(
+                onPressed: () => context.push(Uri(path: '/attendance/mark/${c.sectionId}', queryParameters: {'label': c.label}).toString()),
+                icon: const Icon(Icons.fact_check_outlined),
+                label: Text(c.marked ? 'Update attendance' : 'Take attendance'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(onPressed: () => context.push('/leave'), icon: const Icon(Icons.event_busy_outlined), label: const Text('Leave requests')),
               const SizedBox(height: 20),
               Text('Students', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
@@ -200,9 +216,10 @@ class _Stat extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: color)),
+              // Shrunk to fit on one line rather than broken mid-word ("Attendan / ce").
+              FittedBox(fit: BoxFit.scaleDown, child: Text(value, maxLines: 1, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: color))),
               const SizedBox(height: 2),
-              Text(label, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              FittedBox(fit: BoxFit.scaleDown, child: Text(label, maxLines: 1, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant))),
             ]),
           ),
         ),

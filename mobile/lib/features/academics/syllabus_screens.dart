@@ -68,6 +68,7 @@ class MySyllabusScreen extends ConsumerWidget {
                       const Card(child: Padding(padding: EdgeInsets.all(16), child: Text("The teachers haven't shared the syllabus yet."))),
                     for (final c in k.subjects)
                       Card(
+                        margin: const EdgeInsets.only(bottom: 10),
                         child: Padding(
                           padding: const EdgeInsets.all(14),
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

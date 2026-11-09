@@ -131,7 +131,7 @@ function MessagesPage() {
         <EmptyState className="rounded-2xl border bg-card" illustration={<MessagesSquare className="size-12 text-muted-foreground/60" aria-hidden />}
           title="No messages yet" action={<Button onClick={() => setCreating(true)}><MessageSquarePlus aria-hidden />New message</Button>} />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[20rem_minmax(0,1fr)]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[20rem_minmax(0,1fr)]">
           <ul className={cn("divide-y rounded-2xl border bg-card", conv && "hidden lg:block")} aria-label="Conversations">
             {q.data.map((c) => (
               <li key={c.id}>

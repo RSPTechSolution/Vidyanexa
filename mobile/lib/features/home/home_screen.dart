@@ -247,7 +247,10 @@ class _FamilyCards extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Row(
+                      // Both tiles the same height, whatever wraps in either (big phone fonts).
+                      IntrinsicHeight(
+                        child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           if (a != null)
                             Expanded(
@@ -275,6 +278,7 @@ class _FamilyCards extends ConsumerWidget {
                               ),
                             ),
                         ],
+                      ),
                       ),
                     ],
                   ),
@@ -316,7 +320,7 @@ class _MiniStat extends StatelessWidget {
                   Text(
                     value,
                     style: TextStyle(fontWeight: FontWeight.w700, color: color),
-                    maxLines: 2,
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -463,7 +467,9 @@ class _FeeTiles extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _Heading('Fees', action: 'Open', onAction: () => context.go('/fees')),
-        Row(
+        IntrinsicHeight(
+          child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
               child: _MiniStat(
@@ -485,6 +491,7 @@ class _FeeTiles extends ConsumerWidget {
               ),
             ),
           ],
+        ),
         ),
       ],
     );

@@ -525,7 +525,10 @@ function PersonalDashboard() {
   const teacher = me.role === "teacher";
   const all = views.data ?? [];
   const first = all[0];
-  const todayCount = all.reduce((n, v) => n + v.entries.filter((e) => e.day === day).length, 0);
+  const counts = all.map((v) => v.entries.filter((e) => e.day === day).length);
+  const todayCount = counts.reduce((n, c) => n + c, 0);
+  // Two children: each child's periods ("8 · 7", Aarav · Diya), not one sum that matches neither timetable.
+  const perChild = me.role === "parent" && all.length > 1;
   const next = first ? nextLesson(first, day) : undefined;
   const sections = new Set(first?.entries.map((e) => e.section_id)).size;
   const subjects = new Set(first?.entries.map((e) => e.subject_id)).size;
@@ -545,7 +548,7 @@ function PersonalDashboard() {
         { id: "stats", label: "Key numbers", node: (
       <Stagger className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StaggerItem>
-          <StatCard label={teacher ? "Lessons today" : "Periods today"} value={todayCount} loading={views.isLoading} icon={CalendarDays} href="/my-timetable" />
+          <StatCard label={teacher ? "Lessons today" : "Periods today"} value={perChild ? counts.join(" · ") : todayCount} hint={perChild ? all.map((v) => v.title.split(" ")[0]).join(" · ") : undefined} loading={views.isLoading} icon={CalendarDays} href="/my-timetable" />
         </StaggerItem>
         <StaggerItem>
           <StatCard label="Next up" value={next ? next.e!.subject_name : "Done for today"} loading={views.isLoading} icon={Clock} accent="info"

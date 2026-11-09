@@ -116,7 +116,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: SegmentedButton<int>(
                   showSelectedIcon: false,
-                  segments: [for (var d = 1; d <= 6; d++) ButtonSegment(value: d, label: Text(dayNames[d - 1]))],
+                  segments: [for (var d = 1; d <= 6; d++) ButtonSegment(value: d, label: segmentLabel(dayNames[d - 1]))],
                   selected: {day},
                   onSelectionChanged: (s) => setState(() => day = s.first),
                 ),

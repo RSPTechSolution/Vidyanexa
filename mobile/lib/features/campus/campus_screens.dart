@@ -41,6 +41,7 @@ class MyLibraryScreen extends ConsumerWidget {
               if (out.isEmpty) const Padding(padding: EdgeInsets.all(8), child: Text('Nothing borrowed right now.')),
               for (final b in out)
                 Card(
+                  margin: const EdgeInsets.only(bottom: 10),
                   child: ListTile(
                     leading: Icon(Icons.menu_book_outlined, color: scheme.primary),
                     title: Text(b['title'] as String, style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -90,6 +91,7 @@ class MyHostelScreen extends ConsumerWidget {
               : ListView(padding: const EdgeInsets.all(12), children: [
                   for (final h in rows)
                     Card(
+                      margin: const EdgeInsets.only(bottom: 10),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

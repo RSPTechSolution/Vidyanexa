@@ -46,7 +46,8 @@ function TabsList({
     <TabsPrimitive.List
       data-slot="tabs-list"
       data-variant={variant}
-      className={cn(tabsListVariants({ variant }), className)}
+      // On a narrow screen a long row of tabs scrolls sideways instead of pushing the page wider.
+      className={cn(tabsListVariants({ variant }), "max-w-full justify-start overflow-x-auto [scrollbar-width:none]", className)}
       {...props}
     />
   )

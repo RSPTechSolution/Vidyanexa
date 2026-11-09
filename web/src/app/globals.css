@@ -198,6 +198,12 @@
 }
 
 @layer base {
+  /* A sideways scroll box (wide tables on a phone) contains what is positioned inside it, such as the screen-reader
+     label in a table's last header cell. Otherwise that label escapes the box and the whole page scrolls sideways.
+     In the base layer, so an element that sets its own position (sticky, absolute) keeps it. */
+  .overflow-x-auto {
+    position: relative;
+  }
   * {
     @apply border-border outline-ring/50;
   }

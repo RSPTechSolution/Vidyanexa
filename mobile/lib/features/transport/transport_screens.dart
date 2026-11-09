@@ -166,6 +166,7 @@ class _DriverScreenState extends ConsumerState<DriverScreen> {
             return ListView(padding: const EdgeInsets.all(16), children: [
               for (final r in routes)
                 Card(
+                  margin: const EdgeInsets.only(bottom: 10),
                   child: Padding(
                     padding: const EdgeInsets.all(14),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -186,6 +187,7 @@ class _DriverScreenState extends ConsumerState<DriverScreen> {
           return ListView(padding: const EdgeInsets.all(12), children: [
             Card(
               color: s.success.withValues(alpha: 0.1),
+              margin: const EdgeInsets.only(bottom: 12),
               child: ListTile(
                 leading: Icon(Icons.gps_fixed_rounded, color: s.success),
                 title: Text('${trip['route_name']} · ${trip['direction'] == 'pickup' ? 'to school' : 'home'}', style: const TextStyle(fontWeight: FontWeight.w800)),
@@ -195,6 +197,7 @@ class _DriverScreenState extends ConsumerState<DriverScreen> {
             ),
             for (final r in roster)
               Card(
+                margin: const EdgeInsets.only(bottom: 10),
                 child: ListTile(
                   title: Text(r['name'] as String, style: const TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: Text('${r['stop_name'] ?? 'No stop'} · ${r['class_section']}${r['absent'] == true ? ' · absent' : ''}'),
@@ -261,6 +264,7 @@ class _MyBusScreenState extends ConsumerState<MyBusScreen> {
         builder: (kids) => ListView(padding: const EdgeInsets.all(12), children: [
           for (final k in kids)
             Card(
+              margin: const EdgeInsets.only(bottom: 10),
               child: Padding(
                 padding: const EdgeInsets.all(14),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

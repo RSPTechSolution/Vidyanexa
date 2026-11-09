@@ -73,7 +73,8 @@ class HeroChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.94), borderRadius: BorderRadius.circular(999)),
+    // Solid white: see-through, the drawing's shapes showed faintly behind the words.
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(999)),
     child: Text(
       text,
       maxLines: 2,

@@ -16,6 +16,8 @@ export interface NavItem {
   /** Show a live count next to the label. */
   badge?: "notices";
   superAdminOnly?: boolean;
+  /** Needs a school (hidden from the platform admin, who has none). */
+  schoolOnly?: boolean;
   keywords?: string[];
 }
 
@@ -81,7 +83,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Messages", href: "/messages", icon: MessagesSquare, module: "communication", keywords: ["chat", "message teacher", "parent message", "inbox"] },
       { label: "Parent-teacher meetings", href: "/ptm", icon: Handshake, module: "communication", keywords: ["ptm", "meeting", "book slot", "appointment"] },
       { label: "Surveys", href: "/surveys", icon: ClipboardPen, module: "communication", keywords: ["feedback", "poll", "questionnaire"] },
-      { label: "Calendar", href: "/calendar", icon: CalendarHeart, keywords: ["holidays", "events", "vacation", "ptm", "academic calendar"] },
+      { label: "Calendar", href: "/calendar", icon: CalendarHeart, schoolOnly: true, keywords: ["holidays", "events", "vacation", "ptm", "academic calendar"] },
       { label: "Notices", href: "/notices", icon: Megaphone, module: "communication", badge: "notices", keywords: ["announcements", "circular", "news"] },
     ],
   },
@@ -153,7 +155,7 @@ export const NAV_GROUPS: NavGroup[] = [
 export function canSee(item: NavItem, me: Me) {
   const isSuper = me.role === "super_admin";
   if (item.superAdminOnly) return isSuper;
-  if (isSuper) return !item.module && !item.permission && !item.roles; // super admin has no school context
+  if (isSuper) return !item.module && !item.permission && !item.roles && !item.schoolOnly; // super admin has no school context
   if (item.module && !me.modules.includes(item.module)) return false;
   if (item.permission && !me.permissions.includes(item.permission)) return false;
   if (item.roles && !item.roles.includes(me.role)) return false;

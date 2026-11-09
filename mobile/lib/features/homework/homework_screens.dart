@@ -363,6 +363,7 @@ class _TeacherHomeworkList extends ConsumerWidget {
                     if (i == list.length) return LoadMoreTile(list: 'homework-$view', items: list, noun: 'homework');
                     final h = list[i];
                     return Card(
+                      margin: const EdgeInsets.only(bottom: 10),
                       child: ListTile(
                         title: Text(
                           h.title,

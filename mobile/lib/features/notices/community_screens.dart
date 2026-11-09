@@ -366,6 +366,7 @@ class SurveysScreen extends ConsumerWidget {
             : ListView(padding: const EdgeInsets.all(12), children: [
                 for (final s in list)
                   Card(
+                    margin: const EdgeInsets.only(bottom: 10),
                     child: ListTile(
                       title: Text(s['title'] as String, style: const TextStyle(fontWeight: FontWeight.w700)),
                       subtitle: Text('${(s['questions'] as List).length} questions'),

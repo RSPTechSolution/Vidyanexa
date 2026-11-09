@@ -9,11 +9,12 @@ import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy import event, func, select, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.database import system_session
+from app.core.database import elevated, system_session
 from app.core.errors import NotFound
 from app.models import DeviceToken, Notification, Student, StudentGuardian, User
 from app.schemas.common import PageMeta, PageParams
@@ -86,13 +87,15 @@ async def mark_all_read(db: AsyncSession, user: User) -> int:
 # ---- devices --------------------------------------------------------------------------------------
 
 async def register_device(db: AsyncSession, user: User, token: str, platform: str, app: str) -> None:
-    """A phone signs in: it now gets this user's pushes (a token moves to whoever signed in last)."""
-    existing = await db.scalar(select(DeviceToken).where(DeviceToken.token == token))
-    if existing:
-        existing.user_id, existing.school_id, existing.platform, existing.app = user.id, user.school_id, platform, app
-        existing.last_seen = datetime.now(UTC)
-    else:
-        db.add(DeviceToken(school_id=user.school_id, user_id=user.id, token=token, platform=platform, app=app))
+    """A phone signs in: it now gets this user's pushes (a token moves to whoever signed in last).
+
+    One insert-or-move, so two registrations at the same moment can't collide, and across schools (row security would
+    hide a token last used at another school, and the insert would then fail on the unique token)."""
+    now = datetime.now(UTC)
+    values = dict(school_id=user.school_id, user_id=user.id, platform=platform, app=app, last_seen=now)
+    async with elevated(db):
+        await db.execute(insert(DeviceToken).values(token=token, **values)
+                         .on_conflict_do_update(index_elements=[DeviceToken.token], set_=values))
 
 
 async def unregister_device(db: AsyncSession, user: User, token: str) -> None:

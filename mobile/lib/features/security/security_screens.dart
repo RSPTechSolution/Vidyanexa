@@ -67,6 +67,7 @@ class GatePassesScreen extends ConsumerWidget {
               : ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 96), children: [
                   for (final p in rows)
                     Card(
+                      margin: const EdgeInsets.only(bottom: 10),
                       child: Padding(
                         padding: const EdgeInsets.all(14),
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -247,6 +248,7 @@ class CctvScreen extends ConsumerWidget {
             Text('Your consent', style: Theme.of(context).textTheme.titleMedium),
             for (final c in d.consent)
               Card(
+                margin: const EdgeInsets.only(bottom: 10),
                 child: Padding(
                   padding: const EdgeInsets.all(14),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -268,6 +270,7 @@ class CctvScreen extends ConsumerWidget {
             if (d.cameras.isEmpty) const Padding(padding: EdgeInsets.all(8), child: Text('No classroom cameras are open to families.')),
             for (final cam in d.cameras)
               Card(
+                margin: const EdgeInsets.only(bottom: 10),
                 child: ListTile(
                   leading: const Icon(Icons.videocam_outlined),
                   title: Text(cam['name'] as String),
@@ -384,6 +387,7 @@ class _GateDeskState extends ConsumerState<GateDeskScreen> {
               return Column(children: [
                 for (final v in open)
                   Card(
+                    margin: const EdgeInsets.only(bottom: 10),
                     child: ListTile(
                       title: Text(v['name'] as String),
                       subtitle: Text('${v['purpose']}${v['meeting'] != null ? ' · to see ${v['meeting']}' : ''}'),

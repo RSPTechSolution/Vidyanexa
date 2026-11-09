@@ -292,9 +292,9 @@ class _SectionsViewState extends ConsumerState<SectionsView> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: SegmentedButton<int>(
                 segments: [
-                  const ButtonSegment(value: 0, label: Text('Today')),
-                  const ButtonSegment(value: 1, label: Text('Yesterday')),
-                  ButtonSegment(value: 2, label: Text(DateFormat('EEE d').format(DateTime.now().subtract(const Duration(days: 2))))),
+                  ButtonSegment(value: 0, label: segmentLabel('Today')),
+                  ButtonSegment(value: 1, label: segmentLabel('Yesterday')),
+                  ButtonSegment(value: 2, label: segmentLabel(DateFormat('EEE d').format(DateTime.now().subtract(const Duration(days: 2))))),
                 ],
                 selected: {back},
                 onSelectionChanged: (s) => setState(() => back = s.first),

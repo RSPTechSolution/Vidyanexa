@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/api/api_client.dart';
 import '../../core/auth/auth_controller.dart';
+import '../../core/auth/session.dart';
 import '../../shared/widgets/common.dart';
 import '../../shared/widgets/open_file.dart';
 import '../timetable/timetable_screen.dart' show subjectColors;
@@ -309,11 +310,15 @@ class MarksHomeScreen extends ConsumerWidget {
                 children: [
                   for (final e in exams)
                     Card(
+                      margin: const EdgeInsets.only(bottom: 10),
                       child: ExpansionTile(
                         shape: const Border(),
                         initiallyExpanded: e['status'] == 'marks_entry' || e['status'] == 'ongoing',
                         title: Text(e['name'] as String, style: const TextStyle(fontWeight: FontWeight.w700)),
-                        subtitle: Text('${_statusLabel[e['status']] ?? e['status']} · ${e['marks_entered']}/${e['marks_expected']} marks in'),
+                        // The counts are the whole school's: a teacher sees only the status here, and her own papers inside.
+                        subtitle: Text(ref.watch(meProvider)?.role == 'teacher'
+                            ? '${_statusLabel[e['status']] ?? e['status']}'
+                            : '${_statusLabel[e['status']] ?? e['status']} · ${e['marks_entered']}/${e['marks_expected']} marks in'),
                         children: [_Sheets(examId: e['id'] as String)],
                       ),
                     ),

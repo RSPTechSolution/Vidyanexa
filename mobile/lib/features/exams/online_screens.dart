@@ -258,6 +258,7 @@ class _TakeTestScreenState extends ConsumerState<TakeTestScreen> {
       body: ListView(padding: const EdgeInsets.all(12), children: [
         for (final (i, q) in questions.indexed)
           Card(
+            margin: const EdgeInsets.only(bottom: 10),
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -360,6 +361,7 @@ class LiveClassesScreen extends ConsumerWidget {
               : ListView(padding: const EdgeInsets.all(12), children: [
                   for (final l in list)
                     Card(
+                      margin: const EdgeInsets.only(bottom: 10),
                       child: ListTile(
                         leading: Icon(Icons.videocam_rounded, color: l.state == 'live' ? s.success : null),
                         title: Text(l.title, style: TextStyle(fontWeight: FontWeight.w700,

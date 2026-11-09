@@ -155,11 +155,15 @@ class _LoadMoreTileState extends ConsumerState<LoadMoreTile> {
             const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
             const SizedBox(width: 8),
           ],
-          Semantics(
-            liveRegion: true,
-            child: Text(
-              '${loading ? 'Loading more… ' : ''}Showing ${items.length} of ${items.total} ${widget.noun}',
-              style: TextStyle(fontSize: 12, color: muted),
+          // Flexible: with a big phone font the line wraps instead of running off the screen.
+          Flexible(
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                '${loading ? 'Loading more… ' : ''}Showing ${items.length} of ${items.total} ${widget.noun}',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: muted),
+              ),
             ),
           ),
         ],

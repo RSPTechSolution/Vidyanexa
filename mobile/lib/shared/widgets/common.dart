@@ -118,7 +118,8 @@ class ChildSwitcher extends StatelessWidget {
     if (names.length < 2) return const SizedBox.shrink();
     final scheme = Theme.of(context).colorScheme;
     return SizedBox(
-      height: 60,
+      // Taller with a bigger phone font, so the second line ("Paid up", "₹3,000 due") is never cut off.
+      height: MediaQuery.textScalerOf(context).scale(60).clamp(60, 120),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -268,3 +269,7 @@ void showSnack(BuildContext context, String message, {bool error = false}) {
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Text(message), behavior: SnackBarBehavior.floating, backgroundColor: error ? scheme.error : null));
 }
+
+/// A label for a segment of a [SegmentedButton]: on one line, shrunk to fit rather than broken mid-word ("Mo / n")
+/// when the phone's font is big and the segments are narrow.
+Widget segmentLabel(String text) => FittedBox(fit: BoxFit.scaleDown, child: Text(text, maxLines: 1, softWrap: false));

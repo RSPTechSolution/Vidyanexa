@@ -8,6 +8,7 @@ import '../../core/auth/auth_controller.dart';
 import '../../core/auth/models.dart';
 import '../../core/theme/theme_mode.dart';
 import '../auth/login_screen.dart' show AppVersion;
+import '../../shared/widgets/common.dart' show segmentLabel;
 import 'connections.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -79,10 +80,10 @@ class ProfileScreen extends ConsumerWidget {
                   const Text('Appearance', style: TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 10),
                   SegmentedButton<ThemeMode>(
-                    segments: const [
-                      ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode_outlined), label: Text('Light')),
-                      ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode_outlined), label: Text('Dark')),
-                      ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto_outlined), label: Text('Auto')),
+                    segments: [
+                      ButtonSegment(value: ThemeMode.light, icon: const Icon(Icons.light_mode_outlined), label: segmentLabel('Light')),
+                      ButtonSegment(value: ThemeMode.dark, icon: const Icon(Icons.dark_mode_outlined), label: segmentLabel('Dark')),
+                      ButtonSegment(value: ThemeMode.system, icon: const Icon(Icons.brightness_auto_outlined), label: segmentLabel('Auto')),
                     ],
                     selected: {mode},
                     onSelectionChanged: (s) => ref.read(themeModeProvider.notifier).set(s.first),

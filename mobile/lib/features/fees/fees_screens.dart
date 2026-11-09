@@ -216,14 +216,19 @@ class _InvoiceCard extends StatelessWidget {
         ),
         title: Text(inv.term, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text('Due ${_date.format(inv.dueDate)}', style: const TextStyle(fontSize: 12)),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(inr(inv.balance > 0 ? inv.balance : inv.net), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-            const SizedBox(height: 2),
-            InvoiceStatusPill(inv),
-          ],
+        trailing: FittedBox(
+          // A list row's corner has a fixed height: with a big phone font the amount and status shrink to fit.
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(inr(inv.balance > 0 ? inv.balance : inv.net), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+              const SizedBox(height: 2),
+              InvoiceStatusPill(inv),
+            ],
+          ),
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
         children: [
@@ -327,7 +332,10 @@ class _StaffFeesViewState extends ConsumerState<StaffFeesView> {
             summary.when(
               data: (s) => Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Row(
+                // Equal heights, whatever wraps (big phone fonts).
+                child: IntrinsicHeight(
+                  child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Expanded(
                       child: _Tile(label: 'Today', value: inr(s.collectedToday), color: st.success, icon: Icons.currency_rupee_rounded),
@@ -346,6 +354,7 @@ class _StaffFeesViewState extends ConsumerState<StaffFeesView> {
                       child: _Tile(label: 'Overdue', value: inr(s.overdue), color: st.danger, icon: Icons.warning_amber_rounded),
                     ),
                   ],
+                ),
                 ),
               ),
               loading: () => const SkeletonList(count: 1, height: 84),
@@ -398,13 +407,18 @@ class _StaffFeesViewState extends ConsumerState<StaffFeesView> {
                           ListTile(
                             title: Text(inv.studentName, style: const TextStyle(fontWeight: FontWeight.w600)),
                             subtitle: Text('${inv.classSection} · ${inv.term}', maxLines: 1, overflow: TextOverflow.ellipsis),
-                            trailing: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(inr(inv.balance > 0 ? inv.balance : inv.net), style: const TextStyle(fontWeight: FontWeight.w700)),
-                                InvoiceStatusPill(inv),
-                              ],
+                            trailing: FittedBox(
+                              // A list row's corner has a fixed height: with a big phone font the amount and status shrink to fit.
+                              fit: BoxFit.scaleDown,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(inr(inv.balance > 0 ? inv.balance : inv.net), style: const TextStyle(fontWeight: FontWeight.w700)),
+                                  InvoiceStatusPill(inv),
+                                ],
+                              ),
                             ),
                             onTap: () async {
                               await context.push('/fees/invoice/${inv.id}');
@@ -442,7 +456,7 @@ class _Tile extends StatelessWidget {
           FittedBox(
             child: Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
           ),
-          Text(label, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          FittedBox(fit: BoxFit.scaleDown, child: Text(label, maxLines: 1, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant))),
         ],
       ),
     ),
@@ -501,6 +515,7 @@ class InvoiceScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             for (final p in inv.payments)
               Card(
+                margin: const EdgeInsets.only(bottom: 10),
                 child: ListTile(
                   leading: Icon(methodLabels[p.method]?.$2 ?? Icons.payments_outlined, color: s.success),
                   title: Text('${inr(p.amount)} · ${methodLabels[p.method]?.$1 ?? p.method}'),

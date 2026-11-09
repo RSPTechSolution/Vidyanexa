@@ -3,7 +3,7 @@ from datetime import date, timedelta
 
 import asyncio
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from app.models import User
 from app.services import notification_service
@@ -231,3 +231,21 @@ async def test_devices_register_and_move(client, db, school, admin_headers):
     assert (await client.post(f"{API}/notifications/devices", headers=h2, json=tok)).status_code == 200  # same phone, new user
     assert (await client.post(f"{API}/notifications/devices", headers=h1, json={**tok, "platform": "pc"})).status_code == 422
     assert (await client.post(f"{API}/notifications/devices/remove", headers=h2, json={"token": tok["token"]})).status_code == 200
+
+
+async def test_a_phone_moves_between_schools_and_double_registration_is_safe(client, db, school, admin_headers):
+    """A phone used at one school, then signed in at another, gets the new person's pushes (row security hides the old
+    row from the second school); two registrations at the same moment don't fail either."""
+    other = await factories.school(db, "other-school")
+    await factories.user(db, school, "m1@t.com", "teacher")
+    await factories.user(db, other, "m2@t.com", "teacher")
+    h1 = await factories.login_headers(client, "m1@t.com", PASSWORD, school.slug)
+    h2 = await factories.login_headers(client, "m2@t.com", PASSWORD, other.slug)
+    tok = {"token": "fcm-token-moving-phone-1", "platform": "android", "app": "staff"}
+    assert (await client.post(f"{API}/notifications/devices", headers=h1, json=tok)).status_code == 200
+    assert (await client.post(f"{API}/notifications/devices", headers=h2, json=tok)).status_code == 200
+    rows = (await db.execute(text("SELECT u.email FROM device_tokens d JOIN users u ON u.id = d.user_id WHERE d.token = :t"),
+                             {"t": tok["token"]})).all()
+    assert [r[0] for r in rows] == ["m2@t.com"]
+    again = await asyncio.gather(*[client.post(f"{API}/notifications/devices", headers=h2, json={**tok, "token": "fcm-token-twice-2"}) for _ in range(3)])
+    assert [r.status_code for r in again] == [200, 200, 200]

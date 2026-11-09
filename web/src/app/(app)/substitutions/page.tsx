@@ -87,8 +87,8 @@ export default function SubstitutionsPage() {
           <Button variant="outline" size="icon" aria-label="Next day" onClick={() => setDay(format(addDays(dayDate, 1), "yyyy-MM-dd"))}><ChevronRight aria-hidden /></Button>
           <span className="text-sm font-medium">{format(dayDate, "EEEE")}</span>
         </div>
-        <div className="flex items-end gap-2 sm:ml-auto">
-          <Field label="Teacher away" className="w-60">
+        <div className="flex w-full items-end gap-2 sm:ml-auto sm:w-auto">
+          <Field label="Teacher away" className="min-w-0 flex-1 sm:w-60 sm:flex-none">
             {(a) => (
               <Select value={teacherId || undefined} onValueChange={(v) => setTeacherId(String(v))}>
                 <SelectTrigger id={a.id} className="w-full"><SelectValue placeholder="Choose a teacher">{teachers.data?.find((t) => t.id === teacherId)?.full_name}</SelectValue></SelectTrigger>

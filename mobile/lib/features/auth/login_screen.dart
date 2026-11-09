@@ -10,6 +10,7 @@ import '../../core/auth/auth_controller.dart';
 import '../../core/config/app_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../shared/widgets/brand.dart';
+import '../../shared/widgets/common.dart' show segmentLabel;
 import '../../shared/widgets/hero_banner.dart';
 import '../../shared/widgets/form_widgets.dart';
 
@@ -115,9 +116,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const SizedBox(height: 18),
                       if (flavor == AppFlavor.parent) ...[
                         SegmentedButton<bool>(
-                          segments: const [
-                            ButtonSegment(value: false, label: Text("I'm a parent")),
-                            ButtonSegment(value: true, label: Text("I'm a student")),
+                          segments: [
+                            ButtonSegment(value: false, label: segmentLabel("I'm a parent")),
+                            ButtonSegment(value: true, label: segmentLabel("I'm a student")),
                           ],
                           selected: {_student},
                           showSelectedIcon: false,

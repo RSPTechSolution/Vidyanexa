@@ -15,6 +15,8 @@ import 'package:eduvia/core/router/app_router.dart';
 import 'package:integration_test/integration_test.dart';
 
 const _email = String.fromEnvironment('E2E_EMAIL');
+// Set to a name (e.g. "bigfont") to save a screenshot of every screen through `flutter drive`.
+const _shots = String.fromEnvironment('E2E_SHOTS');
 const _password = String.fromEnvironment(
   'E2E_PASSWORD',
   defaultValue: 'Demo@1234',
@@ -36,7 +38,7 @@ Future<void> _waitFor(WidgetTester tester, Finder f, {int seconds = 30}) async {
 }
 
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('sign in as $_email and open every screen', (tester) async {
     final errors = <String>[];
@@ -82,12 +84,36 @@ void main() {
       await _wait(tester, 4); // home loads; push registration runs
 
       final visited = <String>[];
-      void check(String name) {
+      if (_shots.isNotEmpty) await binding.convertFlutterSurfaceToImage();
+      final leaked = RegExp(r'(^|[^A-Za-z])(null|NaN|undefined|Instance of)([^A-Za-z]|$)');
+      Future<void> check(String name) async {
         visited.add(name);
         for (final e in find.byType(ErrorPanel).evaluate()) {
           errors.add(
             '$name: shows an error: ${(e.widget as ErrorPanel).message}',
           );
+        }
+        if (_shots.isNotEmpty) {
+          await binding.takeScreenshot('${_shots}_${_email.split('@').first}_${name.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_')}');
+        }
+        // Scroll to the bottom, so rows that only build further down are laid out (and checked) too.
+        final scrollables = find.byType(Scrollable);
+        for (var i = 0; i < 6 && scrollables.evaluate().isNotEmpty; i++) {
+          try {
+            await tester.drag(scrollables.first, const Offset(0, -600), warnIfMissed: false);
+          } catch (_) {
+            break;
+          }
+          await _wait(tester, 0.5);
+        }
+        // And back to the top, where the next step expects to start.
+        for (var i = 0; i < 8 && scrollables.evaluate().isNotEmpty; i++) {
+          await tester.drag(scrollables.first, const Offset(0, 800), warnIfMissed: false);
+          await _wait(tester, 0.3);
+        }
+        for (final t in tester.widgetList<Text>(find.byType(Text))) {
+          final text = t.data ?? t.textSpan?.toPlainText() ?? '';
+          if (leaked.hasMatch(text)) errors.add('$name: shows "$text"');
         }
       }
 
@@ -105,7 +131,7 @@ void main() {
           ),
         );
         await _wait(tester);
-        check('tab $tab');
+        await check('tab $tab');
       }
 
       // Every item on the More screen, the way a person opens it.
@@ -130,7 +156,7 @@ void main() {
         );
         await tester.tap(tile);
         await _wait(tester);
-        check(title);
+        await check(title);
         router.pop();
         await _wait(tester, 1);
       }
