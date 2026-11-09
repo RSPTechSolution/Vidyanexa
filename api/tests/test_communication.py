@@ -92,3 +92,33 @@ async def test_homework_flow(client, db, school, admin_headers):
     late = await client.post(f"{API}/homework/{hw['id']}/done", headers=p, json={"student_id": student_id, "done": False})
     assert late.json()["error"]["code"] == "ALREADY_CHECKED"
     assert (await client.get(f"{API}/homework", headers=p)).status_code == 403
+
+
+async def test_teachers_see_only_their_own_homework(client, db, school, admin_headers):
+    """A subject teacher sees their subject only; the class teacher (incharge) sees all of their class; admins see all."""
+    a, b, maths, science, *_ = await setup(client, db, school, admin_headers)
+    sci = await factories.user(db, school, "sci7@t.com", "teacher")
+    periods = (await client.get(f"{API}/timetable/periods", headers=admin_headers)).json()["data"]
+    await client.put(f"{API}/timetable/slots", headers=admin_headers, json={
+        "section_id": str(a.id), "day": 2, "period_id": periods[0]["id"], "subject_id": science["id"], "teacher_id": str(sci.id)})
+    incharge = await factories.user(db, school, "ct7@t.com", "teacher")
+    await client.patch(f"{API}/classes/sections/{a.id}", headers=admin_headers, json={"class_teacher_id": str(incharge.id)})
+    due = (date.today() + timedelta(days=3)).isoformat()
+
+    def titles(r):
+        return sorted(h["title"] for h in r.json()["data"])
+
+    t = await factories.login_headers(client, "t7@t.com", PASSWORD, school.slug)
+    s = await factories.login_headers(client, "sci7@t.com", PASSWORD, school.slug)
+    ct = await factories.login_headers(client, "ct7@t.com", PASSWORD, school.slug)
+    for headers, subject, title in [(t, maths, "Maths 7"), (s, science, "Science 7")]:
+        r = await client.post(f"{API}/homework", headers=headers, json={"section_id": str(a.id), "subject_id": subject["id"], "title": title, "due_date": due})
+        assert r.status_code == 201, r.text
+    await client.post(f"{API}/homework", headers=admin_headers, json={"section_id": str(b.id), "subject_id": maths["id"], "title": "Maths 8", "due_date": due})
+
+    assert titles(await client.get(f"{API}/homework", headers=t)) == ["Maths 7"]
+    assert titles(await client.get(f"{API}/homework", headers=s)) == ["Science 7"]
+    assert titles(await client.get(f"{API}/homework", headers=ct)) == ["Maths 7", "Science 7"]
+    assert titles(await client.get(f"{API}/homework", headers=admin_headers)) == ["Maths 7", "Maths 8", "Science 7"]
+    science_hw = next(h for h in (await client.get(f"{API}/homework", headers=s)).json()["data"])
+    assert (await client.get(f"{API}/homework/{science_hw['id']}", headers=t)).status_code == 404

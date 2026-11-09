@@ -3,7 +3,7 @@ import uuid
 from collections import Counter
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import false, func, or_, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError, Forbidden, NotFound
@@ -38,6 +38,18 @@ def _allowed(scope, section_id: uuid.UUID, subject_id: uuid.UUID | None = None) 
         return False
     subjects = scope[section_id]
     return subjects is None or subject_id is None or subject_id in subjects
+
+
+def _visible(user: User, scope: dict):
+    """What a teacher sees: everything in the class they are incharge of, only their own subjects in classes they teach,
+    and anything they set themselves. Admins and principals (scope None) see all of it."""
+    whole = [sid for sid, subjects in scope.items() if subjects is None]
+    pairs = [(sid, subj) for sid, subjects in scope.items() if subjects is not None for subj in subjects]
+    return or_(
+        Homework.created_by == user.id,
+        Homework.section_id.in_(whole) if whole else false(),
+        tuple_(Homework.section_id, Homework.subject_id).in_(pairs) if pairs else false(),
+    )
 
 
 async def _labels(db: AsyncSession, school_id: uuid.UUID) -> dict[uuid.UUID, tuple[str, int]]:
@@ -128,8 +140,8 @@ async def list_homework(db: AsyncSession, user: User, page: PageParams, *, secti
         stmt = stmt.where(Homework.id == homework_id)
     if section_id:
         stmt = stmt.where(Homework.section_id == section_id)
-    if scope is not None:  # teachers see homework for the classes they teach
-        stmt = stmt.where(Homework.section_id.in_(list(scope)))
+    if scope is not None:
+        stmt = stmt.where(_visible(user, scope))
     total = await db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
     rows = (await db.execute(stmt.order_by(Homework.due_date.desc(), Homework.created_at.desc()).offset(page.offset).limit(page.page_size))).all()
     labels = await _labels(db, user.school_id)
