@@ -1,0 +1,146 @@
+<!doctype html>
+<!-- Christmas and New Year feed posts (1080x1350), rendered by web/scripts/social/season.mjs. Parameters arrive in the
+     hash as URL-encoded JSON: theme (christmas | newyear), layout (greeting | hero), kicker, title (*gold words*), sub,
+     pill, points, big (a large number, e.g. the year), foot. -->
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: Cinzel; src: url("../../web/src/fonts/Cinzel-SemiBold.ttf"); font-weight: 600; }
+* { box-sizing: border-box; margin: 0; }
+body { width: 1080px; height: 1350px; overflow: hidden; color: #F7F2E8; font-family: "Segoe UI", Arial, sans-serif; }
+.page { position: relative; height: 100%; padding: 120px 84px 0; overflow: hidden;
+  background:
+    radial-gradient(700px 520px at 50% 112%, rgba(120,170,230,.22), transparent 70%),
+    radial-gradient(760px 560px at 100% 0%, rgba(184,137,60,.28), transparent 62%),
+    linear-gradient(180deg, #0B1428 0%, #13213D 60%, #1B2A48 100%); }
+.newyear .page, .page.newyear { background:
+    radial-gradient(640px 520px at 78% 18%, rgba(241,199,110,.26), transparent 66%),
+    radial-gradient(620px 560px at 10% 30%, rgba(110,90,200,.22), transparent 66%),
+    linear-gradient(180deg, #0A1226 0%, #121E3A 58%, #1D2240 100%); }
+.brand { display: flex; align-items: center; gap: 16px; position: relative; z-index: 3; }
+.brand img { width: 56px; }
+.word { font-family: Cinzel; font-weight: 600; font-size: 30px; letter-spacing: .08em; }
+.kicker { margin-top: 52px; font-size: 24px; letter-spacing: .24em; color: #E2BE74; font-weight: 700; position: relative; z-index: 3; }
+h1 { margin-top: 18px; font-family: Georgia, serif; font-size: 82px; line-height: 1.05; letter-spacing: -.01em; max-width: 900px; position: relative; z-index: 3; }
+h1 em { font-style: normal; color: #F1C76E; text-shadow: 0 0 34px rgba(255,200,110,.45); }
+.sub { margin-top: 26px; font-size: 31px; line-height: 1.45; color: #D6D2C8; max-width: 860px; position: relative; z-index: 3; }
+.pill { display: inline-flex; align-items: center; gap: 14px; margin-top: 40px; padding: 20px 32px; border-radius: 999px; font-size: 30px; font-weight: 700;
+  color: #15233F; background: linear-gradient(90deg, #F1C76E, #E2A94C); box-shadow: 0 18px 40px -12px rgba(241,199,110,.55); position: relative; z-index: 3; }
+.points { margin-top: 46px; display: grid; gap: 18px; position: relative; z-index: 3; }
+.points div { display: flex; align-items: center; gap: 16px; font-size: 29px; color: #EDE7DA; }
+.points b { display: inline-flex; width: 40px; height: 40px; border-radius: 50%; align-items: center; justify-content: center;
+  background: rgba(241,199,110,.16); border: 1.5px solid rgba(241,199,110,.6); color: #F1C76E; font-size: 22px; }
+.big { font-family: Georgia, serif; font-size: 250px; line-height: .9; color: #F1C76E; text-shadow: 0 0 60px rgba(255,200,110,.45); position: relative; z-index: 3; margin-top: 10px; }
+.foot { position: absolute; left: 84px; right: 84px; bottom: 46px; display: flex; justify-content: space-between; font-size: 23px; color: #CFC8B8; letter-spacing: .03em; z-index: 3; }
+.foot b { color: #F7F2E8; }
+.art { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+
+/* greeting layout: centred */
+.greeting-layout { text-align: center; }
+.greeting-layout .brand { justify-content: center; }
+.greeting-layout .kicker { margin-top: 90px; }
+.greeting-layout h1 { margin: 26px auto 0; font-size: 124px; max-width: none; }
+.greeting-layout .sub { margin: 34px auto 0; }
+.greeting-layout .foot { justify-content: center; }
+.christmas .foot, .christmas .foot b { color: #15233F; }
+</style></head>
+<body><div class="page" id="page">
+  <svg class="art" id="art" viewBox="0 0 1080 1350"></svg>
+  <div class="brand"><img src="../png/vidyanexa-crest-reverse.png" alt=""><div class="word">VIDYANEXA</div></div>
+  <div class="kicker" id="kicker"></div>
+  <h1 id="title"></h1>
+  <div id="body"></div>
+  <div class="foot" id="foot"></div>
+</div>
+<script>
+  const p = JSON.parse(decodeURIComponent(location.hash.slice(1) || "{}"));
+  const gold = (s) => (s || "").replace(/\*(.+?)\*/g, "<em>$1</em>");
+  const layout = p.layout || "greeting", theme = p.theme || "christmas";
+  const page = document.getElementById("page");
+  page.classList.add(`${layout}-layout`, theme);
+  document.getElementById("kicker").textContent = p.kicker || "";
+  document.getElementById("title").innerHTML = gold(p.title);
+  document.getElementById("body").innerHTML = (p.big ? `<div class="big">${p.big}</div>` : "")
+    + (p.sub ? `<p class="sub">${p.sub}</p>` : "") + (p.pill ? `<div class="pill">${p.pill}</div>` : "")
+    + (p.points ? `<div class="points">${p.points.map((x) => `<div><b>✓</b>${x}</div>`).join("")}</div>` : "");
+  document.getElementById("foot").innerHTML = p.foot || "<b>vidyanexa.com</b><span>Free 14-day trial · no card needed</span>";
+
+  // A seeded random, so every render of a post is identical.
+  let seed = theme === "christmas" ? 7 : 11;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  let art = `<defs><radialGradient id="starglow"><stop offset="0" stop-color="#FFE29A" stop-opacity=".55"/><stop offset="1" stop-color="#F1C76E" stop-opacity="0"/></radialGradient></defs>`;
+  // Stars in the sky, both themes.
+  for (let i = 0; i < 70; i++) {
+    const x = rnd() * 1080, y = rnd() * 900, r = 0.8 + rnd() * 1.8;
+    art += `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${r.toFixed(1)}" fill="#F7F2E8" opacity="${(0.25 + rnd() * 0.5).toFixed(2)}"/>`;
+  }
+  const sparkle = (x, y, s, c = "#F1C76E") => `<path transform="translate(${x} ${y}) scale(${s / 20})" d="M0 -10 L2 -2 L10 0 L2 2 L0 10 L-2 2 L-10 0 L-2 -2 Z" fill="${c}"/>`;
+
+  if (theme === "christmas") {
+    // Falling snow.
+    for (let i = 0; i < 110; i++) {
+      const x = rnd() * 1080, y = rnd() * 1250, r = 1.6 + rnd() * 4;
+      if (layout === "greeting" && x > 110 && x < 970 && y > 260 && y < 730) continue;
+      art += `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${r.toFixed(1)}" fill="#FFFFFF" opacity="${(0.35 + rnd() * 0.5).toFixed(2)}"/>`;
+    }
+    // Snowflakes: six arms with little branches.
+    const flake = (x, y, s, o) => {
+      let g = `<g transform="translate(${x} ${y}) scale(${s})" stroke="#DCE8F7" stroke-width="2.2" stroke-linecap="round" opacity="${o}">`;
+      for (let a = 0; a < 6; a++) g += `<g transform="rotate(${a * 60})"><path d="M0 0 V-30 M0 -18 L-8 -26 M0 -18 L8 -26 M0 -8 L-6 -14 M0 -8 L6 -14"/></g>`;
+      return g + "</g>";
+    };
+    art += flake(930, 260, 1.5, .5) + flake(150, 330, 1.1, .35) + flake(990, 820, 1.0, .3) + flake(110, 760, 1.3, .3);
+    // Snowy ground and a row of pine trees, a lit one in the middle with a star on top.
+    const tree = (x, base, h, lit) => {
+      const w = h * 0.62;
+      let g = "";
+      for (let k = 0; k < 3; k++) {
+        const top = base - h + k * h * 0.26, bot = base - h * 0.18 - (2 - k) * h * 0.2;
+        const ww = w * (0.55 + k * 0.22);
+        g += `<path d="M${x} ${top} L${x + ww / 2} ${bot} L${x - ww / 2} ${bot} Z" fill="${lit ? "#1F5A47" : "#16394A"}"/>`;
+        g += `<path d="M${x - ww / 2} ${bot} Q ${x} ${bot - 16} ${x + ww / 2} ${bot}" stroke="#E8F0FA" stroke-width="5" fill="none" opacity=".75"/>`;
+      }
+      g += `<rect x="${x - h * 0.04}" y="${base - h * 0.18}" width="${h * 0.08}" height="${h * 0.18}" fill="#3A2A22"/>`;
+      if (lit) {
+        const bulbs = ["#F1C76E", "#FF6B6B", "#7FD1FF", "#FFE29A"];
+        for (let i = 0; i < 26; i++) {
+          const t = 0.15 + rnd() * 0.65, yy = base - h + t * h * 0.82, half = w * 0.5 * t * 0.95;
+          const xx = x + (rnd() * 2 - 1) * half, c = bulbs[i % bulbs.length];
+          art += ""; g += `<circle cx="${xx.toFixed(0)}" cy="${yy.toFixed(0)}" r="13" fill="${c}" opacity=".22"/><circle cx="${xx.toFixed(0)}" cy="${yy.toFixed(0)}" r="5.5" fill="${c}"/>`;
+        }
+        g += `<circle cx="${x}" cy="${base - h - 6}" r="70" fill="url(#starglow)"/>` + sparkle(x, base - h - 6, 60);
+      }
+      return g;
+    };
+    const base = 1270;
+    art += `<path d="M0 ${base - 40} Q 270 ${base - 90} 540 ${base - 50} T 1080 ${base - 60} V1350 H0 Z" fill="#E6EEF8" opacity=".14"/>`;
+    const trees = layout === "greeting"
+      ? [[110, 300, 0], [260, 220, 0], [540, 420, 1], [820, 220, 0], [970, 300, 0]]
+      : [[780, 260, 0], [930, 380, 1], [1060, 230, 0]];
+    for (const [x, h, lit] of trees) art += tree(x, base, h, lit);
+    art += `<path d="M0 ${base} Q 300 ${base - 30} 600 ${base - 6} T 1080 ${base - 14} V1350 H0 Z" fill="#E6EEF8" opacity=".9"/>`;
+  } else {
+    // Fireworks: rays from a centre, tipped with dots, in brand gold and soft accents.
+    const burst = (cx, cy, r, c, n = 18) => {
+      let g = `<g opacity=".55">`;
+      for (let i = 0; i < n; i++) {
+        const a = (Math.PI * 2 * i) / n, r0 = r * 0.25, r1 = r * (0.8 + rnd() * 0.2);
+        const x0 = cx + Math.cos(a) * r0, y0 = cy + Math.sin(a) * r0, x1 = cx + Math.cos(a) * r1, y1 = cy + Math.sin(a) * r1;
+        g += `<line x1="${x0.toFixed(0)}" y1="${y0.toFixed(0)}" x2="${x1.toFixed(0)}" y2="${y1.toFixed(0)}" stroke="${c}" stroke-width="3" stroke-linecap="round" opacity=".75"/>`;
+        g += `<circle cx="${(cx + Math.cos(a) * r1 * 1.08).toFixed(0)}" cy="${(cy + Math.sin(a) * r1 * 1.08).toFixed(0)}" r="4.5" fill="${c}"/>`;
+      }
+      return g + "</g>";
+    };
+    art += layout === "greeting"
+      ? burst(110, 170, 110, "#F1C76E") + burst(990, 150, 130, "#E2A94C", 22) + burst(960, 1080, 110, "#9FB8FF") + burst(120, 1090, 100, "#FF8FA3", 16)
+      : burst(890, 330, 170, "#F1C76E", 22) + burst(980, 900, 120, "#9FB8FF") + burst(760, 1100, 90, "#FF8FA3", 14);
+    // Confetti.
+    const conf = ["#F1C76E", "#E2A94C", "#9FB8FF", "#FF8FA3", "#F7F2E8"];
+    for (let i = 0; i < 60; i++) {
+      const x = rnd() * 1080, y = (layout === "greeting" ? 990 : 600) + rnd() * (layout === "greeting" ? 280 : 700), w = 8 + rnd() * 10, rot = rnd() * 180;
+      art += `<rect x="${x.toFixed(0)}" y="${y.toFixed(0)}" width="${w.toFixed(0)}" height="${(w * 0.45).toFixed(0)}" rx="2" fill="${conf[i % conf.length]}" opacity=".7" transform="rotate(${rot.toFixed(0)} ${x.toFixed(0)} ${y.toFixed(0)})"/>`;
+    }
+  }
+  for (const [x, y, s] of [[200, 190, 24], [960, 560, 20], [80, 620, 18], [700, 140, 16]]) art += sparkle(x, y, s);
+  document.getElementById("art").innerHTML = art;
+</script>
+</body></html>

@@ -3,6 +3,7 @@
 //
 //   node scripts/social/metricool.mjs                        → brand/social/metricool.csv
 //   node scripts/social/metricool.mjs --start 2026-10-26     first post date (then Mon/Wed/Fri; dated posts keep their date)
+//   node scripts/social/metricool.mjs --feed F --out O        another batch: its own feed file and CSV (paths from the repo root)
 //   node scripts/social/metricool.mjs --template path.csv    fill the template downloaded from Metricool instead,
 //                                                            keeping its exact header row (safest if Metricool renames columns)
 //
@@ -15,16 +16,18 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../../..");
-const FEED = path.join(root, "brand/social/feed.md");
+const args = process.argv.slice(2);
+const opt = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined; };
+
+// --feed / --out (paths from the repo root): a later batch of posts gets its own feed and CSV, e.g.
+//   --feed brand/social/feed-2026-11-09.md --out brand/social/metricool-2026-11-09.csv
+const FEED = path.join(root, opt("--feed") ?? "brand/social/feed.md");
 const MEDIA_SRC = path.join(root, "brand/social/out");
 const PUBLIC_DIR = path.join(root, "web/public/social");
 const PUBLIC_URL = "https://www.vidyanexa.com/social";
-const OUT = path.join(root, "brand/social/metricool.csv");
+const OUT = path.join(root, opt("--out") ?? "brand/social/metricool.csv");
 const TIME = "19:30:00"; // 7:30 pm: after school hours, when principals and owners are on their phones
 const COVER_AT = "3.0"; // seconds into each Reel: headline, phone and first caption all showing
-
-const args = process.argv.slice(2);
-const opt = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined; };
 const start = new Date(`${opt("--start") ?? "2026-10-26"}T00:00:00`);
 
 // ---- the feed: "## N · Image|Reel · `posts/file.png` [· YYYY-MM-DD [HH:MM]]", then a ``` caption block, then "**Alt text:** …".
@@ -50,9 +53,11 @@ for (const p of posts) {
   if (!fs.existsSync(src)) throw new Error(`Missing ${src}: run posts.mjs / reels.mjs first`);
   p.public = `${String(p.n).padStart(2, "0")}-${path.basename(p.file)}`;
   if (p.kind === "Reel") {
-    // Instagram's publishing API can refuse a video with no audio track: add a silent one (AAC 128 kbps, its limit).
+    // Instagram's publishing API can refuse a video with no audio track. Reels with sound effects keep theirs; any
+    // without sound get a silent one (AAC 128 kbps, its limit).
+    const hasAudio = execFileSync("ffprobe", ["-v", "error", "-select_streams", "a", "-show_entries", "stream=index", "-of", "csv=p=0", src]).toString().trim() !== "";
     execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-i", src, "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo",
-      "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-shortest", "-movflags", "+faststart", path.join(PUBLIC_DIR, p.public)]);
+      "-map", "0:v", "-map", hasAudio ? "0:a" : "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-shortest", "-movflags", "+faststart", path.join(PUBLIC_DIR, p.public)]);
   } else {
     fs.copyFileSync(src, path.join(PUBLIC_DIR, p.public));
   }

@@ -12,6 +12,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { mixdown } from "./sfx.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../../..");
@@ -69,9 +70,10 @@ const TOUCHES = `
   }), 50);
 `;
 
-/** Helpers each storyboard step gets: a paced page and a caption marker. */
-function director(page, t0, captions) {
+/** Helpers each storyboard step gets: a paced page and a caption marker. Taps and keys are logged for the sound. */
+function director(page, t0, captions, events) {
   const pause = (ms = 900) => page.waitForTimeout(ms);
+  const now = () => (Date.now() - t0) / 1000;
   return {
     page,
     pause,
@@ -88,16 +90,21 @@ function director(page, t0, captions) {
     async tap(locator, wait = 700) {
       await locator.scrollIntoViewIfNeeded();
       await pause(250);
+      events.push({ kind: "tap", t: now() });
       await locator.click();
       await pause(wait);
     },
     async type(locator, text, wait = 500) {
+      events.push({ kind: "tap", t: now() });
       await locator.click();
+      const t = now();
+      [...text].forEach((_, i) => events.push({ kind: "key", t: t + i * 0.075 }));
       await page.keyboard.type(text, { delay: 75 });
       await pause(wait);
     },
     /** Scroll smoothly by `dy` pixels, as a thumb would. */
     async scroll(dy, ms = 900) {
+      events.push({ kind: "whoosh", t: now(), gain: 0.35 }); // a soft swipe
       await page.evaluate(([dy, ms]) => new Promise((done) => {
         const el = document.scrollingElement, from = el.scrollTop, start = performance.now();
         const step = (now) => { const k = Math.min(1, (now - start) / ms); el.scrollTop = from + dy * (1 - Math.cos(k * Math.PI)) / 2; k < 1 ? requestAnimationFrame(step) : done(); };
@@ -127,16 +134,22 @@ async function record(browser, seg, timeline) {
   const tVideo = Date.now();
   await page.goto(`${BASE}${seg.url}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(seg.settle ?? 900);
+  if (seg.ready) await seg.ready(page); // wait (off camera) until the screen has its data, on a slow machine too
   const tStart = Date.now();
-  const captions = [];
-  const d = director(page, tStart, captions);
+  const captions = [], events = [];
+  const d = director(page, tStart, captions, events);
   await seg.run(d);
   d.noCaption();
   await page.waitForTimeout(seg.hold ?? 1200);
   const length = (Date.now() - tStart) / 1000;
   await ctx.close();
   const file = await page.video().path();
-  timeline.push({ file, skip: (tStart - tVideo) / 1000, length, captions });
+  // On a busy machine the recording starts late, so its first frame isn't at tVideo. Its end is reliable (closing
+  // the page ends it), so count back from there: the take (hold included) is its last `length` seconds.
+  const duration = Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file]).toString());
+  const fromStart = (tStart - tVideo) / 1000, fromEnd = Math.max(0, duration - length);
+  if (Math.abs(fromStart - fromEnd) > 0.25) process.stdout.write(`(recording late by ${(fromStart - fromEnd).toFixed(1)}s, corrected) `);
+  timeline.push({ file, skip: fromEnd, length, captions, events, noWhoosh: seg.noWhoosh });
 }
 
 // ---- the edit ------------------------------------------------------------------------------------------------
@@ -171,9 +184,11 @@ async function compose(browser, story, timeline, outFile) {
 
   // 2. Captions on one timeline (segments follow each other).
   let offset = 0;
-  const caps = [];
+  const caps = [], sounds = [];
   for (const s of timeline) {
     for (const c of s.captions) caps.push({ text: c.text, start: offset + c.start, end: offset + (c.end ?? s.length) });
+    for (const e of s.events ?? []) if (e.t >= 0 && e.t < s.length) sounds.push({ ...e, t: offset + e.t });
+    if (offset > 0 && !s.noWhoosh) sounds.push({ kind: "whoosh", t: offset - 0.3 }); // a new scene (another person's phone)
     offset += s.length;
   }
   const total = offset + END_CARD;
@@ -184,20 +199,26 @@ async function compose(browser, story, timeline, outFile) {
   const args = ["-loop", "1", "-t", total.toFixed(2), "-i", bg, "-i", joined, "-loop", "1", "-t", total.toFixed(2), "-i", frame];
   capFiles.forEach((f) => args.push("-loop", "1", "-t", total.toFixed(2), "-i", f));
   args.push("-loop", "1", "-t", total.toFixed(2), "-i", end);
-  args.push("-f", "lavfi", "-t", total.toFixed(2), "-i", "anullsrc=r=48000:cl=stereo"); // silent track: Instagram wants one
+  // Sound: taps, keys, a pop for each caption (a chime when it's a success), a whoosh into the closing card.
+  for (const c of caps) sounds.push({ kind: /✅|🎉|✓/.test(c.text) ? "chime" : "pop", t: Math.max(0, c.start) });
+  sounds.push({ kind: "whoosh", t: total - END_CARD - 0.35 }, { kind: "chime", t: total - END_CARD + 0.25, gain: 0.8 });
+  const wav = path.join(WORK, `${id}-sfx.wav`);
+  mixdown(wav, total, story.sound === false ? [] : sounds);
+  args.push("-i", wav);
   const n = 3 + capFiles.length; // index of the end card
   let g = `[1:v]tpad=stop_mode=clone:stop_duration=${END_CARD + 1}[scr];[0:v][scr]overlay=260:500:shortest=0[a0];[a0][2:v]overlay=0:0[b0]`;
   let last = "b0";
   caps.forEach((c, i) => {
     const a = Math.max(0, c.start), b = Math.max(a + 0.6, c.end);
     g += `;[${3 + i}:v]format=rgba,fade=t=in:st=${a.toFixed(2)}:d=0.25:alpha=1,fade=t=out:st=${(b - 0.25).toFixed(2)}:d=0.25:alpha=1[c${i}]`;
-    g += `;[${last}][c${i}]overlay=0:0:enable='between(t,${a.toFixed(2)},${b.toFixed(2)})'[k${i}]`;
+    const y = `if(lt(t-${a.toFixed(2)},0.7),46*exp(-7*(t-${a.toFixed(2)}))*cos(13*(t-${a.toFixed(2)})),0)`;
+    g += `;[${last}][c${i}]overlay=x=0:y='${y}':enable='between(t,${a.toFixed(2)},${b.toFixed(2)})'[k${i}]`;
     last = `k${i}`;
   });
   const e0 = (total - END_CARD).toFixed(2);
   g += `;[${n}:v]format=rgba,fade=t=in:st=${e0}:d=0.45:alpha=1[end];[${last}][end]overlay=0:0:enable='gte(t,${e0})'[out]`;
   ffmpeg([...args, "-filter_complex", g, "-map", "[out]", "-map", `${n + 1}:a`, "-t", total.toFixed(2), "-r", String(FPS),
-    "-c:v", "libx264", "-preset", "slow", "-crf", "19", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", outFile]);
+    "-c:v", "libx264", "-preset", "slow", "-crf", "19", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-ac", "2", "-movflags", "+faststart", outFile]);
   return total;
 }
 
@@ -215,6 +236,7 @@ for (const mod of modules.filter((m) => !onlyModule || m === onlyModule)) {
     const timeline = [];
     for (const seg of story.segments) await record(browser, seg, timeline);
     const secs = await compose(browser, story, timeline, outFile);
+    if (story.after) await story.after(); // undo what the take changed, if it shouldn't stay in the demo school
     console.log(`${secs.toFixed(1)}s`);
   }
 }
