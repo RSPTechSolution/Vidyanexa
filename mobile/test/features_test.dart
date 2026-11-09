@@ -5,9 +5,11 @@ import 'package:eduvia/core/config/app_config.dart';
 import 'package:eduvia/features/attendance/attendance_screens.dart';
 import 'package:eduvia/features/exams/exam_screens.dart';
 import 'package:eduvia/core/router/app_router.dart';
+import 'package:eduvia/features/home/home_screen.dart' show greeting;
 import 'package:eduvia/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -61,6 +63,14 @@ void main() {
     final bar = find.byType(NavigationBar);
     expect(MediaQuery.textScalerOf(tester.element(find.descendant(of: bar, matching: find.text('Attendance')))).scale(10), 10);
     expect(MediaQuery.textScalerOf(tester.element(find.byType(Scaffold).first)).scale(10), 13); // the rest still follows the phone
+  });
+
+  testWidgets('home shows the picture for who is signed in', (tester) async {
+    Finder art(String name) => find.byWidgetPredicate((w) => w is SvgPicture && (w.bytesLoader as SvgAssetLoader).assetName == 'assets/hero/$name.svg');
+    final fake = FakeApi()..on('GET /auth/me', (_) => (200, FakeApi.ok(meJson())));
+    await pump(tester, container(fake));
+    expect(art('parent'), findsOneWidget);
+    expect(find.text('Good ${greeting(DateTime.now()).split(' ').last}, Suresh'), findsOneWidget);
   });
 
   testWidgets('a teacher without fee access has no Fees tab', (tester) async {

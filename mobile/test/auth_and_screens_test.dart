@@ -5,6 +5,7 @@ import 'package:eduvia/core/config/app_config.dart';
 import 'package:eduvia/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -20,6 +21,14 @@ ProviderContainer makeContainer(FakeApi fake, MemoryTokenStore tokens, {AppFlavo
       return c;
     }),
   ]);
+}
+
+/// The sign-in button sits below the picture: scroll to it first, as a person on a small phone would.
+Future<void> tapSignIn(WidgetTester tester) async {
+  final button = find.widgetWithText(FilledButton, 'Sign in');
+  await tester.ensureVisible(button);
+  await tester.pumpAndSettle();
+  await tester.tap(button);
 }
 
 void main() {
@@ -77,10 +86,21 @@ void main() {
 
     testWidgets('login validates required fields', (tester) async {
       await pumpApp(tester, FakeApi(), MemoryTokenStore());
-      await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+      await tapSignIn(tester);
       await tester.pump();
       expect(find.text('Enter your email'), findsOneWidget);
       expect(find.text('Enter your password'), findsOneWidget);
+    });
+
+    testWidgets('the parent app shows the family picture, and the student one for a student', (tester) async {
+      Finder art(String name) => find.byWidgetPredicate((w) => w is SvgPicture && (w.bytesLoader as SvgAssetLoader).assetName == 'assets/hero/$name.svg');
+      await pumpApp(tester, FakeApi(), MemoryTokenStore());
+      expect(art('parent'), findsOneWidget);
+      expect(find.text('Every school day, in your hand'), findsOneWidget);
+      await tester.tap(find.text("I'm a student"));
+      await tester.pumpAndSettle();
+      expect(art('student'), findsOneWidget);
+      expect(find.text("Ready for today's lessons?"), findsOneWidget);
     });
 
     testWidgets('wrong password shows the server message', (tester) async {
@@ -89,7 +109,7 @@ void main() {
       expect(find.widgetWithText(TextFormField, 'School ID'), findsNothing); // email and password only
       await tester.enterText(find.widgetWithText(TextFormField, 'Email'), 'parent@demo.com');
       await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'wrong');
-      await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+      await tapSignIn(tester);
       await tester.pumpAndSettle();
       expect(find.text('Invalid email or password'), findsOneWidget);
     });
@@ -99,10 +119,10 @@ void main() {
       await pumpApp(tester, fake, MemoryTokenStore());
       await tester.enterText(find.widgetWithText(TextFormField, 'Email'), 'parent@demo.com');
       await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'Demo@1234');
-      await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+      await tapSignIn(tester);
       await tester.pumpAndSettle();
       expect(find.textContaining('Suresh'), findsOneWidget);
-      expect(find.text('Green Valley Public School'), findsOneWidget);
+      expect(find.textContaining('GREEN VALLEY PUBLIC SCHOOL'), findsOneWidget);
       // Only modules the school enabled are listed.
       expect(find.text('Fees'), findsOneWidget);
       expect(find.text('Bus tracking'), findsNothing);
@@ -130,12 +150,12 @@ void main() {
       expect(find.textContaining('by SMS and email'), findsOneWidget);
       await tester.enterText(find.widgetWithText(TextField, 'Sign-in code'), '111111');
       await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+      await tapSignIn(tester);
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('That code is wrong or has expired'), findsOneWidget);
       await tester.enterText(find.widgetWithText(TextField, 'Sign-in code'), '482913');
       await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+      await tapSignIn(tester);
       for (var i = 0; i < 10; i++) {
         await tester.pump(const Duration(milliseconds: 200));
       }

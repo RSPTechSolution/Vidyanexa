@@ -224,7 +224,8 @@ class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: scheme.surfaceContainer,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: scheme.secondaryContainer,
+        // The selected tab sits on a soft gold pill, the crest's gold, as in the approved design (sample C).
+        indicatorColor: scheme.brightness == Brightness.light ? const Color(0xFFFCE9B8) : const Color(0xFF5A4520),
         // Small enough that five labels ("Attendance", "Homework") fit side by side on a phone.
         labelTextStyle: WidgetStatePropertyAll(textTheme.labelMedium?.copyWith(fontSize: 11, letterSpacing: -0.1, fontWeight: FontWeight.w600)),
       ),

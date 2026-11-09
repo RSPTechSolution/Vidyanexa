@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 366 380" width="366" height="380">
+<rect width="366" height="380" fill="#CFE6F5"></rect>
+<circle cx="290" cy="88" r="26" fill="#F6C453"></circle>
+<g fill="#FFFFFF"><ellipse cx="90" cy="96" rx="36" ry="12"></ellipse><ellipse cx="112" cy="88" rx="22" ry="12"></ellipse></g>
+<path d="M0 214 Q80 180 170 204 T366 196 V280 H0Z" fill="#A9CF9A"></path>
+<g fill="#5B8C5A"><circle cx="30" cy="206" r="20"></circle><circle cx="52" cy="214" r="14"></circle><circle cx="330" cy="200" r="20"></circle><circle cx="350" cy="210" r="14"></circle></g>
+<rect y="262" width="366" height="20" fill="#8DBB7E"></rect>
+<rect y="282" width="366" height="64" fill="#6B7280"></rect>
+<g fill="#FFFFFF"><rect x="8" y="312" width="30" height="4" rx="2"></rect><rect x="68" y="312" width="30" height="4" rx="2"></rect><rect x="128" y="312" width="30" height="4" rx="2"></rect><rect x="188" y="312" width="30" height="4" rx="2"></rect><rect x="248" y="312" width="30" height="4" rx="2"></rect><rect x="308" y="312" width="30" height="4" rx="2"></rect></g>
+<rect y="346" width="366" height="34" fill="#8DBB7E"></rect>
+<rect x="74" y="200" width="222" height="10" rx="5" fill="#D6962A"></rect>
+<rect x="68" y="206" width="232" height="78" rx="12" fill="#F2B632"></rect>
+<rect x="40" y="240" width="38" height="44" rx="8" fill="#F2B632"></rect>
+<path d="M70 216 H86 V242 H66 Z" fill="#5B86C6"></path>
+<g fill="#5B86C6"><rect x="94" y="216" width="26" height="24" rx="4"></rect><rect x="126" y="216" width="26" height="24" rx="4"></rect><rect x="158" y="216" width="26" height="24" rx="4"></rect><rect x="190" y="216" width="26" height="24" rx="4"></rect><rect x="222" y="216" width="26" height="24" rx="4"></rect><rect x="254" y="216" width="30" height="24" rx="4"></rect></g>
+<g fill="#FFFFFF" opacity=".55"><rect x="98" y="219" width="6" height="18" rx="2"></rect><rect x="130" y="219" width="6" height="18" rx="2"></rect><rect x="162" y="219" width="6" height="18" rx="2"></rect></g>
+<rect x="40" y="250" width="260" height="5" fill="#15233F"></rect>
+<text x="190" y="274" font-family="Lexend" font-size="11" font-weight="700" fill="#15233F" text-anchor="middle" letter-spacing="2">SCHOOL BUS</text>
+<circle cx="45" cy="270" r="5" fill="#FFF3D1"></circle>
+<circle cx="104" cy="286" r="17" fill="#2a2f3a"></circle><circle cx="104" cy="286" r="7" fill="#C9CCD6"></circle>
+<circle cx="262" cy="286" r="17" fill="#2a2f3a"></circle><circle cx="262" cy="286" r="7" fill="#C9CCD6"></circle>
+</svg>

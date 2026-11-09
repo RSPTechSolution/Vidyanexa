@@ -9,6 +9,7 @@ import '../../core/auth/session.dart';
 import '../../core/config/app_config.dart';
 import '../../shared/widgets/brand.dart';
 import '../../shared/widgets/common.dart';
+import '../../shared/widgets/hero_banner.dart';
 import '../../shared/widgets/motion.dart';
 import '../attendance/attendance_data.dart';
 import '../attendance/attendance_screens.dart' show statusColor;
@@ -21,6 +22,13 @@ import '../notifications/notifications_screen.dart';
 import '../timetable/timetable_screen.dart';
 import 'today_widget.dart';
 
+/// The note on the Home picture: the date, or why the school is closed today.
+String _todayChip(WidgetRef ref) {
+  final closed = ref.watch(schoolClosedTodayProvider).value;
+  final date = DateFormat('EEEE, d MMMM').format(DateTime.now());
+  return closed == null ? date : '$date · $closed';
+}
+
 String greeting(DateTime now) => now.hour < 12 ? 'Good morning' : (now.hour < 17 ? 'Good afternoon' : 'Good evening');
 
 class HomeScreen extends ConsumerWidget {
@@ -32,8 +40,6 @@ class HomeScreen extends ConsumerWidget {
     if (auth is! SignedIn) return const SizedBox.shrink();
     final me = auth.me;
     final flavor = ref.watch(appConfigProvider).flavor;
-    final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurfaceVariant;
     final month = isoMonth(DateTime.now());
     // Everything the cards below need. Until the first load finishes, one skeleton stands in for all of them, so the
     // cards appear together instead of popping in one by one and pushing each other down.
@@ -75,14 +81,17 @@ class HomeScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
-            Text('${greeting(DateTime.now())}, ${me.firstName}', style: theme.textTheme.headlineSmall),
-            const SizedBox(height: 4),
-            Text(DateFormat('EEEE, d MMMM').format(DateTime.now()), style: TextStyle(color: muted)),
-            const SizedBox(height: 20),
-            if (me.school != null)
-              Entrance(
-                child: _SchoolCard(school: me.school!, role: me.role),
-              ),
+            Text(
+              [roleLabel(me.role), if (me.school != null) me.school!.name].join(' · ').toUpperCase(),
+              style: eyebrow(context),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 2),
+            Text('${greeting(DateTime.now())}, ${me.firstName}', style: serifHeading(context)),
+            const SizedBox(height: 12),
+            Entrance(
+              child: HeroBanner(art: HeroArt.forRole(me.role, flavor), chip: _todayChip(ref)),
+            ),
             const SizedBox(height: 16),
             if (loading)
               const _HomeSkeleton()
@@ -157,43 +166,6 @@ class _HomeSkeleton extends StatelessWidget {
           SizedBox(height: 8),
           SkeletonTile(),
         ],
-      ),
-    );
-  }
-}
-
-class _SchoolCard extends StatelessWidget {
-  const _SchoolCard({required this.school, required this.role});
-  final SchoolBrief school;
-  final String role;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(color: scheme.primary.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
-              child: Icon(Icons.school_outlined, color: scheme.primary),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(school.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 2),
-                  Text(roleLabel(role), style: TextStyle(color: scheme.onSurfaceVariant)),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
