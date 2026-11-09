@@ -345,6 +345,7 @@ class _MiniStat extends StatelessWidget {
                   Text(
                     value,
                     style: TextStyle(fontWeight: FontWeight.w700, color: color),
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],

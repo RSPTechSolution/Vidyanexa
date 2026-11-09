@@ -43,13 +43,18 @@ class HomeShell extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const OfflineBanner(),
-          NavigationBar(
-            selectedIndex: selected < 0 ? 0 : selected,
-            onDestinationSelected: (i) {
-              final branch = tabs[i].index;
-              shell.goBranch(branch, initialLocation: branch == shell.currentIndex);
-            },
-            destinations: [for (final t in tabs) _destinations[t]!],
+          // Phones set to a bigger font size (Samsung's default is) would wrap "Attendance" onto two lines; the
+          // tab labels stay at normal size, everything else on screen still follows the phone's setting.
+          MediaQuery.withClampedTextScaling(
+            maxScaleFactor: 1.0,
+            child: NavigationBar(
+              selectedIndex: selected < 0 ? 0 : selected,
+              onDestinationSelected: (i) {
+                final branch = tabs[i].index;
+                shell.goBranch(branch, initialLocation: branch == shell.currentIndex);
+              },
+              destinations: [for (final t in tabs) _destinations[t]!],
+            ),
           ),
         ],
       ),

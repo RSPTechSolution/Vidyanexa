@@ -226,7 +226,7 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         indicatorColor: scheme.secondaryContainer,
         // Small enough that five labels ("Attendance", "Homework") fit side by side on a phone.
-        labelTextStyle: WidgetStatePropertyAll(textTheme.labelMedium?.copyWith(fontSize: 11.5, letterSpacing: 0, fontWeight: FontWeight.w600)),
+        labelTextStyle: WidgetStatePropertyAll(textTheme.labelMedium?.copyWith(fontSize: 11, letterSpacing: -0.1, fontWeight: FontWeight.w600)),
       ),
       dialogTheme: DialogThemeData(backgroundColor: scheme.surfaceContainerHigh, surfaceTintColor: Colors.transparent),
       bottomSheetTheme: BottomSheetThemeData(backgroundColor: scheme.surfaceContainerLow, surfaceTintColor: Colors.transparent),

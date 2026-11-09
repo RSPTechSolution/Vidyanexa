@@ -49,6 +49,20 @@ void main() {
     }
   });
 
+  testWidgets('tab labels stay on one line with a big phone font on a narrow phone', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2340);
+    tester.view.devicePixelRatio = 3; // 360 wide, a Galaxy S24
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final fake = FakeApi()..on('GET /auth/me', (_) => (200, FakeApi.ok(meJson())));
+    await pump(tester, container(fake));
+    // The test font is wider than Lexend, so check the scaling the tab labels get rather than their measured size.
+    final bar = find.byType(NavigationBar);
+    expect(MediaQuery.textScalerOf(tester.element(find.descendant(of: bar, matching: find.text('Attendance')))).scale(10), 10);
+    expect(MediaQuery.textScalerOf(tester.element(find.byType(Scaffold).first)).scale(10), 13); // the rest still follows the phone
+  });
+
   testWidgets('a teacher without fee access has no Fees tab', (tester) async {
     final me = meJson(role: 'teacher')..['permissions'] = ['school.view', 'attendance.view', 'attendance.mark'];
     final fake = FakeApi()..on('GET /auth/me', (_) => (200, FakeApi.ok(me)));
