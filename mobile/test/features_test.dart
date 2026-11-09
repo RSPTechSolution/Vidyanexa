@@ -682,6 +682,27 @@ void main() {
     expect(views, containsAll(['mine', 'class']));
   });
 
+  testWidgets("More shows My class only to a teacher who is a class teacher (incharge)", (tester) async {
+    for (final incharge in [false, true]) {
+      final me = meJson(role: 'teacher')..['permissions'] = ['school.view', 'attendance.mark', 'leave.approve']..['modules'] = ['attendance'];
+      final fake = FakeApi()
+        ..on('GET /auth/me', (_) => (200, FakeApi.ok(me)))
+        ..on('GET /attendance/sections', (_) => (200, FakeApi.ok([])))
+        ..on('GET /classes/my', (_) => (200, FakeApi.ok(incharge
+            ? [{'section_id': 'sec1', 'label': 'Class 5 – A', 'is_class_teacher': true, 'students': 30, 'attendance_marked': false, 'present': 0,
+                'absent': 0, 'on_leave': 0, 'pending_leave': 0, 'pending_gate_passes': 0, 'fees_enabled': false, 'students_overdue': 0, 'overdue_amount': 0}]
+            : [])));
+      final c = container(fake, flavor: AppFlavor.staff);
+      await pump(tester, c);
+      c.read(routerProvider).go('/more');
+      await tester.pumpAndSettle();
+      expect(find.text('My class'), incharge ? findsOneWidget : findsNothing, reason: 'incharge: $incharge');
+      expect(find.text('Leave requests'), incharge ? findsOneWidget : findsNothing, reason: 'incharge: $incharge');
+      await tester.pumpWidget(const SizedBox());
+      c.dispose();
+    }
+  });
+
   testWidgets('a teacher posts a notice to their class from the app', (tester) async {
     Map<String, dynamic>? posted;
     final me = meJson(role: 'teacher')

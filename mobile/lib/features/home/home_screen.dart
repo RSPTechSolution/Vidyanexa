@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../core/auth/auth_controller.dart';
 import '../../core/auth/models.dart';
 import '../../core/auth/session.dart';
+import '../../core/theme/app_theme.dart';
 import '../../shared/widgets/brand.dart';
 import '../../shared/widgets/common.dart';
 import '../../shared/widgets/hero_banner.dart';
@@ -177,7 +178,7 @@ class _Heading extends StatelessWidget {
     child: Row(
       children: [
         Expanded(
-          child: Text(text, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          child: Text(text, style: serifHeading(context, size: 22)),
         ),
         if (action != null) TextButton(onPressed: onAction, child: Text(action!)),
       ],
@@ -222,10 +223,14 @@ class _FamilyCards extends ConsumerWidget {
                       Row(
                         children: [
                           CircleAvatar(
-                            backgroundColor: scheme.primary.withValues(alpha: 0.12),
+                            // The crest's gold behind each child's initials (sample C).
+                            backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF5A4520) : const Color(0xFFFCE9B8),
                             child: Text(
                               entry.value.split(' ').map((p) => p[0]).take(2).join(),
-                              style: TextStyle(color: scheme.primary, fontWeight: FontWeight.w700),
+                              style: TextStyle(
+                                color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFFF6DFA6) : Brand.navy,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),

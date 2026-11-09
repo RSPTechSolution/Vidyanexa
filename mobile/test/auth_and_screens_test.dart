@@ -5,6 +5,7 @@ import 'package:eduvia/core/config/app_config.dart';
 import 'package:eduvia/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -101,6 +102,25 @@ void main() {
       await tester.pumpAndSettle();
       expect(art('student'), findsOneWidget);
       expect(find.text("Ready for today's lessons?"), findsOneWidget);
+    });
+
+    testWidgets('the sign-in screen shows the app version', (tester) async {
+      await pumpApp(tester, FakeApi(), MemoryTokenStore());
+      expect(find.text('Version 1.2.0 (7)'), findsOneWidget);
+    });
+
+    testWidgets('with fingerprint unlock on, a saved sign-in opens locked, and signing out leads to the password', (tester) async {
+      FlutterSecureStorage.setMockInitialValues({'eduvia.appLock': 'on'});
+      addTearDown(() => FlutterSecureStorage.setMockInitialValues({}));
+      final fake = FakeApi()
+        ..on('GET /auth/me', (_) => (200, FakeApi.ok(meJson())))
+        ..on('POST /auth/logout', (_) => (200, FakeApi.ok({})));
+      await pumpApp(tester, fake, MemoryTokenStore()..access = 'a'..refresh = 'r');
+      expect(find.text('Vidyanexa is locked'), findsOneWidget);
+      await tester.tap(find.text('Sign out and use your password'));
+      await tester.pumpAndSettle();
+      expect(find.text('Vidyanexa is locked'), findsNothing);
+      expect(find.widgetWithText(FilledButton, 'Sign in'), findsOneWidget);
     });
 
     testWidgets('wrong password shows the server message', (tester) async {

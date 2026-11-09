@@ -2,6 +2,7 @@
     <!-- Release builds need this to reach the API (debug builds get it automatically). -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"

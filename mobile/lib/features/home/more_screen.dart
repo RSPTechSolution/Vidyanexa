@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/auth/models.dart';
 import '../../core/auth/session.dart';
+import '../attendance/my_class_screen.dart' show myClassesProvider;
 import '../notices/notices_screen.dart';
 
 /// Everything that doesn't fit in the bottom bar.
@@ -16,12 +17,17 @@ class MoreScreen extends ConsumerWidget {
     if (me == null) return const SizedBox.shrink();
     final unread = ref.watch(unreadNoticesProvider).value ?? 0;
     final scheme = Theme.of(context).colorScheme;
+    // A teacher's class-teacher (incharge) pages: My class, leave requests and early pickups are only for their own class,
+    // so a teacher without one doesn't see them (they would open empty).
+    final teacher = me.role == 'teacher';
+    final incharge = teacher && me.hasModule('attendance') && (ref.watch(myClassesProvider).value?.isNotEmpty ?? false);
+    final classDuties = !teacher || incharge;
     final items = <(IconData, String, String, String, Widget?)>[
-      if (me.hasModule('attendance') && me.role == 'teacher') (Icons.groups_outlined, 'My class', 'Your class: attendance, leave, fees and parents', '/my-class', null),
+      if (incharge) (Icons.groups_outlined, 'My class', 'Your class: attendance, leave, fees and parents', '/my-class', null),
       if (me.hasModule('communication')) (Icons.campaign_outlined, 'Notices', 'Announcements from the school', '/notices',
           unread > 0 ? Badge(label: Text('$unread')) : null),
       if (me.hasModule('academics') && (me.isFamily || me.teaches)) (Icons.calendar_month_outlined, 'Timetable', me.isFamily ? 'The week, period by period' : 'Where you teach this week', '/timetable', null),
-      if (me.hasModule('attendance') && (me.isFamily || me.can('leave.approve'))) (Icons.event_busy_outlined, me.isFamily ? 'Leave' : 'Leave requests', me.isFamily ? 'Tell the school before a day away' : 'Approve leave for your class', '/leave', null),
+      if (me.hasModule('attendance') && (me.isFamily || (me.can('leave.approve') && classDuties))) (Icons.event_busy_outlined, me.isFamily ? 'Leave' : 'Leave requests', me.isFamily ? 'Tell the school before a day away' : 'Approve leave for your class', '/leave', null),
       if (me.hasModule('exams') && me.isFamily) (Icons.quiz_outlined, 'Online tests', 'Quizzes from teachers and scores', '/tests', null),
       if (me.hasModule('academics')) (Icons.videocam_outlined, 'Live classes', 'Online lessons with a Join button', '/live', null),
       if (me.hasModule('communication')) (Icons.forum_outlined, 'Messages', me.isFamily ? 'Write to the teachers' : 'Write to parents', '/messages', null),
@@ -31,7 +37,7 @@ class MoreScreen extends ConsumerWidget {
       if (me.hasModule('transport') && me.role == 'driver') (Icons.directions_bus_outlined, 'Driver', 'Trips, boarding and SOS', '/driver', null),
       if (me.hasModule('library')) (Icons.menu_book_outlined, 'Library books', 'Borrowed books, due dates and fines', '/my-library', null),
       if (me.hasModule('hostel') && me.isFamily) (Icons.hotel_outlined, 'Hostel', 'Room and warden', '/my-hostel', null),
-      if (me.hasModule('security') && (me.isFamily || me.can('leave.approve') || me.can('gatepass.issue'))) (Icons.confirmation_number_outlined, 'Gate passes', me.isFamily ? 'Collect your child early' : 'Approve early pickups', '/gate-pass', null),
+      if (me.hasModule('security') && (me.isFamily || (me.can('leave.approve') && classDuties) || me.can('gatepass.issue'))) (Icons.confirmation_number_outlined, 'Gate passes', me.isFamily ? 'Collect your child early' : 'Approve early pickups', '/gate-pass', null),
       if (me.hasModule('security') && me.can('gate.manage')) (Icons.door_front_door_outlined, 'Gate desk', 'Pickup codes and visitors', '/gate', null),
       if (me.hasModule('cctv') && me.isFamily) (Icons.videocam_outlined, 'Classroom CCTV', 'Consent and live viewing', '/cctv', null),
       if (me.hasModule('hr') && !me.isFamily) (Icons.badge_outlined, 'My leave and pay', 'Leave balance, requests and payslips', '/my-hr', null),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/auth/auth_controller.dart';
@@ -26,7 +28,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _error;
 
   /// The parent app is also the students' app: this only changes the picture and the words, not how sign-in works.
+  /// Remembered on the phone, so a student's phone keeps showing the student picture.
   bool _student = false;
+  static const _studentKey = 'login.student';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStudent();
+  }
+
+  Future<void> _loadStudent() async {
+    try {
+      final saved = await SharedPreferencesAsync().getBool(_studentKey);
+      if (mounted && saved != null && saved != _student) setState(() => _student = saved);
+    } catch (_) {} // no saved choice: the parent picture
+  }
+
+  void _setStudent(bool v) {
+    setState(() => _student = v);
+    try {
+      SharedPreferencesAsync().setBool(_studentKey, v).catchError((_) {});
+    } catch (_) {} // storage unavailable: forgotten next time
+  }
 
   @override
   void dispose() {
@@ -97,7 +121,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ],
                           selected: {_student},
                           showSelectedIcon: false,
-                          onSelectionChanged: (v) => setState(() => _student = v.first),
+                          // The crest's gold for the chosen one, like the tab bar.
+                          style: SegmentedButton.styleFrom(
+                            selectedBackgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF5A4520) : const Color(0xFFFCE9B8),
+                            selectedForegroundColor: theme.brightness == Brightness.dark ? const Color(0xFFF6DFA6) : Brand.navy,
+                          ),
+                          onSelectionChanged: (v) => _setStudent(v.first),
                         ),
                         const SizedBox(height: 18),
                       ],
@@ -134,6 +163,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       LoadingButton(label: 'Sign in', loading: _busy, onPressed: _submit),
                       const SizedBox(height: 12),
                       TextButton(onPressed: () => context.push('/login-code'), child: const Text('Use a one-time code instead')),
+                      const SizedBox(height: 8),
+                      const AppVersion(),
                     ]),
                   ),
                 ),
@@ -173,5 +204,31 @@ class _CrestPill extends StatelessWidget {
         ),
       ]),
     ]),
+  );
+}
+
+/// "Version 1.0.0 (1)": what support asks for first.
+class AppVersion extends StatefulWidget {
+  const AppVersion({super.key});
+
+  @override
+  State<AppVersion> createState() => _AppVersionState();
+}
+
+class _AppVersionState extends State<AppVersion> {
+  final _info = PackageInfo.fromPlatform();
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<PackageInfo>(
+    future: _info,
+    builder: (context, snap) {
+      final info = snap.data;
+      if (info == null) return const SizedBox(height: 16);
+      return Text(
+        'Version ${info.version} (${info.buildNumber})',
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+      );
+    },
   );
 }

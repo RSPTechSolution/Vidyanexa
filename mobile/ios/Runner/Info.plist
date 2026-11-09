@@ -28,6 +28,8 @@
 		<false/>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
+		<key>NSFaceIDUsageDescription</key>
+		<string>Unlock Vidyanexa with Face ID instead of typing your password.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>The driver app shares the school bus's location with parents during a trip.</string>
 		<key>UIApplicationSceneManifest</key>

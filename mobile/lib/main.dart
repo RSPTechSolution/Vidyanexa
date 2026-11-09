@@ -9,6 +9,7 @@ import 'core/push/push.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode.dart';
 import 'shared/widgets/motion.dart';
+import 'features/auth/lock_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +36,8 @@ class VidyanexaApp extends ConsumerWidget {
       themeMode: ref.watch(themeModeProvider),
       scrollBehavior: const AppScrollBehavior(),
       routerConfig: ref.watch(routerProvider),
+      // Fingerprint or face unlock, when it is turned on, covers everything.
+      builder: (context, child) => LockGate(child: child ?? const SizedBox.shrink()),
     );
   }
 }

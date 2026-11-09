@@ -98,4 +98,6 @@ googleServices {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // Fingerprint unlock (local_auth) shows its prompt over an AppCompat theme; without it Android 8 and older crash.
+    implementation("androidx.appcompat:appcompat:1.7.0")
 }

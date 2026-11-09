@@ -39,7 +39,7 @@ const _light = ColorScheme(
   onError: Color(0xFFFFFFFF),
   errorContainer: Color(0xFFFFDAD6),
   onErrorContainer: Color(0xFF410002),
-  surface: Color(0xFFFAF9FD),
+  surface: Color(0xFFFBF8F2), // warm paper, as in the approved design (sample C)
   onSurface: Color(0xFF1A1B21),
   onSurfaceVariant: Color(0xFF45464F),
   outline: Color(0xFF757680),
@@ -50,7 +50,7 @@ const _light = ColorScheme(
   surfaceContainerHigh: Color(0xFFE9E7EF),
   surfaceContainerHighest: Color(0xFFE3E2E9),
   surfaceDim: Color(0xFFDAD9E0),
-  surfaceBright: Color(0xFFFAF9FD),
+  surfaceBright: Color(0xFFFBF8F2),
   inverseSurface: Color(0xFF2F3036),
   onInverseSurface: Color(0xFFF1F0F7),
   inversePrimary: Color(0xFFB0C6FF),
@@ -178,14 +178,16 @@ class AppTheme {
         centerTitle: false,
         titleTextStyle: textTheme.titleLarge?.copyWith(fontSize: 22, fontWeight: FontWeight.w400),
       ),
+      // Light: white cards lifted by a soft navy shadow, no outline (sample C). Dark: outlined, as shadows don't show.
       cardTheme: CardThemeData(
         color: cardColor,
         surfaceTintColor: Colors.transparent,
-        elevation: 0,
+        elevation: isDark ? 0 : 1.5,
+        shadowColor: isDark ? Colors.transparent : const Color(0x2915233F),
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: scheme.outlineVariant),
+          borderRadius: BorderRadius.circular(18),
+          side: isDark ? BorderSide(color: scheme.outlineVariant) : BorderSide.none,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -222,7 +224,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: scheme.surfaceContainer,
+        backgroundColor: isDark ? scheme.surfaceContainer : Colors.white,
         surfaceTintColor: Colors.transparent,
         // The selected tab sits on a soft gold pill, the crest's gold, as in the approved design (sample C).
         indicatorColor: scheme.brightness == Brightness.light ? const Color(0xFFFCE9B8) : const Color(0xFF5A4520),
