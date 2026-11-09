@@ -632,6 +632,40 @@ void main() {
     expect(find.text('Nobody matches'), findsOneWidget);
   });
 
+  testWidgets('a class teacher sees their own homework and their class in separate tabs', (tester) async {
+    final me = meJson(role: 'teacher')..['permissions'] = ['school.view', 'homework.manage']..['modules'] = ['academics'];
+    Map<String, dynamic> hw(String id, String title, String subject, String teacher) => {
+          'id': id, 'section_id': 'sec1', 'section_label': 'Class 5 – A', 'subject_id': 'x', 'subject_name': subject, 'subject_color': 'blue',
+          'title': title, 'details': null, 'assigned_on': '2026-11-09', 'due_date': '2026-11-12', 'teacher': teacher,
+          'students': 30, 'done': 0, 'checked': 0, 'can_edit': true, 'attachments': []};
+    final views = <Object?>[];
+    final fake = FakeApi()
+      ..on('GET /auth/me', (_) => (200, FakeApi.ok(me)))
+      ..on('GET /classes/my', (_) => (200, FakeApi.ok([{
+            'section_id': 'sec1', 'label': 'Class 5 – A', 'is_class_teacher': true, 'students': 30, 'attendance_marked': false, 'present': 0,
+            'absent': 0, 'on_leave': 0, 'pending_leave': 0, 'pending_gate_passes': 0, 'fees_enabled': false, 'students_overdue': 0, 'overdue_amount': 0}])))
+      ..on('GET /homework', (req) {
+        final view = req.queryParameters['view'];
+        views.add(view);
+        return (200, {'success': true, 'data': view == 'class'
+            ? [hw('h1', 'Fractions, page 42', 'Mathematics', 'Priya Verma'), hw('h2', 'Water cycle drawing', 'Science', 'Arjun Rao')]
+            : [hw('h1', 'Fractions, page 42', 'Mathematics', 'Priya Verma')],
+          'meta': {'total': view == 'class' ? 2 : 1, 'page': 1, 'page_size': 25}});
+      });
+    final c = container(fake, flavor: AppFlavor.staff);
+    await pump(tester, c);
+    c.read(routerProvider).go('/homework');
+    await tester.pumpAndSettle();
+    expect(find.text('My homework'), findsOneWidget);
+    expect(find.text('Fractions, page 42'), findsOneWidget);
+    expect(find.text('Water cycle drawing'), findsNothing);
+    await tester.tap(find.widgetWithText(Tab, 'Class 5 – A'));
+    await tester.pumpAndSettle();
+    expect(find.text('Water cycle drawing'), findsOneWidget);
+    expect(find.textContaining('Arjun Rao'), findsOneWidget); // who set it
+    expect(views, containsAll(['mine', 'class']));
+  });
+
   testWidgets('a teacher posts a notice to their class from the app', (tester) async {
     Map<String, dynamic>? posted;
     final me = meJson(role: 'teacher')

@@ -19,10 +19,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError, api } from "@/lib/api/client";
 import type { HomeworkItem } from "@/lib/api/types";
-import { useHomeworkList, useHomeworkTargets } from "@/lib/queries";
+import { useHomeworkList, useHomeworkTargets, useMyClasses } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 function SetHomeworkDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
@@ -84,7 +85,7 @@ function SetHomeworkDialog({ open, onOpenChange }: { open: boolean; onOpenChange
   );
 }
 
-function HomeworkCard({ h }: { h: HomeworkItem }) {
+function HomeworkCard({ h, showTeacher = false }: { h: HomeworkItem; showTeacher?: boolean }) {
   const due = parseISO(h.due_date);
   const past = isPast(due) && !isToday(due);
   const reviewed = h.students ? Math.round((100 * h.checked) / h.students) : 0;
@@ -98,6 +99,7 @@ function HomeworkCard({ h }: { h: HomeworkItem }) {
       <p className={cn("mt-1 flex items-center gap-1 text-xs", past ? "text-muted-foreground" : "text-primary")}>
         <CalendarClock className="size-3.5" aria-hidden />{isToday(due) ? "Due today" : `Due ${format(due, "EEE d MMM")}`}
       </p>
+      {showTeacher && h.teacher && <p className="mt-1 text-xs text-muted-foreground">Set by {h.teacher}</p>}
       <div className="mt-auto pt-3">
         <div className="mb-1 flex justify-between text-xs text-muted-foreground"><span>{h.done} done at home · {h.checked} checked</span><span className="tabular">{h.students} students</span></div>
         <div className="h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden><div className="h-full rounded-full bg-success" style={{ width: `${reviewed}%` }} /></div>
@@ -110,7 +112,12 @@ export default function HomeworkPage() {
   const targets = useHomeworkTargets();
   const [sectionId, setSectionId] = useState("all");
   const [page, setPage] = useState(1);
-  const q = useHomeworkList(page, sectionId === "all" ? undefined : sectionId);
+  // A class teacher (incharge) gets two tabs, so their class's homework from other teachers isn't mixed in with their own.
+  const myClasses = useMyClasses();
+  const incharge = myClasses.data?.filter((c) => c.is_class_teacher) ?? [];
+  const [tab, setTab] = useState<"mine" | "class">("mine");
+  const view = incharge.length ? tab : undefined;
+  const q = useHomeworkList(page, view === "class" || sectionId === "all" ? undefined : sectionId, true, view);
   const [setting, setSetting] = useState(false);
   const more = useLoadMore(q.data?.data, q.data?.meta, (h) => h.id);
   const groups = useMemo(() => {
@@ -122,16 +129,28 @@ export default function HomeworkPage() {
     <PermissionGate permission="homework.manage">
       <PageHeader title="Homework" description="Set homework for your classes and check who has done it."
         actions={<Button onClick={() => setSetting(true)}><Plus aria-hidden />Set homework</Button>} />
-      <Select value={sectionId} onValueChange={(v) => { setSectionId(String(v)); setPage(1); }}>
-        <SelectTrigger className="mb-4 h-9 w-56" aria-label="Class"><SelectValue>{sectionId === "all" ? "All my classes" : targets.data?.find((t) => t.section_id === sectionId)?.section_label}</SelectValue></SelectTrigger>
-        <SelectContent className="max-h-72"><SelectItem value="all">All my classes</SelectItem>{targets.data?.map((t) => <SelectItem key={t.section_id} value={t.section_id}>{t.section_label}</SelectItem>)}</SelectContent>
-      </Select>
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        {incharge.length > 0 && (
+          <Tabs value={tab} onValueChange={(v) => { setTab(v as "mine" | "class"); setPage(1); }}>
+            <TabsList>
+              <TabsTrigger value="mine">My homework</TabsTrigger>
+              <TabsTrigger value="class">{incharge.length === 1 ? incharge[0].label : "My classes"}</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
+        {view !== "class" && (
+          <Select value={sectionId} onValueChange={(v) => { setSectionId(String(v)); setPage(1); }}>
+            <SelectTrigger className="h-9 w-56" aria-label="Class"><SelectValue>{sectionId === "all" ? "All my classes" : targets.data?.find((t) => t.section_id === sectionId)?.section_label}</SelectValue></SelectTrigger>
+            <SelectContent className="max-h-72"><SelectItem value="all">All my classes</SelectItem>{targets.data?.map((t) => <SelectItem key={t.section_id} value={t.section_id}>{t.section_label}</SelectItem>)}</SelectContent>
+          </Select>
+        )}
+      </div>
       {q.isLoading && !more.rows.length ? <Skeleton className="h-64 rounded-xl" /> : !more.rows.length ? (
         <EmptyState className="rounded-2xl border bg-card" illustration={<ClassesIllustration />} title="No homework yet" action={<Button onClick={() => setSetting(true)}><BookOpenCheck aria-hidden />Set homework</Button>} />
       ) : groups.map(([label, items]) => items.length > 0 && (
         <section key={label} className="mb-6">
           <h2 className="mb-3 font-heading text-lg font-bold">{label}</h2>
-          <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{items.map((h) => <StaggerItem key={h.id}><HomeworkCard h={h} /></StaggerItem>)}</Stagger>
+          <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{items.map((h) => <StaggerItem key={h.id}><HomeworkCard h={h} showTeacher={view === "class"} /></StaggerItem>)}</Stagger>
         </section>
       ))}
       <LoadMore shown={more.rows.length} total={more.total} hasMore={more.hasMore} loading={q.isFetching && page === more.nextPage} fetching={q.isFetching} onLoadMore={() => setPage(more.nextPage)} noun="homework" />

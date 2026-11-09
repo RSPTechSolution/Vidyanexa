@@ -120,5 +120,13 @@ async def test_teachers_see_only_their_own_homework(client, db, school, admin_he
     assert titles(await client.get(f"{API}/homework", headers=s)) == ["Science 7"]
     assert titles(await client.get(f"{API}/homework", headers=ct)) == ["Maths 7", "Science 7"]
     assert titles(await client.get(f"{API}/homework", headers=admin_headers)) == ["Maths 7", "Maths 8", "Science 7"]
+    # The class teacher's two tabs: what they set themselves, and their whole class.
+    await client.post(f"{API}/homework", headers=admin_headers, json={"section_id": str(b.id), "subject_id": science["id"], "title": "Science 8", "due_date": due})
+    await client.put(f"{API}/timetable/slots", headers=admin_headers, json={
+        "section_id": str(b.id), "day": 3, "period_id": periods[0]["id"], "subject_id": science["id"], "teacher_id": str(incharge.id)})
+    assert titles(await client.get(f"{API}/homework", headers=ct, params={"view": "mine"})) == ["Science 8"]
+    assert titles(await client.get(f"{API}/homework", headers=ct, params={"view": "class"})) == ["Maths 7", "Science 7"]
+    assert titles(await client.get(f"{API}/homework", headers=t, params={"view": "class"})) == []
+    assert titles(await client.get(f"{API}/homework", headers=t, params={"view": "mine"})) == ["Maths 7"]
     science_hw = next(h for h in (await client.get(f"{API}/homework", headers=s)).json()["data"])
     assert (await client.get(f"{API}/homework/{science_hw['id']}", headers=t)).status_code == 404

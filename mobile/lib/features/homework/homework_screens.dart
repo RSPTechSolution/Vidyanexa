@@ -11,6 +11,7 @@ import '../../core/auth/session.dart';
 import '../../shared/widgets/common.dart';
 import '../../shared/widgets/motion.dart';
 import '../../shared/widgets/open_file.dart';
+import '../attendance/my_class_screen.dart' show myClassesProvider;
 import '../timetable/timetable_screen.dart' show subjectColors;
 
 final _day = DateFormat('EEE d MMM');
@@ -83,8 +84,11 @@ final myHomeworkProvider = FutureProvider.autoDispose<List<HomeworkItem>>((ref) 
   return res.data;
 });
 
-final teacherHomeworkProvider = FutureProvider.autoDispose<PagedList<HomeworkItem>>(
-  (ref) => fetchPages(ref.watch(apiClientProvider), '/homework', ref.watch(pagesProvider('homework')), HomeworkItem.fromJson),
+/// Staff homework lists: 'mine' (what I set, and my subjects), 'class' (every subject in the class I am incharge of), or
+/// 'all' (everything I may see; admins see the whole school).
+final teacherHomeworkProvider = FutureProvider.autoDispose.family<PagedList<HomeworkItem>, String>(
+  (ref, view) => fetchPages(ref.watch(apiClientProvider), '/homework', ref.watch(pagesProvider('homework-$view')), HomeworkItem.fromJson,
+      query: view == 'all' ? null : {'view': view}),
 );
 
 final homeworkDetailProvider = FutureProvider.autoDispose.family<HomeworkItem, String>((ref, id) async {
@@ -298,29 +302,56 @@ class TeacherHomeworkView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(teacherHomeworkProvider);
-    final scheme = Theme.of(context).colorScheme;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Homework')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final ok = await showModalBottomSheet<bool>(
-            context: context,
-            isScrollControlled: true,
-            showDragHandle: true,
-            builder: (_) => const SetHomeworkSheet(),
-          );
-          if (ok == true) ref.invalidate(teacherHomeworkProvider);
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Set homework'),
+    final me = ref.watch(meProvider);
+    // A class teacher (incharge) gets two tabs, so their class's homework doesn't get mixed in with their own.
+    final classes = me?.role == 'teacher' ? (ref.watch(myClassesProvider).value ?? const []) : const [];
+    final fab = FloatingActionButton.extended(
+      onPressed: () async {
+        final ok = await showModalBottomSheet<bool>(
+          context: context,
+          isScrollControlled: true,
+          showDragHandle: true,
+          builder: (_) => const SetHomeworkSheet(),
+        );
+        if (ok == true) ref.invalidate(teacherHomeworkProvider);
+      },
+      icon: const Icon(Icons.add),
+      label: const Text('Set homework'),
+    );
+    if (classes.isEmpty) {
+      return Scaffold(appBar: AppBar(title: const Text('Homework')), floatingActionButton: fab, body: const _TeacherHomeworkList(view: 'all'));
+    }
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Homework'),
+          bottom: TabBar(tabs: [
+            const Tab(text: 'My homework'),
+            Tab(text: classes.length == 1 ? classes.first.label : 'My classes'),
+          ]),
+        ),
+        floatingActionButton: fab,
+        body: const TabBarView(children: [_TeacherHomeworkList(view: 'mine'), _TeacherHomeworkList(view: 'class')]),
       ),
-      body: RefreshIndicator(
-        onRefresh: () => ref.refresh(teacherHomeworkProvider.future),
+    );
+  }
+}
+
+class _TeacherHomeworkList extends ConsumerWidget {
+  const _TeacherHomeworkList({required this.view});
+  final String view;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(teacherHomeworkProvider(view));
+    final scheme = Theme.of(context).colorScheme;
+    return RefreshIndicator(
+        onRefresh: () => ref.refresh(teacherHomeworkProvider(view).future),
         child: AsyncView(
           value: async,
           loading: const SkeletonList(lines: 3),
-          onRetry: () => ref.invalidate(teacherHomeworkProvider),
+          onRetry: () => ref.invalidate(teacherHomeworkProvider(view)),
           builder: (list) => list.isEmpty
               ? ListView(
                   children: const [EmptyPanel(icon: Icons.menu_book_outlined, title: 'No homework yet')],
@@ -329,7 +360,7 @@ class TeacherHomeworkView extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
                   itemCount: list.length + 1,
                   itemBuilder: (context, i) {
-                    if (i == list.length) return LoadMoreTile(list: 'homework', items: list, noun: 'homework');
+                    if (i == list.length) return LoadMoreTile(list: 'homework-$view', items: list, noun: 'homework');
                     final h = list[i];
                     return Card(
                       child: ListTile(
@@ -349,7 +380,10 @@ class TeacherHomeworkView extends ConsumerWidget {
                                 crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
                                   Pill(h.subject, color: _subjectColor(context, h.color)),
-                                  Text('${h.sectionLabel} · ${dueText(h.dueDate)}', style: const TextStyle(fontSize: 12)),
+                                  Text(
+                                    [h.sectionLabel, dueText(h.dueDate), if (view == 'class' && h.teacher != null) h.teacher!].join(' · '),
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 6),
@@ -376,8 +410,7 @@ class TeacherHomeworkView extends ConsumerWidget {
                   },
                 ),
         ),
-      ),
-    );
+      );
   }
 }
 

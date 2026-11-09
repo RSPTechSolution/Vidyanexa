@@ -315,12 +315,13 @@ export function useNoticeSections(enabled = true) {
   return useQuery({ queryKey: ["notices", "sections"], enabled, queryFn: async () => (await api<{ id: string; label: string }[]>("/notices/sections")).data });
 }
 
-export function useHomeworkList(page: number, sectionId: string | undefined, enabled = true) {
+/** view "mine": what I set and my own subjects; "class": every subject in the class I am incharge of; none: all I may see. */
+export function useHomeworkList(page: number, sectionId: string | undefined, enabled = true, view?: "mine" | "class") {
   return useQuery({
-    queryKey: ["homework", "list", page, sectionId],
+    queryKey: ["homework", "list", page, sectionId, view],
     enabled,
     placeholderData: keepPreviousData,
-    queryFn: () => api<HomeworkItem[]>("/homework", { query: { page, page_size: 20, section_id: sectionId } }),
+    queryFn: () => api<HomeworkItem[]>("/homework", { query: { page, page_size: 20, section_id: sectionId, view } }),
   });
 }
 

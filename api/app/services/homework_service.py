@@ -132,7 +132,9 @@ async def delete(db: AsyncSession, user: User, homework_id: uuid.UUID) -> None:
 
 
 async def list_homework(db: AsyncSession, user: User, page: PageParams, *, section_id: uuid.UUID | None = None,
-                        homework_id: uuid.UUID | None = None) -> tuple[list[HomeworkOut], PageMeta]:
+                        homework_id: uuid.UUID | None = None, view: str | None = None) -> tuple[list[HomeworkOut], PageMeta]:
+    """view "mine": what this person set, and their own subjects in the classes they teach. view "class": every subject in
+    the classes they are class teacher (incharge) of. No view: all they may see."""
     scope = await _scope(db, user)
     stmt = (select(Homework, Subject.name, Subject.color, User.full_name).join(Subject, Subject.id == Homework.subject_id)
             .outerjoin(User, User.id == Homework.created_by).where(Homework.school_id == user.school_id))
@@ -142,6 +144,13 @@ async def list_homework(db: AsyncSession, user: User, page: PageParams, *, secti
         stmt = stmt.where(Homework.section_id == section_id)
     if scope is not None:
         stmt = stmt.where(_visible(user, scope))
+    if view == "mine":
+        taught = (await db.execute(select(TimetableEntry.section_id, TimetableEntry.subject_id)
+                                   .where(TimetableEntry.teacher_id == user.id).distinct())).all()
+        stmt = stmt.where(or_(Homework.created_by == user.id,
+                              tuple_(Homework.section_id, Homework.subject_id).in_([tuple(r) for r in taught]) if taught else false()))
+    elif view == "class":
+        stmt = stmt.where(Homework.section_id.in_(select(Section.id).where(Section.class_teacher_id == user.id)))
     total = await db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
     rows = (await db.execute(stmt.order_by(Homework.due_date.desc(), Homework.created_at.desc()).offset(page.offset).limit(page.page_size))).all()
     labels = await _labels(db, user.school_id)

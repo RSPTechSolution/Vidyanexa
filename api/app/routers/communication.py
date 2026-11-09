@@ -1,5 +1,6 @@
 """Notices and homework."""
 import uuid
+from typing import Literal
 
 from fastapi import APIRouter, Depends
 
@@ -86,9 +87,10 @@ async def targets(db: DB, current: CurrentUser = require_permission("homework.ma
 
 @homework.get("", response_model=ApiResponse[list[HomeworkOut]])
 async def list_homework(db: DB, page: PageParams = Depends(), section_id: uuid.UUID | None = None,
+                        view: Literal["mine", "class"] | None = None,
                         current: CurrentUser = require_permission("homework.manage")):
     current.require_school()
-    rows, meta = await homework_service.list_homework(db, current.user, page, section_id=section_id)
+    rows, meta = await homework_service.list_homework(db, current.user, page, section_id=section_id, view=view)
     return ok(rows, meta)
 
 
