@@ -12,8 +12,9 @@ function safeNext(next: string | null) {
 }
 
 /** Sign in with a 6-digit code sent by email, or by SMS when a mobile number is entered. */
-export function CodeLoginForm() {
-  const [identifier, setIdentifier] = useState("");
+/** [email] fills the box (from the password form); [onEmail] hears what is typed. */
+export function CodeLoginForm({ email = "", onEmail }: { email?: string; onEmail?: (email: string) => void }) {
+  const [identifier, setIdentifier] = useState(email);
   const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
   const [wait, setWait] = useState(0);
@@ -63,7 +64,7 @@ export function CodeLoginForm() {
       {error && <Alert variant="destructive" role="alert"><AlertDescription>{error}</AlertDescription></Alert>}
       {info && !error && <p role="status" className="rounded-lg bg-primary/5 px-3 py-2 text-sm">{info}</p>}
       <Field label="Email or mobile number" required>
-        {(a) => <Input {...a} value={identifier} onChange={(e) => setIdentifier(e.target.value)} autoComplete="username" disabled={sent} placeholder="name@example.com or 98140 12345" />}
+        {(a) => <Input {...a} value={identifier} onChange={(e) => { setIdentifier(e.target.value); onEmail?.(e.target.value); }} autoComplete="username" disabled={sent} placeholder="name@example.com or 98140 12345" />}
       </Field>
       {sent && (
         <Field label="Sign-in code" required>

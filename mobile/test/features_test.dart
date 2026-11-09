@@ -73,6 +73,22 @@ void main() {
     expect(find.text('Good ${greeting(DateTime.now()).split(' ').last}, Suresh'), findsOneWidget);
   });
 
+  testWidgets('home shows an overdue fee once, and no stale coming-soon card', (tester) async {
+    final me = meJson()..['modules'] = ['fees', 'exams', 'transport', 'communication'];
+    final fake = FakeApi()
+      ..on('GET /auth/me', (_) => (200, FakeApi.ok(me)))
+      ..on('GET /fees/my', (_) => (200, FakeApi.ok({
+            'children': [{'student_id': 's1', 'name': 'Aarav Patel', 'class_section': 'Class 5 – A', 'due': 16000, 'overdue': 16000,
+              'next_due_date': '2026-07-15', 'invoices': [invoice()]}],
+            'total_due': 16000,
+          })));
+    await pump(tester, container(fake));
+    expect(find.text('Fees overdue'), findsOneWidget);
+    expect(find.text('₹16,000'), findsOneWidget);
+    expect(find.text('₹16,000 overdue'), findsNothing);
+    expect(find.text('Coming soon'), findsNothing); // results, bus and messages are already in the app
+  });
+
   testWidgets('a teacher without fee access has no Fees tab', (tester) async {
     final me = meJson(role: 'teacher')..['permissions'] = ['school.view', 'attendance.view', 'attendance.mark'];
     final fake = FakeApi()..on('GET /auth/me', (_) => (200, FakeApi.ok(me)));

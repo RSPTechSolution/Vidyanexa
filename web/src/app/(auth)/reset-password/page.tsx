@@ -10,7 +10,7 @@ import { z } from "zod";
 import { Field } from "@/components/common/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/common/password-input";
 import { newPassword } from "@/lib/validation";
 import { useHydrated } from "@/lib/use-hydrated";
 
@@ -69,10 +69,10 @@ function ResetForm() {
       <form onSubmit={handleSubmit(onSubmit)} noValidate method="post" className="space-y-5">
         {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
         <Field label="New password" error={errors.password?.message} required>
-          {(a) => <Input {...a} {...register("password")} type="password" autoComplete="new-password" />}
+          {(a) => <PasswordInput {...a} {...register("password")} autoComplete="new-password" />}
         </Field>
         <Field label="Confirm password" error={errors.confirm?.message} required>
-          {(a) => <Input {...a} {...register("confirm")} type="password" autoComplete="new-password" />}
+          {(a) => <PasswordInput {...a} {...register("confirm")} autoComplete="new-password" />}
         </Field>
         <Button type="submit" size="lg" className="h-10 w-full" disabled={!hydrated} loading={isSubmitting} loadingText="Updating…">
           Update password

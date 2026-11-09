@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/auth/auth_controller.dart';
@@ -33,7 +34,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       _error = null;
     });
     try {
-      await ref.read(authControllerProvider.notifier).requestPasswordReset(_email.text, null);
+      await ref.read(authControllerProvider.notifier).requestPasswordReset(_email.text.trim(), null);
       if (mounted) setState(() => _sent = true);
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
@@ -60,6 +61,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     "If an account matches those details, we've sent a link to reset the password. It expires in 30 minutes.",
                     style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                   ),
+                  const SizedBox(height: 24),
+                  FilledButton(onPressed: () => context.go('/login'), child: const Text('Back to sign in')),
+                  TextButton(onPressed: () => setState(() => _sent = false), child: const Text('Use a different email')),
                 ])
               : Form(
                   key: _form,
@@ -74,7 +78,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
                       onFieldSubmitted: (_) => _submit(),
-                      validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
+                      autofillHints: const [AutofillHints.email],
+                      validator: (v) {
+                        final s = v?.trim() ?? '';
+                        if (s.isEmpty) return 'Enter your email';
+                        return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(s) ? null : 'Enter a valid email';
+                      },
                     ),
                     const SizedBox(height: 24),
                     LoadingButton(label: 'Send reset link', loading: _busy, onPressed: _submit),

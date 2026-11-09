@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/common/password-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VerifyCode } from "@/components/auth/verify-code";
 import type { BillingCycle, Plan, Quote } from "@/lib/api/types";
@@ -208,7 +209,7 @@ export function SignupForm({ initialPlans, query }: { initialPlans: Plan[] | nul
             {(a) => <Input {...a} {...register("email")} type="email" inputMode="email" autoComplete="email" />}
           </Field>
           <Field label="Password" error={errors.password?.message} required hint="At least 8 characters, with letters and numbers." className="sm:col-span-2">
-            {(a) => <Input {...a} {...register("password")} type="password" autoComplete="new-password" />}
+            {(a) => <PasswordInput {...a} {...register("password")} autoComplete="new-password" />}
           </Field>
         </div>
         <div className="mt-6">

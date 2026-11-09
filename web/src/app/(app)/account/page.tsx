@@ -16,7 +16,7 @@ import { useSession } from "@/components/session-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/common/password-input";
 import { ApiError, api } from "@/lib/api/client";
 import { formatDateTime, initials, roleLabel } from "@/lib/format";
 import { newPassword } from "@/lib/validation";
@@ -56,13 +56,13 @@ function ChangePassword() {
         </CardHeader>
         <CardContent className="grid gap-4 sm:max-w-sm">
           <Field label="Current password" error={errors.current_password?.message} required>
-            {(a) => <Input {...a} {...register("current_password")} type="password" autoComplete="current-password" />}
+            {(a) => <PasswordInput {...a} {...register("current_password")} autoComplete="current-password" />}
           </Field>
           <Field label="New password" error={errors.new_password?.message} required>
-            {(a) => <Input {...a} {...register("new_password")} type="password" autoComplete="new-password" />}
+            {(a) => <PasswordInput {...a} {...register("new_password")} autoComplete="new-password" />}
           </Field>
           <Field label="Confirm new password" error={errors.confirm?.message} required>
-            {(a) => <Input {...a} {...register("confirm")} type="password" autoComplete="new-password" />}
+            {(a) => <PasswordInput {...a} {...register("confirm")} autoComplete="new-password" />}
           </Field>
         </CardContent>
         <CardFooter className="border-t">

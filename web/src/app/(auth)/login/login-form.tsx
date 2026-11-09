@@ -1,13 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { VerifyCode } from "@/components/auth/verify-code";
 import { Field } from "@/components/common/field";
+import { PasswordInput } from "@/components/common/password-input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,20 +25,22 @@ function safeNext(next: string | null) {
   return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
 }
 
-export function LoginForm() {
+/** [email] fills the box (from the code form); [onEmail] hears what is typed, so switching forms keeps it. */
+export function LoginForm({ email = "", onEmail }: { email?: string; onEmail?: (email: string) => void }) {
   const [error, setError] = useState<string | null>(null);
   const hydrated = useHydrated();
-  const [showPassword, setShowPassword] = useState(false);
   // Stays true after a successful sign-in until the browser has loaded the next page.
   const [redirecting, setRedirecting] = useState(false);
   // A school that signed itself up but hasn't confirmed its email yet: finish that here.
   const [confirm, setConfirm] = useState<{ email: string; slug: string } | null>(null);
   const {
-    register, handleSubmit, formState: { errors, isSubmitting },
+    register, handleSubmit, watch, formState: { errors, isSubmitting },
   } = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email, password: "" },
   });
+  const typed = watch("email");
+  useEffect(() => onEmail?.(typed), [typed, onEmail]);
 
   const onSubmit = async (v: Values) => {
     setError(null);
@@ -69,20 +71,7 @@ export function LoginForm() {
         {(a) => <Input {...a} {...register("email")} type="email" autoComplete="username" inputMode="email" />}
       </Field>
       <Field label="Password" error={errors.password?.message} required>
-        {(a) => (
-          <div className="relative">
-            <Input {...a} {...register("password")} type={showPassword ? "text" : "password"} autoComplete="current-password" className="pr-10" />
-            <button
-              type="button"
-              onClick={() => setShowPassword((s) => !s)}
-              className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-lg text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              aria-pressed={showPassword}
-            >
-              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            </button>
-          </div>
-        )}
+        {(a) => <PasswordInput {...a} {...register("password")} autoComplete="current-password" />}
       </Field>
       <div className="flex justify-end">
         <Link href="/forgot-password" className="text-sm font-medium text-primary hover:underline">Forgot password?</Link>

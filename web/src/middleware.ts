@@ -40,7 +40,9 @@ export async function middleware(req: NextRequest) {
   const refresh = req.cookies.get(REFRESH_COOKIE)?.value;
 
   if (PUBLIC_PAGES.includes(pathname) || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))) {
-    if (pathname === "/login" && access) return NextResponse.redirect(new URL("/dashboard", req.url));
+    // Signed in already (or only the short-lived token has expired): go straight in. A dead session is cleared on the
+    // way, so this can't bounce back and forth.
+    if (pathname === "/login" && (access || refresh)) return NextResponse.redirect(new URL("/dashboard", req.url));
     return NextResponse.next();
   }
 

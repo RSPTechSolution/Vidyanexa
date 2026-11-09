@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../../core/auth/auth_controller.dart';
 import '../../core/auth/models.dart';
 import '../../core/auth/session.dart';
-import '../../core/config/app_config.dart';
 import '../../shared/widgets/brand.dart';
 import '../../shared/widgets/common.dart';
 import '../../shared/widgets/hero_banner.dart';
@@ -110,11 +109,6 @@ class HomeScreen extends ConsumerWidget {
                   if (me.hasModule('academics') && me.teaches) const _TodayLessons(),
                 ],
               ].indexed.map((e) => Entrance(index: e.$1 + 1, child: e.$2)),
-            const SizedBox(height: 16),
-            Entrance(
-              index: 5,
-              child: _ComingUp(flavor: flavor, modules: me.modules),
-            ),
           ],
         ),
       ),
@@ -270,8 +264,8 @@ class _FamilyCards extends ConsumerWidget {
                                     : f.due > 0
                                     ? scheme.primary
                                     : s.success,
-                                title: f.overdue > 0 ? '${inr(f.overdue)} overdue' : 'Fees due',
-                                value: f.due > 0 ? inr(f.due) : 'Paid up',
+                                title: f.overdue > 0 ? 'Fees overdue' : 'Fees due',
+                                value: f.overdue > 0 ? inr(f.overdue) : (f.due > 0 ? inr(f.due) : 'Paid up'),
                                 onTap: () => context.go('/fees'),
                               ),
                             ),
@@ -488,59 +482,6 @@ class _FeeTiles extends ConsumerWidget {
           ],
         ),
       ],
-    );
-  }
-}
-
-/// Features the school uses that this app doesn't show yet.
-class _ComingUp extends StatelessWidget {
-  const _ComingUp({required this.flavor, required this.modules});
-  final AppFlavor flavor;
-  final List<String> modules;
-
-  static const _features = {
-    AppFlavor.parent: [
-      ('exams', Icons.assignment_outlined, 'Results', 'Marks and report cards'),
-      ('transport', Icons.directions_bus_outlined, 'Bus tracking', 'Live location of the school bus'),
-      ('communication', Icons.chat_bubble_outline, 'Messages', 'Notices and chat with teachers'),
-    ],
-    AppFlavor.staff: [
-      ('academics', Icons.menu_book_outlined, 'Homework', 'Assign and review work'),
-      ('exams', Icons.edit_note_outlined, 'Marks entry', 'Enter and publish results'),
-      ('hr', Icons.beach_access_outlined, 'Leave', 'Apply and track approvals'),
-      ('communication', Icons.chat_bubble_outline, 'Messages', 'Talk to parents and colleagues'),
-    ],
-    AppFlavor.driver: [
-      ('transport', Icons.route_outlined, 'Trips', 'Start trips and share live location'),
-      ('transport', Icons.how_to_reg_outlined, 'Boarding', 'Mark students on and off the bus'),
-    ],
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final items = _features[flavor]!.where((f) => modules.contains(f.$1)).toList();
-    if (items.isEmpty) return const SizedBox.shrink();
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Coming soon', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text('Your school uses these too. They will appear here as each one is set up.', style: TextStyle(color: scheme.onSurfaceVariant)),
-            const SizedBox(height: 8),
-            for (final (_, icon, title, subtitle) in items)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(icon, color: scheme.primary),
-                title: Text(title),
-                subtitle: Text(subtitle),
-              ),
-          ],
-        ),
-      ),
     );
   }
 }

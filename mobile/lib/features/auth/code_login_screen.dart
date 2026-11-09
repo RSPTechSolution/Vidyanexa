@@ -88,7 +88,11 @@ class _CodeLoginScreenState extends ConsumerState<CodeLoginScreen> {
             enabled: !_sent,
             autocorrect: false,
             keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.send,
             onChanged: (_) => setState(() {}),
+            onSubmitted: (v) {
+              if (v.trim().length >= 3 && !_busy) _send();
+            },
             decoration: const InputDecoration(labelText: 'Email or mobile number'),
           ),
           const SizedBox(height: 16),
@@ -97,8 +101,13 @@ class _CodeLoginScreenState extends ConsumerState<CodeLoginScreen> {
               controller: _code,
               keyboardType: TextInputType.number,
               maxLength: 6,
+              autofocus: true,
               autofillHints: const [AutofillHints.oneTimeCode],
+              textInputAction: TextInputAction.done,
               onChanged: (_) => setState(() {}),
+              onSubmitted: (v) {
+                if (v.trim().length == 6 && !_busy) _verify();
+              },
               decoration: const InputDecoration(labelText: 'Sign-in code', counterText: ''),
             ),
             const SizedBox(height: 8),

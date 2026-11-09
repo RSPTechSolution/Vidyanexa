@@ -101,7 +101,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: 18),
                       ],
-                      if (_error != null) ...[FormBanner(message: _error!), const SizedBox(height: 16)],
                       if (notice != null) ...[FormBanner(message: notice, tone: BannerTone.warning), const SizedBox(height: 16)],
                       TextFormField(
                         controller: _email,
@@ -130,6 +129,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         child: TextButton(onPressed: () => context.push('/forgot-password'), child: const Text('Forgot password?')),
                       ),
                       const SizedBox(height: 8),
+                      // Right above the button, so it's on screen when someone has scrolled down past the picture to sign in.
+                      if (_error != null) ...[FormBanner(message: _error!), const SizedBox(height: 12)],
                       LoadingButton(label: 'Sign in', loading: _busy, onPressed: _submit),
                       const SizedBox(height: 12),
                       TextButton(onPressed: () => context.push('/login-code'), child: const Text('Use a one-time code instead')),

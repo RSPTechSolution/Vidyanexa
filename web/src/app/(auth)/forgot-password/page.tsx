@@ -54,7 +54,9 @@ export default function ForgotPasswordPage() {
           <h1 className="text-2xl font-bold">Check your email</h1>
           <p className="text-sm text-muted-foreground">
             If an account matches those details, we&apos;ve sent a link to reset the password. The link expires in 30 minutes.
+            Nothing there? Check your spam folder.
           </p>
+          <Button variant="outline" className="w-full" onClick={() => setSent(false)}>Use a different email</Button>
         </div>
       ) : (
         <>
