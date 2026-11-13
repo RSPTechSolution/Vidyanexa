@@ -250,3 +250,33 @@ async def test_school_pays_for_its_plan_online_with_gst(client, db):
     await factories.user(db, school, "t@sunrise.edu", "teacher")
     t = await factories.login_headers(client, "t@sunrise.edu", PASSWORD, "sunrise")
     assert (await client.post(f"{API}/subscription/checkout", headers=t, json={"plan_code": "pro"})).status_code == 403
+
+
+async def test_after_the_trial_only_sign_in_and_billing_work_until_the_school_pays(client, db):
+    h = await _trial_school(client)
+    assert (await client.get(f"{API}/students", headers=h)).status_code == 200  # during the trial
+    school = await db.scalar(select(School).where(School.slug == "sunrise"))
+    school.trial_ends_at = datetime.now(UTC) - timedelta(days=1)
+    await db.commit()
+
+    blocked = await client.get(f"{API}/students", headers=h)
+    assert blocked.status_code == 402 and blocked.json()["error"]["code"] == "SUBSCRIPTION_ENDED"
+    assert (await client.get(f"{API}/dashboard/summary", headers=h)).status_code == 402
+    me = (await client.get(f"{API}/auth/me", headers=h)).json()["data"]
+    assert me["school"]["subscription_ended"] == "trial"
+    assert (await client.get(f"{API}/subscription", headers=h)).status_code == 200
+
+    order = (await client.post(f"{API}/subscription/checkout", headers=h, json={"plan_code": "basic", "billing_cycle": "monthly"})).json()["data"]
+    await client.post(f"{API}/subscription/payments/{order['payment_id']}/confirm", headers=h, json={"outcome": "success"})
+    assert (await client.get(f"{API}/students", headers=h)).status_code == 200
+    assert (await client.get(f"{API}/auth/me", headers=h)).json()["data"]["school"]["subscription_ended"] is None
+
+    # A paid plan that runs out keeps working for the grace days, then stops.
+    school = await db.scalar(select(School).where(School.slug == "sunrise"))
+    await db.refresh(school)
+    school.current_period_end = datetime.now(UTC) - timedelta(days=3)
+    await db.commit()
+    assert (await client.get(f"{API}/students", headers=h)).status_code == 200
+    school.current_period_end = datetime.now(UTC) - timedelta(days=8)
+    await db.commit()
+    assert (await client.get(f"{API}/students", headers=h)).json()["error"]["code"] == "SUBSCRIPTION_ENDED"

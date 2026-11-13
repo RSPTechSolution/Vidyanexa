@@ -111,3 +111,12 @@ async def test_dashboard_counts_students_from_records(client, db, school, admin_
         "D1,Ana,Roy,female,2019-01-01,,Class 1,A,1,,,,,,,,", "D2,Bo,Roy,male,2019-01-02,,Class 1,A,2,,,,,,,,"), "dry_run": False})
     s = (await client.get(f"{API}/dashboard/summary", headers=admin_headers)).json()["data"]
     assert {r["role"]: r["count"] for r in s["roles"]}["student"] == 2 and s["student_logins"] == 0
+
+
+async def test_import_fields_for_the_mapping_screen(client, admin_headers):
+    fields = (await client.get(f"{API}/transfer/students/fields", headers=admin_headers)).json()["data"]
+    by_key = {f["key"]: f for f in fields}
+    assert by_key["admission_no"] == {"key": "admission_no", "label": "Admission number", "required": True, "hint": None}
+    assert by_key["roll_no"]["required"] is False and by_key["date_of_birth"]["hint"]
+    staff = (await client.get(f"{API}/transfer/staff/fields", headers=admin_headers)).json()["data"]
+    assert [f["key"] for f in staff if f["required"]] == ["full_name", "email", "role"]

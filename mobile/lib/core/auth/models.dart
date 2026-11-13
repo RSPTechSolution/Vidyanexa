@@ -1,5 +1,5 @@
 class SchoolBrief {
-  const SchoolBrief({required this.id, required this.name, required this.slug, required this.timezone, required this.currency, this.brandColor});
+  const SchoolBrief({required this.id, required this.name, required this.slug, required this.timezone, required this.currency, this.brandColor, this.subscriptionEnded});
 
   final String id;
   final String name;
@@ -10,6 +10,9 @@ class SchoolBrief {
   /// The school's accent colour (e.g. "#0f766e"), if it picked one; the app's colours are built from it.
   final String? brandColor;
 
+  /// Set ("trial", "cancelled" or "expired") once the school can no longer use Vidyanexa until it pays for a plan.
+  final String? subscriptionEnded;
+
   factory SchoolBrief.fromJson(Map<String, dynamic> j) => SchoolBrief(
     id: j['id'] as String,
     name: j['name'] as String,
@@ -17,6 +20,7 @@ class SchoolBrief {
     timezone: j['timezone'] as String,
     currency: j['currency'] as String,
     brandColor: j['brand_color'] as String?,
+    subscriptionEnded: j['subscription_ended'] as String?,
   );
 }
 

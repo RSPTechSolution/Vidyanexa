@@ -66,20 +66,23 @@ async def test_fee_receipt_goes_to_parents(client, db, school, admin_headers):
     assert receipt.to == "ravi@t.com" and "₹2,000" in receipt.text and "₹3,000" in receipt.text and "RCT-" in receipt.subject
 
 
-async def test_admin_status_log_and_test_send(client, db, school, admin_headers):
+async def test_admin_status_log_and_test_send(client, db, school, admin_headers, super_headers):
     st = (await client.get(f"{API}/emails/status", headers=admin_headers)).json()["data"]
     assert st["provider"] == "console" and st["sending"] is False and st["daily_limit"] == 300
-    sent = await client.post(f"{API}/emails/test", headers=admin_headers, json={"to": "me@t.com"})
+    # Testing the email provider is the platform's job, not the school's.
+    assert (await client.post(f"{API}/emails/test", headers=admin_headers, json={"to": "me@t.com"})).status_code == 403
+    sent = await client.post(f"{API}/emails/test", headers=super_headers, json={"to": "me@t.com"})
     assert sent.status_code == 201 and sent.json()["data"]["status"] == "logged"
+    assert (await client.get(f"{API}/emails/status", headers=super_headers)).status_code == 200
     log = (await client.get(f"{API}/emails", headers=admin_headers)).json()["data"]
-    assert log[0]["kind"] == "test" and log[0]["to_email"] == "me@t.com"
+    assert all(r["kind"] != "test" for r in log)  # the platform's test isn't in the school's log
 
     await factories.user(db, school, "t@t.com", "teacher")
     t = await factories.login_headers(client, "t@t.com", factories.PASSWORD, school.slug)
     assert (await client.get(f"{API}/emails", headers=t)).status_code == 403
 
 
-async def test_real_provider_sends_after_commit_and_records_failures(client, db, school, admin_headers, monkeypatch):
+async def test_real_provider_sends_after_commit_and_records_failures(client, db, school, super_headers, monkeypatch):
     sent: list[str] = []
 
     async def fake_deliver(msg):
@@ -89,18 +92,18 @@ async def test_real_provider_sends_after_commit_and_records_failures(client, db,
 
     monkeypatch.setattr(email_service, "provider_name", lambda: "brevo-smtp")
     monkeypatch.setattr(email_service, "deliver", fake_deliver)
-    ok = await client.post(f"{API}/emails/test", headers=admin_headers, json={"to": "ok@school.in"})
-    bad = await client.post(f"{API}/emails/test", headers=admin_headers, json={"to": "bounce@school.in"})
+    ok = await client.post(f"{API}/emails/test", headers=super_headers, json={"to": "ok@school.in"})
+    bad = await client.post(f"{API}/emails/test", headers=super_headers, json={"to": "bounce@school.in"})
     assert ok.json()["data"]["status"] == "queued"
     await asyncio.sleep(0.3)  # delivery runs after the request's transaction commits
     assert sent == ["ok@school.in"]
     async with system_session() as s:
-        rows = {r.to_email: r for r in (await s.scalars(select(EmailLog).where(EmailLog.school_id == school.id))).all()}
+        rows = {r.to_email: r for r in (await s.scalars(select(EmailLog).where(EmailLog.kind == "test"))).all()}
     assert rows["ok@school.in"].status == "sent" and rows["ok@school.in"].sent_at is not None
     assert rows["bounce@school.in"].status == "failed" and "550" in rows["bounce@school.in"].error
 
 
-async def test_demo_domains_are_never_sent(client, admin_headers, monkeypatch):
+async def test_demo_domains_are_never_sent(client, super_headers, monkeypatch):
     sent = []
 
     async def fake_deliver(msg):
@@ -108,7 +111,7 @@ async def test_demo_domains_are_never_sent(client, admin_headers, monkeypatch):
 
     monkeypatch.setattr(email_service, "provider_name", lambda: "brevo-smtp")
     monkeypatch.setattr(email_service, "deliver", fake_deliver)
-    res = await client.post(f"{API}/emails/test", headers=admin_headers, json={"to": "parent@demo.com"})
+    res = await client.post(f"{API}/emails/test", headers=super_headers, json={"to": "parent@demo.com"})
     assert res.json()["data"]["status"] == "skipped"
     await asyncio.sleep(0.2)
     assert sent == []

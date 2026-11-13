@@ -54,7 +54,7 @@ async def channels_for(db: AsyncSession, school_id: uuid.UUID, event_name: str) 
     return [c for c in chosen if c in CHANNELS]
 
 
-async def queue(db: AsyncSession, *, school_id: uuid.UUID, event_name: str, phones, body: str, force: list[str] | None = None) -> int:
+async def queue(db: AsyncSession, *, school_id: uuid.UUID | None, event_name: str, phones, body: str, force: list[str] | None = None) -> int:
     """Send `body` to each phone on the channels the school turned on for this event (or `force`)."""
     chans = force if force is not None else await channels_for(db, school_id, event_name)
     numbers = list(dict.fromkeys(n for n in (normalise(p) for p in phones) if n))

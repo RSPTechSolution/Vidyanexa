@@ -1,5 +1,5 @@
 import {
-  HardDrive, Server, UsersRound, Sparkles, ChartNoAxesCombined, Cctv, DoorOpen, FileCheck2, Ticket, UserCheck, Hotel, Library, Package, BookOpen, Award, Briefcase, BriefcaseBusiness, Bus, Calculator, ClipboardPen, Handshake, MessagesSquare, Smartphone, FileQuestion, Video, CalendarHeart, CalendarOff, Fingerprint, ListChecks, QrCode, BookMarked, BookOpenCheck, FileBadge2, NotebookPen, Repeat2, TrendingUp, UserPlus, Mail, Building2, CalendarDays, ClipboardCheck, FileSpreadsheet, Megaphone, Wallet, CalendarRange, CreditCard, GraduationCap, Inbox, KeyRound, LayoutDashboard, Layers, School, ScrollText, Settings2, ToggleRight, UserMinus, Users, type LucideIcon,
+  HardDrive, Server, UsersRound, Sparkles, ChartNoAxesCombined, Cctv, DoorOpen, FileCheck2, Ticket, UserCheck, Hotel, Library, Package, BookOpen, Award, Briefcase, BriefcaseBusiness, Bus, Calculator, ClipboardPen, Handshake, MessagesSquare, Smartphone, FileQuestion, Video, CalendarHeart, CalendarOff, ListChecks, QrCode, BookMarked, BookOpenCheck, FileBadge2, NotebookPen, Repeat2, TrendingUp, UserPlus, Mail, Building2, CalendarDays, ClipboardCheck, FileSpreadsheet, Megaphone, Wallet, CalendarRange, CreditCard, GraduationCap, Inbox, KeyRound, LayoutDashboard, Layers, School, ScrollText, Settings2, ToggleRight, UserMinus, Users, type LucideIcon,
 } from "lucide-react";
 import type { Me } from "@/lib/api/types";
 
@@ -139,7 +139,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Users & roles", href: "/settings/users", icon: Users, permission: "users.view", keywords: ["staff", "accounts", "permissions"] },
       { label: "Email", href: "/settings/emails", icon: Mail, permission: "emails.view", keywords: ["brevo", "smtp", "sent", "receipts"] },
       { label: "SMS and WhatsApp", href: "/settings/messaging", icon: Smartphone, permission: "emails.view", keywords: ["sms", "whatsapp", "text message", "twilio", "msg91"] },
-      { label: "Attendance machines", href: "/settings/devices", icon: Fingerprint, module: "attendance", permission: "devices.manage", keywords: ["biometric", "fingerprint", "face", "zkteco", "adms"] },
+      // "Attendance machines" (/settings/devices, biometric ADMS) is left out until it has been tested with real devices.
       { label: "Audit log", href: "/settings/audit", icon: ScrollText, permission: "audit.view", keywords: ["history", "activity"] },
     ],
   },

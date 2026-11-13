@@ -74,6 +74,7 @@ class SchoolBrief(Schema):
     subscription_status: str
     trial_ends_at: datetime | None
     brand_color: str | None = None  # from school settings; one of BRAND_COLORS
+    subscription_ended: str | None = None  # "trial" | "cancelled" | "expired": only sign-in and billing work
 
 
 class MeOut(Schema):

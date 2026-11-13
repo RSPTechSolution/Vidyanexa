@@ -110,7 +110,11 @@ function PlanChip({ collapsed }: { collapsed: boolean }) {
       <span className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground"><CreditCard className="size-4" aria-hidden /></span>
       <span className="min-w-0 leading-tight">
         <span className="block text-sm font-semibold text-sidebar-foreground">{me.school.plan.name} plan</span>
-        <span className="block text-xs text-sidebar-muted">{trial ? `Trial · ${daysLeft} days left` : "Manage plan"}</span>
+        <span className={cn("block text-xs", me.school.subscription_ended ? "font-semibold text-warning" : "text-sidebar-muted")}>
+          {me.school.subscription_ended === "trial" ? "Trial ended · choose a plan"
+            : me.school.subscription_ended ? "Plan ended · renew now"
+            : trial ? `Trial · ${daysLeft} ${daysLeft === 1 ? "day" : "days"} left` : "Manage plan"}
+        </span>
       </span>
     </Link>
   );

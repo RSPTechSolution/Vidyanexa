@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db, set_tenant
-from app.core.errors import Forbidden, Unauthorized
+from app.core.errors import AppError, Forbidden, Unauthorized
 from app.core.permissions import PREVIEW_MODULES, Role, has_permission, preview_modules_for
 from app.core.security import decode_access_token, decode_download_token
 from app.models import School, User, UserSession
@@ -60,6 +60,15 @@ def client_ip(request: Request) -> str | None:
     return request.client.host if request.client else None
 
 
+# What a school whose subscription has ended can still reach: its own account, and the plan page to pay.
+_OPEN_WHEN_ENDED = ("/api/v1/auth/", "/api/v1/subscription", "/api/v1/schools/current")
+_ENDED_MESSAGES = {
+    "trial": "Your school's free trial has ended. Choose a plan to keep using Vidyanexa.",
+    "cancelled": "Your school's Vidyanexa subscription was cancelled. Choose a plan to start again.",
+    "expired": "Your school's Vidyanexa plan has expired. Renew it to keep using Vidyanexa.",
+}
+
+
 async def get_current_user(request: Request, db: DB) -> CurrentUser:
     auth = request.headers.get("Authorization", "")
     scheme, _, token = auth.partition(" ")
@@ -86,6 +95,11 @@ async def get_current_user(request: Request, db: DB) -> CurrentUser:
         school = await db.get(School, user.school_id)
         if not school or not school.is_active:
             raise Unauthorized("School is inactive", code="SCHOOL_INACTIVE")
+        # A trial that is over (or a plan not renewed): only signing in and paying for a plan still work.
+        from app.services.billing_service import subscription_ended
+        ended = subscription_ended(school)
+        if ended and not request.url.path.startswith(_OPEN_WHEN_ENDED):
+            raise AppError(_ENDED_MESSAGES[ended], code="SUBSCRIPTION_ENDED", status_code=402)
 
     await set_tenant(db, user.school_id, bypass=user.role == Role.SUPER_ADMIN)
     return CurrentUser(user=user, session_id=session.id)

@@ -203,6 +203,18 @@ function DevicesPage() {
   );
 }
 
+/** Biometric machines (ADMS) aren't offered to schools until they have been tested with real devices. */
+const DEVICES_READY = false;
+
 export default function Page() {
+  if (!DEVICES_READY) {
+    return (
+      <>
+        <PageHeader title="Attendance machines" />
+        <EmptyState className="rounded-2xl border bg-card" title="Coming soon"
+          description="Fingerprint and face attendance machines aren't available yet. Teachers take attendance in the app or on the website, and students can scan their QR ID cards." />
+      </>
+    );
+  }
   return <PermissionGate permission="devices.manage"><DevicesPage /></PermissionGate>;
 }

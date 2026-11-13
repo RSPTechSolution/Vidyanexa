@@ -7,7 +7,7 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy import func, select
 
 from app.core.config import settings
-from app.core.deps import DB, CurrentUser, require_permission
+from app.core.deps import DB, CurrentUser, require_permission, require_super_admin
 from app.core.errors import AppError
 from app.models import EmailLog, School
 from app.schemas.common import ApiResponse, PageMeta, PageParams, ok
@@ -42,7 +42,8 @@ class TestEmail(BaseModel):
 
 @router.get("/status", response_model=ApiResponse[EmailStatus])
 async def status(db: DB, current: CurrentUser = require_permission("emails.view")):
-    school_id = current.require_school()
+    """The email provider and today's sends: the school's own, or the whole platform's for the platform admin."""
+    school_id = None if current.is_super_admin else current.require_school()
     return ok(EmailStatus(provider=email_service.provider_name(), sending=email_service.provider_name() != "console",
                           sender=f"{settings.EMAIL_FROM_NAME} <{settings.EMAIL_FROM}>",
                           sent_today=await email_service.sent_today(db, school_id), daily_limit=settings.EMAIL_DAILY_LIMIT))
@@ -62,13 +63,12 @@ async def history(db: DB, page: PageParams = Depends(), kind: str | None = None,
 
 
 @router.post("/test", response_model=ApiResponse[EmailLogOut], status_code=201)
-async def send_test(body: TestEmail, db: DB, current: CurrentUser = require_permission("emails.manage")):
-    """Queue a test email. It goes out right after this request; refresh the log to see whether it was delivered."""
-    school_id = current.require_school()
-    if await email_service.sent_today(db, school_id) >= settings.EMAIL_DAILY_LIMIT:
+async def send_test(body: TestEmail, db: DB, current: CurrentUser = require_super_admin()):
+    """Queue a test email (platform admin only: it checks the email provider, which schools don't manage). It goes out
+    right after this request; the returned row says whether it was queued, logged or skipped."""
+    if await email_service.sent_today(db) >= settings.EMAIL_DAILY_LIMIT:
         raise AppError("Today's email limit has been reached", code="EMAIL_LIMIT", status_code=429)
-    school = await db.get(School, school_id)
-    msg = email_templates.test_email(to=body.to, school_name=school.name, sender=current.user.full_name)
-    await email_service.queue(db, msg, school_id=school_id)
+    msg = email_templates.test_email(to=body.to, school_name="Vidyanexa", sender=current.user.full_name)
+    await email_service.queue(db, msg, school_id=None)
     row = await db.get(EmailLog, msg.log_id)
     return ok(EmailLogOut.model_validate(row, from_attributes=True))

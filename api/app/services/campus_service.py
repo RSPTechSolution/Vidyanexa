@@ -113,24 +113,34 @@ async def _borrower_names(db: AsyncSession, issues: list[BookIssue]) -> dict[uui
     return {i.id: students.get(i.student_id) or users.get(i.user_id) or "" for i in issues}
 
 
-def _fine(i: BookIssue, today: date, per_day: Decimal) -> tuple[int, Decimal]:
+def fine_for(days_late: int, rules: LibrarySettings) -> Decimal:
+    """The fine for a book `days_late` days past its due date: the first grace days are free, each day after them costs
+    the daily fine, up to the per-book cap (if the school set one)."""
+    if days_late <= rules.grace_days:
+        return ZERO
+    fine = rules.fine_per_day * (days_late - rules.grace_days)
+    return min(fine, rules.max_fine) if rules.max_fine > 0 else fine
+
+
+def _fine(i: BookIssue, today: date, rules: LibrarySettings) -> tuple[int, Decimal]:
+    """Days late and the fine: fixed when the book came back, still growing while it's out."""
     end = i.returned_on or today
     days = max((end - i.due_on).days, 0)
-    return days, (i.fine if i.returned_on else per_day * days)
+    return days, (i.fine if i.returned_on else fine_for(days, rules))
 
 
 async def _issues_out(db: AsyncSession, school_id: uuid.UUID, rows: list[BookIssue]) -> list[IssueOut]:
     if not rows:
         return []
     today = await school_today(db, school_id)
-    per_day = (await library_settings(db, school_id)).fine_per_day
+    rules = await library_settings(db, school_id)
     names = await _borrower_names(db, rows)
     labels = await _labels(db, {i.student_id for i in rows if i.student_id})
     copies = {c.id: c for c in (await db.scalars(select(BookCopy).where(BookCopy.id.in_([i.copy_id for i in rows])))).all()}
     titles = dict((await db.execute(select(Book.id, Book.title).where(Book.id.in_({c.book_id for c in copies.values()})))).all())
     out = []
     for i in rows:
-        days, fine = _fine(i, today, per_day)
+        days, fine = _fine(i, today, rules)
         c = copies[i.copy_id]
         out.append(IssueOut(id=i.id, accession_no=c.accession_no, title=titles.get(c.book_id, ""), borrower=names[i.id],
                             borrower_kind="student" if i.student_id else "staff", class_section=labels.get(i.student_id), issued_on=i.issued_on,
@@ -179,8 +189,8 @@ async def return_book(db: AsyncSession, user: User, accession_no: str, fine_paid
     if not i:
         raise AppError("This copy isn't issued", code="NOT_ISSUED", status_code=409)
     today = await school_today(db, user.school_id)
-    per_day = (await library_settings(db, user.school_id)).fine_per_day
-    _, fine = _fine(i, today, per_day)
+    rules = await library_settings(db, user.school_id)
+    _, fine = _fine(i, today, rules)
     i.returned_on, i.fine, i.fine_paid = today, fine, fine_paid or fine == 0
     copy.status = {"ok": "available", "damaged": "damaged", "lost": "lost"}[condition]
     await db.flush()
@@ -215,9 +225,9 @@ async def stats(db: AsyncSession, user: User) -> LibraryStats:
     titles = await db.scalar(select(func.count()).select_from(Book).where(Book.school_id == sid)) or 0
     copies = await db.scalar(select(func.count()).select_from(BookCopy).where(BookCopy.school_id == sid, BookCopy.status != "withdrawn")) or 0
     open_ = list((await db.scalars(select(BookIssue).where(BookIssue.school_id == sid, BookIssue.returned_on.is_(None)))).all())
-    per_day = (await library_settings(db, sid)).fine_per_day
+    rules = await library_settings(db, sid)
     unpaid = await db.scalar(select(func.coalesce(func.sum(BookIssue.fine), 0)).where(BookIssue.school_id == sid, BookIssue.fine_paid.is_(False))) or ZERO
-    running = sum((_fine(i, today, per_day)[1] for i in open_), ZERO)
+    running = sum((_fine(i, today, rules)[1] for i in open_), ZERO)
     return LibraryStats(titles=titles, copies=copies, issued=len(open_), overdue=sum(1 for i in open_ if i.due_on < today), fines_due=unpaid + running)
 
 

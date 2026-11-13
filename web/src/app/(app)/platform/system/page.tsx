@@ -63,8 +63,51 @@ function HealthTab() {
           <h2 className="mb-3 font-semibold">Usage</h2>
           <dl className="grid grid-cols-2 gap-y-1.5 text-sm">{Object.entries(h.usage).map(([k, v]) => <div key={k} className="contents"><dt className="text-muted-foreground">{k.replace("_24h", " (24h)").replace(/_/g, " ")}</dt><dd className="font-medium tabular">{v.toLocaleString("en-IN")}</dd></div>)}</dl>
         </section>
+        <TestSends />
       </div>
     </div>
+  );
+}
+
+/** Check the email and SMS/WhatsApp services by sending yourself a message (schools don't see this). */
+function TestSends() {
+  const [to, setTo] = useState("");
+  const [phone, setPhone] = useState("");
+  const [channel, setChannel] = useState<"sms" | "whatsapp">("sms");
+  const email = useMutation({
+    mutationFn: () => api<{ status: string; to_email: string }>("/emails/test", { method: "POST", body: { to } }),
+    onSuccess: ({ data }) => toast.success(
+      data.status === "logged" ? "Logged only: email sending is off on this server"
+        : data.status === "skipped" ? "Not sent: demo and test domains are never emailed"
+        : `Sending a test email to ${data.to_email}`),
+    onError: (e) => toast.error(e instanceof ApiError ? (Object.values(e.fieldErrors)[0] ?? e.message) : "Could not send"),
+  });
+  const text = useMutation({
+    mutationFn: () => api<{ message: string }>("/messaging/test", { method: "POST", body: { channel, phone } }),
+    onSuccess: ({ data }) => toast.success(data.message),
+    onError: (e) => toast.error(e instanceof ApiError ? (Object.values(e.fieldErrors)[0] ?? e.message) : "Could not send"),
+  });
+  return (
+    <section className="rounded-2xl border bg-card p-5 md:col-span-2">
+      <h2 className="font-semibold">Test sends</h2>
+      <p className="mb-4 text-sm text-muted-foreground">Send yourself an email or a text to check the services above. Only you see this; schools don&apos;t.</p>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <form className="flex flex-wrap items-end gap-2" onSubmit={(e) => { e.preventDefault(); email.mutate(); }}>
+          <Field label="Email address" className="min-w-0 flex-1">{(a) => <Input {...a} type="email" required value={to} onChange={(e) => setTo(e.target.value)} placeholder="you@example.com" />}</Field>
+          <Button type="submit" variant="outline" loading={email.isPending}>Send test email</Button>
+        </form>
+        <form className="flex flex-wrap items-end gap-2" onSubmit={(e) => { e.preventDefault(); text.mutate(); }}>
+          <Field label="Channel" className="w-32">{(a) => (
+            <Select value={channel} onValueChange={(v) => setChannel(v as "sms" | "whatsapp")}>
+              <SelectTrigger id={a.id} className="w-full"><SelectValue>{channel === "sms" ? "SMS" : "WhatsApp"}</SelectValue></SelectTrigger>
+              <SelectContent><SelectItem value="sms">SMS</SelectItem><SelectItem value="whatsapp">WhatsApp</SelectItem></SelectContent>
+            </Select>
+          )}</Field>
+          <Field label="Mobile number" className="min-w-0 flex-1">{(a) => <Input {...a} type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98140 10001" />}</Field>
+          <Button type="submit" variant="outline" disabled={phone.trim().length < 6} loading={text.isPending}>Send test</Button>
+        </form>
+      </div>
+    </section>
   );
 }
 

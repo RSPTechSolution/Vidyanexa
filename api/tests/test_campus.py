@@ -202,3 +202,18 @@ async def test_other_school_cannot_see(client, db, school, other_school, admin_h
     await _enable(client, oh, "library")
     assert (await client.get(f"{API}/library/books", headers=oh)).json()["data"] == []
     assert (await client.post(f"{API}/library/issue", headers=oh, json={"accession_no": "00001", "borrower": "x"})).status_code == 422
+
+
+def test_library_fine_rules_are_the_schools_own():
+    """Grace days are free, each later day costs the daily fine, and a school can cap the fine per book."""
+    from decimal import Decimal
+
+    from app.schemas.campus import LibrarySettings
+    from app.services.campus_service import fine_for
+
+    plain = LibrarySettings(fine_per_day=2)
+    assert fine_for(0, plain) == 0 and fine_for(10, plain) == Decimal(20)  # defaults: no grace, no cap
+    rules = LibrarySettings(fine_per_day=5, grace_days=3, max_fine=50)
+    assert fine_for(3, rules) == 0  # within the grace days
+    assert fine_for(4, rules) == Decimal(5)  # one day past the grace
+    assert fine_for(30, rules) == Decimal(50)  # capped

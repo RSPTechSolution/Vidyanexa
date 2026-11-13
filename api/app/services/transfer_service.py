@@ -36,6 +36,23 @@ STAFF_COLUMNS = ["full_name", "email", "role", "phone", "employee_id", "designat
 STAFF_REQUIRED = ["full_name", "email", "role"]
 PARENT_COLUMNS = ["full_name", "email", "phone", "children", "active"]
 
+# For the mapping screen of an import: what each column means, in words.
+FIELD_LABELS = {
+    "admission_no": "Admission number", "first_name": "First name", "last_name": "Last name", "gender": "Gender",
+    "date_of_birth": "Date of birth", "admission_date": "Admission date", "class": "Class", "section": "Section",
+    "roll_no": "Roll number", "blood_group": "Blood group", "address": "Address",
+    "father_name": "Father's name", "father_phone": "Father's phone", "father_email": "Father's email",
+    "mother_name": "Mother's name", "mother_phone": "Mother's phone", "mother_email": "Mother's email",
+    "guardian_name": "Guardian's name", "guardian_phone": "Guardian's phone", "guardian_email": "Guardian's email",
+    "full_name": "Full name", "email": "Email", "role": "Role", "phone": "Phone", "employee_id": "Employee ID",
+    "designation": "Designation", "license_no": "Driving licence number",
+}
+STUDENT_HINTS = {
+    "gender": "male, female or other", "date_of_birth": "e.g. 2015-04-21 or 21/04/2015", "class": "As in Classes, e.g. Class 5",
+    "section": "e.g. A", "father_email": "Creates or links the father's app login",
+}
+STAFF_HINTS = {"role": "teacher, accountant, receptionist, librarian, driver…", "license_no": "Drivers only"}
+
 
 class RowError(BaseModel):
     row: int  # 1-based data row (row 2 in a spreadsheet, after the header)

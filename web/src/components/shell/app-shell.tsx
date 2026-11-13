@@ -7,6 +7,7 @@ import { PageTransition } from "@/components/motion/primitives";
 import { SessionProvider } from "@/components/session-provider";
 import { Header } from "@/components/shell/header";
 import { PlatformBanner, type Platform } from "@/components/shell/platform-banner";
+import { SubscriptionEnded, SubscriptionEndedBanner } from "@/components/shell/subscription-ended";
 import { rememberSidebar } from "@/components/shell/shell-cookies";
 import { Sidebar, SidebarBrand, SidebarNav } from "@/components/shell/sidebar";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -53,6 +54,14 @@ export function AppShell({ me, collapsed: initiallyCollapsed, platform, bannerHi
     if (me.must_change_password && pathname !== "/account") router.replace("/account?required=1");
   }, [me.must_change_password, pathname, router]);
 
+  // The school's trial is over (or its plan ran out): admins go to the plan page to pay, everyone else is told why.
+  const ended = me.school?.subscription_ended ?? null;
+  const canPay = me.permissions.includes("billing.view");
+  const openWhenEnded = pathname.startsWith("/settings/billing") || pathname.startsWith("/account");
+  useEffect(() => {
+    if (ended && canPay && !openWhenEnded) router.replace("/settings/billing");
+  }, [ended, canPay, openWhenEnded, router]);
+
   const toggle = () =>
     setCollapsed((c) => {
       rememberSidebar(!c);
@@ -79,7 +88,13 @@ export function AppShell({ me, collapsed: initiallyCollapsed, platform, bannerHi
           <Header onOpenMobileNav={() => setMobileOpen(true)} onOpenSearch={() => openSearch(true)} />
           <main id="main" tabIndex={-1} className="flex-1 px-4 py-6 outline-none sm:px-6 lg:px-8 print:p-0">
             <div className="mx-auto w-full max-w-7xl">
-              <PageTransition key={pathname}>{children}</PageTransition>
+              {ended && !openWhenEnded ? <SubscriptionEnded reason={ended} canPay={canPay} /> : (
+                <>
+                  {/* The plan page says so itself; the account page doesn't. */}
+                  {ended && !pathname.startsWith("/settings/billing") && <SubscriptionEndedBanner reason={ended} />}
+                  <PageTransition key={pathname}>{children}</PageTransition>
+                </>
+              )}
             </div>
           </main>
         </div>

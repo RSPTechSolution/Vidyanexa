@@ -6,7 +6,7 @@ import {
 export const MODULE_META: Record<string, { icon: LucideIcon; description: string }> = {
   students: { icon: Users, description: "Admissions, profiles, promotions and documents" },
   academics: { icon: BookOpen, description: "Classes, subjects, timetables, homework and syllabus" },
-  attendance: { icon: CalendarCheck, description: "Daily and period attendance, QR and biometric devices" },
+  attendance: { icon: CalendarCheck, description: "Daily and period attendance, QR ID cards and leave requests" },
   fees: { icon: Wallet, description: "Fee structures, invoices, online payments and receipts" },
   accounts: { icon: Landmark, description: "Expenses, ledgers and Tally export" },
   exams: { icon: ClipboardList, description: "Exams, marks, report cards and online tests" },

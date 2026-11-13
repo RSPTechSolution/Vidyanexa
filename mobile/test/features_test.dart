@@ -89,6 +89,16 @@ void main() {
     expect(find.text('Coming soon'), findsNothing); // results, bus and messages are already in the app
   });
 
+  testWidgets("after the school's trial ends, the app says so instead of showing errors", (tester) async {
+    final me = meJson();
+    (me['school'] as Map)['subscription_ended'] = 'trial';
+    final fake = FakeApi()..on('GET /auth/me', (_) => (200, FakeApi.ok(me)));
+    await pump(tester, container(fake));
+    expect(find.text("Your school's free trial has ended"), findsOneWidget);
+    expect(find.byType(NavigationBar), findsNothing);
+    expect(find.text('Sign out'), findsOneWidget);
+  });
+
   testWidgets('a teacher without fee access has no Fees tab', (tester) async {
     final me = meJson(role: 'teacher')..['permissions'] = ['school.view', 'attendance.view', 'attendance.mark'];
     final fake = FakeApi()..on('GET /auth/me', (_) => (200, FakeApi.ok(me)));

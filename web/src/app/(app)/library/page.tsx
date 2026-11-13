@@ -247,15 +247,24 @@ function SettingsTab() {
     onError: (e) => toast.error(errText(e, "Could not save")),
   });
   if (!q.data) return <Skeleton className="h-40" />;
-  const num = (k: string, label: string) => <Field label={label}>{(a) => <Input {...a} type="number" min={0} value={f[k] ?? ""} onChange={(e) => setF((x) => ({ ...x, [k]: e.target.value }))} />}</Field>;
+  const num = (k: string, label: string, hint?: string) => <Field label={label} hint={hint}>{(a) => <Input {...a} type="number" min={0} value={f[k] ?? ""} onChange={(e) => setF((x) => ({ ...x, [k]: e.target.value }))} />}</Field>;
+  // An example of the rules as they stand, so the office can see what a late return costs before saving.
+  const perDay = Number(f.fine_per_day || 0), grace = Number(f.grace_days || 0), cap = Number(f.max_fine || 0);
+  const example = (days: number) => { const fine = days <= grace ? 0 : perDay * (days - grace); return cap > 0 ? Math.min(fine, cap) : fine; };
   return (
-    <form className="max-w-xl rounded-2xl border bg-card p-5" onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
+    <form className="max-w-2xl rounded-2xl border bg-card p-5" onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
+      <p className="mb-4 text-sm text-muted-foreground">Your school&apos;s own rules. A book is overdue the day after its due date; the fine grows each day it&apos;s kept and stops when it&apos;s returned.</p>
       <div className="grid gap-4 sm:grid-cols-2">
-        {num("loan_days", "Loan period (days)")}
-        {num("fine_per_day", "Late fine per day (₹)")}
+        {num("loan_days", "Loan period (days)", "How long a book can be kept")}
+        {num("fine_per_day", "Late fine per day (₹)", "0 for no fines")}
+        {num("grace_days", "Grace period (days)", "Late days that are free")}
+        {num("max_fine", "Most fine per book (₹)", "0 for no limit")}
         {num("max_books_student", "Books a student can hold")}
         {num("max_books_staff", "Books a staff member can hold")}
       </div>
+      <p className="mt-4 rounded-lg bg-muted/60 px-3 py-2 text-sm">
+        With these rules a book returned <b>3 days</b> late costs <b>₹{example(3)}</b>, and <b>10 days</b> late <b>₹{example(10)}</b>.
+      </p>
       <Button type="submit" className="mt-4" loading={save.isPending}><Save aria-hidden />Save rules</Button>
     </form>
   );

@@ -3,7 +3,7 @@ import uuid
 
 from fastapi import APIRouter
 
-from app.core.deps import DB, CurrentUser, require_module, require_permission
+from app.core.deps import DB, CurrentUser, require_module, require_permission, require_super_admin
 from app.models import School
 from app.schemas.common import ApiResponse, Message, ok
 from app.schemas.messaging import (
@@ -45,10 +45,10 @@ async def log(db: DB, current: CurrentUser = require_permission("emails.view")):
 
 
 @messaging.post("/test", response_model=ApiResponse[Message])
-async def test(body: TestMessage, db: DB, current: CurrentUser = require_permission("emails.manage")):
-    school = await db.get(School, current.require_school())
-    n = await sms_service.queue(db, school_id=school.id, event_name="test", phones=[body.phone], force=[body.channel],
-                                body=f"Test message from {school.name} on Vidyanexa.")
+async def test(body: TestMessage, db: DB, current: CurrentUser = require_super_admin()):
+    """Send a test SMS or WhatsApp (platform admin only: it checks the provider account, which schools don't manage)."""
+    n = await sms_service.queue(db, school_id=None, event_name="test", phones=[body.phone], force=[body.channel],
+                                body="Test message from Vidyanexa.")
     if not n:
         from app.services.academics_service import field_error
         raise field_error("phone", "Enter a valid mobile number")

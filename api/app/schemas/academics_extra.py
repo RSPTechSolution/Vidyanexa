@@ -153,6 +153,7 @@ class CertificateIn(BaseModel):
     conduct: Short | None = None
     remarks: Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)] | None = None
     mark_left: bool = False  # set the student inactive (they leave with the TC)
+    ignore_dues: bool = False  # issue even though the student still owes something (the dues stay on record)
     # bonafide
     purpose: Short | None = None
 
@@ -170,6 +171,19 @@ class CertificateIn(BaseModel):
         keep = {"transfer": ("leaving_date", "reason", "last_class", "promoted", "fees_paid_upto", "conduct", "remarks"),
                 "bonafide": ("purpose", "remarks"), "character": ("conduct", "remarks")}[self.kind]
         return {k: (v.isoformat() if isinstance(v, date) else v) for k in keep if (v := getattr(self, k)) not in (None, "")}
+
+
+class Due(BaseModel):
+    area: Literal["fees", "library", "hostel", "transport"]
+    label: str  # "Fees"
+    detail: str  # "₹3,000 unpaid on 1 invoice"
+
+
+class Clearance(BaseModel):
+    """Everything a student still owes or holds, checked before any certificate is issued."""
+    student_id: uuid.UUID
+    clear: bool
+    dues: list[Due]
 
 
 class CertificateOut(BaseModel):

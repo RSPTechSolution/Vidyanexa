@@ -5,10 +5,13 @@ from datetime import UTC, datetime
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import Conflict, NotFound
+from app.core.errors import AppError, NotFound
 from app.core.permissions import has_permission
-from app.models import Certificate, School, SchoolClass, Section, Student, StudentGuardian, StoredFile, User
-from app.schemas.academics_extra import CertificateIn, CertificateOut, IdCardsRequest
+from app.models import (
+    BookIssue, Certificate, FeeInvoice, Hostel, HostelAllocation, HostelRoom, Route, School, SchoolClass, Section, Student,
+    StudentGuardian, StoredFile, TransportAssignment, User,
+)
+from app.schemas.academics_extra import CertificateIn, CertificateOut, Clearance, Due, IdCardsRequest
 from app.services import audit_service, pdf_service, storage_service
 from app.services.family_service import own_students, school_today
 
@@ -37,6 +40,76 @@ async def _out(db: AsyncSession, c: Certificate, s: Student | None = None) -> Ce
                           details=c.details or {}, issued_by=by, cancelled=c.cancelled_at is not None)
 
 
+def _inr(v) -> str:
+    return f"₹{v:,.0f}"
+
+
+def _plural(n: int, word: str) -> str:
+    return f"{n} {word}{'' if n == 1 else 's'}"
+
+
+async def clearance(db: AsyncSession, user: User, student_id: uuid.UUID) -> Clearance:
+    """What the student still owes or holds: unpaid fees, library books and fines, a hostel bed, a bus seat."""
+    from app.services.campus_service import _fine, library_settings
+    from app.services.fee_service import balance
+
+    s = await _student(db, user.school_id, student_id)
+    today = await school_today(db, user.school_id)
+    dues: list[Due] = []
+
+    invoices = (await db.scalars(select(FeeInvoice).where(FeeInvoice.student_id == s.id, FeeInvoice.status.in_(["unpaid", "partial"])))).all()
+    unpaid = [i for i in invoices if balance(i) > 0]
+    if unpaid:
+        dues.append(Due(area="fees", label="Fees", detail=f"{_inr(sum(balance(i) for i in unpaid))} unpaid on {_plural(len(unpaid), 'invoice')}"))
+
+    issues = (await db.scalars(select(BookIssue).where(BookIssue.student_id == s.id, BookIssue.fine_paid.is_(False)))).all()
+    out = [i for i in issues if not i.returned_on]
+    rules = await library_settings(db, user.school_id)
+    fines = sum((_fine(i, today, rules)[1] for i in issues), 0)
+    if out or fines > 0:
+        parts = [f"{_plural(len(out), 'book')} not returned"] if out else []
+        if fines > 0:
+            parts.append(f"{_inr(fines)} fine unpaid")
+        dues.append(Due(area="library", label="Library", detail=" · ".join(parts)))
+
+    bed = (await db.execute(select(Hostel.name, HostelRoom.number).join(HostelRoom, HostelRoom.hostel_id == Hostel.id)
+                            .join(HostelAllocation, HostelAllocation.room_id == HostelRoom.id)
+                            .where(HostelAllocation.student_id == s.id, HostelAllocation.left_on.is_(None)))).first()
+    if bed:
+        dues.append(Due(area="hostel", label="Hostel", detail=f"Still has a bed: {bed[0]}, room {bed[1]}"))
+
+    route = await db.scalar(select(Route.name).join(TransportAssignment, TransportAssignment.route_id == Route.id)
+                            .where(TransportAssignment.student_id == s.id))
+    if route:
+        dues.append(Due(area="transport", label="Transport", detail=f"Still on the bus: {route}"))
+    return Clearance(student_id=s.id, clear=not dues, dues=dues)
+
+
+async def mark_left(db: AsyncSession, user: User, s: Student) -> None:
+    """The student leaves: inactive (the seat is free, the family's app no longer shows them), the hostel bed and bus
+    seat given up."""
+    today = await school_today(db, user.school_id)
+    s.status = "inactive"
+    for a in (await db.scalars(select(HostelAllocation).where(HostelAllocation.student_id == s.id, HostelAllocation.left_on.is_(None)))).all():
+        a.left_on = today
+    for t in (await db.scalars(select(TransportAssignment).where(TransportAssignment.student_id == s.id))).all():
+        await db.delete(t)
+    await db.flush()
+    await audit_service.record(db, "student.left", school_id=user.school_id, user_id=user.id, entity_type="student", entity_id=s.id,
+                               meta={"name": f"{s.first_name} {s.last_name}"})
+
+
+async def mark_left_after(db: AsyncSession, user: User, cert_id: uuid.UUID) -> CertificateOut:
+    """Asked after a transfer certificate is issued: mark its student as left."""
+    c = await _get(db, user, cert_id)
+    if c.kind != "transfer" or c.cancelled_at:
+        raise AppError("Only a valid transfer certificate marks a student as left", code="NOT_A_TC", status_code=409)
+    s = await db.get(Student, c.student_id)
+    if s.status == "active":
+        await mark_left(db, user, s)
+    return await _out(db, c, s)
+
+
 async def issue(db: AsyncSession, user: User, data: CertificateIn) -> CertificateOut:
     s = await _student(db, user.school_id, data.student_id)
     today = await school_today(db, user.school_id)
@@ -44,8 +117,13 @@ async def issue(db: AsyncSession, user: User, data: CertificateIn) -> Certificat
         existing = await db.scalar(select(Certificate.serial_no).where(
             Certificate.student_id == s.id, Certificate.kind == "transfer", Certificate.cancelled_at.is_(None)))
         if existing:
-            raise Conflict(f"A transfer certificate ({existing}) was already issued. Cancel it first to issue a new one.",
-                           code="TC_EXISTS")
+            raise AppError(f"A transfer certificate ({existing}) was already issued. Cancel it first to issue a new one.",
+                           code="TC_EXISTS", status_code=409)
+    # Every certificate checks what the student still owes first; the office can go ahead knowingly.
+    check = await clearance(db, user, s.id)
+    if not check.clear and not data.ignore_dues:
+        raise AppError("This student still has dues: " + "; ".join(f"{d.label}: {d.detail}" for d in check.dues),
+                       code="DUES_PENDING", status_code=409, details={"dues": [d.model_dump() for d in check.dues]})
     year = today.year if today.month >= 4 else today.year - 1
     prefix = f"{PREFIX[data.kind]}/{year}-{str(year + 1)[2:]}/"
     n = await db.scalar(select(func.count()).select_from(Certificate).where(
@@ -53,11 +131,12 @@ async def issue(db: AsyncSession, user: User, data: CertificateIn) -> Certificat
     c = Certificate(school_id=user.school_id, student_id=s.id, kind=data.kind, serial_no=f"{prefix}{n + 1:04d}", issued_on=today,
                     details=data.details(), issued_by=user.id)
     db.add(c)
-    if data.kind == "transfer" and data.mark_left and s.status == "active":
-        s.status = "inactive"
     await db.flush()
     await audit_service.record(db, "certificate.issue", school_id=user.school_id, user_id=user.id, entity_type="student", entity_id=s.id,
-                               meta={"kind": data.kind, "serial_no": c.serial_no, "left": data.mark_left})
+                               meta={"kind": data.kind, "serial_no": c.serial_no, "left": data.mark_left,
+                                     "dues_ignored": [d.label for d in check.dues]})
+    if data.kind == "transfer" and data.mark_left and s.status == "active":
+        await mark_left(db, user, s)
     return await _out(db, c, s)
 
 

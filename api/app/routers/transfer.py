@@ -23,6 +23,29 @@ def _csv(text: str, name: str) -> Response:
                     headers={"Content-Disposition": f'attachment; filename="{name}-{date.today().isoformat()}.csv"'})
 
 
+class ImportField(BaseModel):
+    key: str  # the column name the import reads
+    label: str
+    required: bool
+    hint: str | None = None
+
+
+def _fields(columns: list[str], required: list[str], hints: dict[str, str]) -> list[ImportField]:
+    return [ImportField(key=c, label=svc.FIELD_LABELS.get(c, c.replace("_", " ").capitalize()), required=c in required, hint=hints.get(c))
+            for c in columns]
+
+
+@router.get("/students/fields", response_model=ApiResponse[list[ImportField]], dependencies=[require_module("students")])
+async def students_fields(current: CurrentUser = require_permission("students.manage")):
+    """What a student import can fill in: the mapping screen matches the columns of any CSV to these."""
+    return ok(_fields(svc.STUDENT_COLUMNS, svc.STUDENT_REQUIRED, svc.STUDENT_HINTS))
+
+
+@router.get("/staff/fields", response_model=ApiResponse[list[ImportField]])
+async def staff_fields(current: CurrentUser = require_permission("users.manage")):
+    return ok(_fields(svc.STAFF_COLUMNS, svc.STAFF_REQUIRED, svc.STAFF_HINTS))
+
+
 @router.get("/students/template", dependencies=[require_module("students")])
 async def students_template(current: CurrentUser = require_permission("students.manage")):
     return _csv(svc.student_template(), "students-template")

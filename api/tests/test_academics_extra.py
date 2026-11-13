@@ -1,4 +1,5 @@
 """Syllabus and lesson plans, certificates and ID cards, admission enquiries, promotion, substitutions."""
+import uuid
 from datetime import date, timedelta
 
 from sqlalchemy import select
@@ -131,6 +132,37 @@ async def test_certificates_and_id_cards(client, db, school, admin_headers):
     assert (await client.post(f"{API}/certificates/id-cards", headers=admin_headers, json={})).status_code == 422
     assert (await client.post(f"{API}/certificates/id-cards", headers=th, json={"student_ids": [other["student"]["id"]]})).status_code == 403
     assert t
+
+
+async def test_certificates_check_dues_first_and_a_tc_can_mark_the_student_left(client, db, school, admin_headers):
+    """Unpaid fees, library books or fines, a hostel bed or a bus seat stop a certificate unless the office goes ahead
+    knowingly; after a TC the office is asked to mark the student as left."""
+    from app.models import FeeInvoice
+    _, section = await factories.klass(db, school, "Class 6")
+    sid = (await client.post(f"{API}/students", headers=admin_headers, json=student_body(section, "DU1", first_name="Dev"))).json()["data"]["student"]["id"]
+    clear = (await client.get(f"{API}/certificates/clearance/{sid}", headers=admin_headers)).json()["data"]
+    assert clear == {"student_id": sid, "clear": True, "dues": []}
+
+    db.add(FeeInvoice(school_id=school.id, invoice_no="INV-DUE-1", student_id=uuid.UUID(sid), term="Quarter 1", academic_year="2026-27",
+                      issue_date=date.today(), due_date=date.today(), total=3000, paid=500, status="partial"))
+    await db.commit()
+    check = (await client.get(f"{API}/certificates/clearance/{sid}", headers=admin_headers)).json()["data"]
+    assert check["clear"] is False and check["dues"] == [{"area": "fees", "label": "Fees", "detail": "₹2,500 unpaid on 1 invoice"}]
+
+    bona = {"student_id": sid, "kind": "bonafide", "purpose": "Bank"}
+    refused = await client.post(f"{API}/certificates", headers=admin_headers, json=bona)
+    assert refused.status_code == 409 and refused.json()["error"]["code"] == "DUES_PENDING"
+    assert refused.json()["error"]["details"]["dues"][0]["area"] == "fees"
+    assert (await client.post(f"{API}/certificates", headers=admin_headers, json={**bona, "ignore_dues": True})).status_code == 201
+
+    tc = (await client.post(f"{API}/certificates", headers=admin_headers, json={
+        "student_id": sid, "kind": "transfer", "leaving_date": date.today().isoformat(), "reason": "Moving", "ignore_dues": True})).json()["data"]
+    assert (await client.get(f"{API}/students/{sid}", headers=admin_headers)).json()["data"]["status"] == "active"  # not yet
+    left = await client.post(f"{API}/certificates/{tc['id']}/mark-left", headers=admin_headers)
+    assert left.status_code == 200
+    assert (await client.get(f"{API}/students/{sid}", headers=admin_headers)).json()["data"]["status"] == "inactive"
+    bona_id = (await client.get(f"{API}/certificates", headers=admin_headers, params={"student_id": sid, "kind": "bonafide"})).json()["data"][0]["id"]
+    assert (await client.post(f"{API}/certificates/{bona_id}/mark-left", headers=admin_headers)).json()["error"]["code"] == "NOT_A_TC"
 
 
 # ---- admission enquiries ------------------------------------------------------------------------

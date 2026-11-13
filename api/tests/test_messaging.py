@@ -9,7 +9,7 @@ from tests.factories import API, PASSWORD
 from tests.test_attendance import today
 
 
-async def test_sms_whatsapp_settings_and_absent_alert(client, db, school, admin_headers):
+async def test_sms_whatsapp_settings_and_absent_alert(client, db, school, admin_headers, super_headers):
     section, ids, parent_pw, _, _ = await test_attendance.setup(client, db, school, admin_headers)
     t = await factories.login_headers(client, "ct@t.com", PASSWORD, school.slug)
     st = (await client.get(f"{API}/messaging/status", headers=admin_headers)).json()["data"]
@@ -25,11 +25,13 @@ async def test_sms_whatsapp_settings_and_absent_alert(client, db, school, admin_
         assert {(m.channel, m.to) for m in logs} == {("sms", "+919000000001"), ("whatsapp", "+919000000001")}  # Mum Zero's phone
         assert all(m.status == "logged" for m in logs) and "absent" in logs[0].body
 
-    sent = await client.post(f"{API}/messaging/test", headers=admin_headers, json={"channel": "sms", "phone": "98140 10001"})
+    # Testing the SMS/WhatsApp provider is the platform's job, not the school's.
+    assert (await client.post(f"{API}/messaging/test", headers=admin_headers, json={"channel": "sms", "phone": "98140 10001"})).status_code == 403
+    sent = await client.post(f"{API}/messaging/test", headers=super_headers, json={"channel": "sms", "phone": "98140 10001"})
     assert sent.json()["data"]["message"].startswith("Test sms logged")
-    assert (await client.post(f"{API}/messaging/test", headers=admin_headers, json={"channel": "sms", "phone": "12-34"})).status_code == 422
-    listed = (await client.get(f"{API}/messaging", headers=admin_headers)).json()["data"]
-    assert listed[0]["to"] == "+919814010001" and listed[0]["kind"] == "test"
+    assert (await client.post(f"{API}/messaging/test", headers=super_headers, json={"channel": "sms", "phone": "12-34"})).status_code == 422
+    test_row = await db.scalar(select(MessageLog).where(MessageLog.kind == "test"))
+    assert test_row.to == "+919814010001" and test_row.school_id is None
 
 
 async def test_chat_between_parent_and_teacher(client, db, school, admin_headers):

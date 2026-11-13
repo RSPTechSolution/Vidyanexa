@@ -72,8 +72,11 @@ class IssueOut(BaseModel):
 
 
 class LibrarySettings(BaseModel):
+    """Each school's own library rules (Library → Settings)."""
     loan_days: int = Field(14, ge=1, le=120)
     fine_per_day: Annotated[Decimal, Field(ge=0, le=100, decimal_places=2), PlainSerializer(float, return_type=float)] = Decimal(2)
+    grace_days: int = Field(0, ge=0, le=30)  # the first late days are free; only days after them are fined
+    max_fine: Annotated[Decimal, Field(ge=0, le=10000, decimal_places=2), PlainSerializer(float, return_type=float)] = Decimal(0)  # per book; 0 = no cap
     max_books_student: int = Field(2, ge=1, le=20)
     max_books_staff: int = Field(5, ge=1, le=50)
 

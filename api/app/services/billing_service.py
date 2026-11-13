@@ -234,6 +234,22 @@ async def payments(db: AsyncSession, school_id: uuid.UUID) -> list[SubscriptionP
                                   .order_by(SubscriptionPayment.paid_at.desc()))).all())
 
 
+GRACE_DAYS = 7  # a paid plan keeps working this long after its period ends, for a late renewal
+
+
+def subscription_ended(school: School, now: datetime | None = None) -> str | None:
+    """Why the school can no longer use Vidyanexa, or None while it can: "trial" (the free trial is over), "cancelled",
+    or "expired" (a paid plan that wasn't renewed within the grace days). Only sign-in and billing stay open."""
+    now = now or _now()
+    if school.subscription_status == "trialing" and school.trial_ends_at and school.trial_ends_at <= now:
+        return "trial"
+    if school.subscription_status == "cancelled":
+        return "cancelled"
+    if school.subscription_status in ("active", "past_due") and school.current_period_end             and school.current_period_end + timedelta(days=GRACE_DAYS) <= now:
+        return "expired"
+    return None
+
+
 def subscription_view(school: School, used: dict[str, int]) -> dict:
     now = _now()
     trial_active = school.subscription_status == "trialing" and bool(school.trial_ends_at and school.trial_ends_at > now)

@@ -1,8 +1,8 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Ban, FileBadge2, IdCard, Plus, ScrollText } from "lucide-react";
+import { AlertTriangle, Ban, CheckCircle2, FileBadge2, IdCard, Plus, ScrollText } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Chip, StudentPicker } from "@/components/academics/pickers";
@@ -13,14 +13,14 @@ import { PageHeader } from "@/components/common/page-header";
 import { PermissionGate } from "@/components/common/permission-gate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiError, api } from "@/lib/api/client";
-import type { Certificate, StudentOption } from "@/lib/api/types";
+import type { Certificate, Clearance, Due, StudentOption } from "@/lib/api/types";
 import { postDownload } from "@/lib/download";
 import { formatDate } from "@/lib/format";
 import { useCertificates, useClasses } from "@/lib/queries";
@@ -38,15 +38,27 @@ function IssueDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
   const [student, setStudent] = useState<StudentOption | null>(null);
   const [kind, setKind] = useState<Kind>("bonafide");
   const [f, setF] = useState({ purpose: "", conduct: "Good", leaving_date: format(new Date(), "yyyy-MM-dd"), reason: "", last_class: "", promoted: "yes", fees_paid_upto: "", remarks: "" });
-  const [markLeft, setMarkLeft] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => { if (open) { setStudent(null); setError(null); } }, [open]);
+  // Dues the office has seen and chosen to go ahead with.
+  const [ignoreDues, setIgnoreDues] = useState(false);
+  // After a TC: ask whether the student leaves now.
+  const [leaving, setLeaving] = useState<Certificate | null>(null);
+  useEffect(() => { if (open) { setStudent(null); setError(null); setIgnoreDues(false); } }, [open]);
+  useEffect(() => { setIgnoreDues(false); }, [student]);
+  // Every certificate first checks what the student still owes: fees, library books and fines, a hostel bed, a bus seat.
+  const clearance = useQuery({
+    queryKey: ["certificates", "clearance", student?.id],
+    enabled: Boolean(student),
+    queryFn: async () => (await api<Clearance>(`/certificates/clearance/${student!.id}`)).data,
+  });
+  const dues = clearance.data?.dues ?? [];
+  const blocked = !student || clearance.isLoading || (dues.length > 0 && !ignoreDues);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF((x) => ({ ...x, [k]: e.target.value }));
   const issue = useMutation({
     mutationFn: () => {
       const pick = kind === "bonafide" ? ["purpose", "remarks"] : kind === "character" ? ["conduct", "remarks"]
         : ["leaving_date", "reason", "last_class", "promoted", "fees_paid_upto", "conduct", "remarks"];
-      const body: Record<string, unknown> = { student_id: student!.id, kind, mark_left: kind === "transfer" && markLeft };
+      const body: Record<string, unknown> = { student_id: student!.id, kind, ignore_dues: ignoreDues };
       for (const k of pick) if (f[k as keyof typeof f]) body[k] = f[k as keyof typeof f];
       return api<Certificate>("/certificates", { method: "POST", body });
     },
@@ -57,10 +69,12 @@ function IssueDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
         action: { label: "Open PDF", onClick: () => window.open(`/api/proxy/certificates/${data.id}/pdf`, "_blank") },
       });
       onOpenChange(false);
+      if (data.kind === "transfer") setLeaving(data);
     },
     onError: (e) => setError(e instanceof ApiError ? (Object.values(e.fieldErrors)[0] ?? e.message) : "Could not issue"),
   });
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader><DialogTitle>Issue a certificate</DialogTitle><DialogDescription>{KINDS[kind].hint}</DialogDescription></DialogHeader>
@@ -89,22 +103,72 @@ function IssueDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
                   )}
                 </Field>
                 <Field label="Fees paid up to">{(a) => <Input {...a} value={f.fees_paid_upto} onChange={set("fees_paid_upto")} placeholder="e.g. September 2026" maxLength={100} />}</Field>
-                <label className="flex items-center gap-3 rounded-lg border p-3 text-sm sm:col-span-2">
-                  <Switch checked={markLeft} onCheckedChange={setMarkLeft} />
-                  <span><span className="font-medium">Mark the student as left</span><span className="block text-xs text-muted-foreground">They become inactive, free a seat and lose app access.</span></span>
-                </label>
               </>
             )}
             <Field label="Remarks" className="sm:col-span-2">{(a) => <Input {...a} value={f.remarks} onChange={set("remarks")} maxLength={500} placeholder="Optional" />}</Field>
           </form>
         </div>
+        {student && <DuesPanel loading={clearance.isLoading} dues={dues} ignore={ignoreDues} onIgnore={setIgnoreDues} />}
         {error && <p role="alert" className="text-sm font-medium text-destructive">{error}</p>}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" form="cert-form" disabled={!student} loading={issue.isPending} loadingText="Issuing…">Issue certificate</Button>
+          <Button type="submit" form="cert-form" disabled={blocked} loading={issue.isPending} loadingText="Issuing…">Issue certificate</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    <MarkLeftDialog certificate={leaving} onDone={() => setLeaving(null)} />
+    </>
+  );
+}
+
+/** What the student still owes, shown before any certificate; issuing needs the office to say it's going ahead. */
+function DuesPanel({ loading, dues, ignore, onIgnore }: { loading: boolean; dues: Due[]; ignore: boolean; onIgnore: (v: boolean) => void }) {
+  if (loading) return <p className="text-sm text-muted-foreground">Checking fees, library, hostel and transport…</p>;
+  if (!dues.length) {
+    return (
+      <p role="status" className="flex items-center gap-2 rounded-lg border border-success/40 bg-success/5 px-3 py-2 text-sm">
+        <CheckCircle2 className="size-4 shrink-0 text-success" aria-hidden />No dues: fees, library, hostel and transport are all clear.
+      </p>
+    );
+  }
+  return (
+    <div role="alert" className="rounded-lg border border-warning/50 bg-warning/5 p-3 text-sm">
+      <p className="flex items-center gap-2 font-semibold"><AlertTriangle className="size-4 shrink-0 text-warning" aria-hidden />This student still has dues</p>
+      <ul className="mt-2 space-y-1">
+        {dues.map((d) => <li key={d.area}><span className="font-medium">{d.label}:</span> {d.detail}</li>)}
+      </ul>
+      <label className="mt-3 flex items-start gap-2">
+        <Checkbox checked={ignore} onCheckedChange={(v) => onIgnore(Boolean(v))} className="mt-0.5" />
+        <span>Issue anyway. The dues stay on the student&apos;s record.</span>
+      </label>
+    </div>
+  );
+}
+
+/** Asked straight after a transfer certificate: does the student leave now? */
+function MarkLeftDialog({ certificate, onDone }: { certificate: Certificate | null; onDone: () => void }) {
+  const qc = useQueryClient();
+  const left = useMutation({
+    mutationFn: (id: string) => api(`/certificates/${id}/mark-left`, { method: "POST" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["students"] });
+      qc.invalidateQueries({ queryKey: ["certificates"] });
+      toast.success(`${certificate?.student_name} is marked as left`);
+      onDone();
+    },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Could not update the student"),
+  });
+  return (
+    <ConfirmDialog
+      open={Boolean(certificate)}
+      onOpenChange={(o) => !o && onDone()}
+      title={`Mark ${certificate?.student_name ?? "the student"} as left?`}
+      description="They become inactive and their seat is freed. Their hostel bed and bus seat are given up, and the family no longer sees them in the app. Their records and certificates are kept."
+      confirmLabel="Mark as left"
+      cancelLabel="Not now"
+      pending={left.isPending}
+      onConfirm={() => certificate && left.mutate(certificate.id)}
+    />
   );
 }
 

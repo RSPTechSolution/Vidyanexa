@@ -35,6 +35,8 @@ export interface SchoolBrief {
   subscription_status: string;
   trial_ends_at: string | null;
   brand_color?: string | null;
+  /** Set when the school can no longer use Vidyanexa: only signing in and paying for a plan still work. */
+  subscription_ended?: "trial" | "cancelled" | "expired" | null;
 }
 
 export interface Me {
@@ -1220,7 +1222,7 @@ export interface BookIssue {
   id: string; accession_no: string; title: string; borrower: string; borrower_kind: "student" | "staff"; class_section: string | null; issued_on: string;
   due_on: string; returned_on: string | null; overdue_days: number; fine: number; fine_paid: boolean;
 }
-export interface LibrarySettings { loan_days: number; fine_per_day: number; max_books_student: number; max_books_staff: number }
+export interface LibrarySettings { loan_days: number; fine_per_day: number; grace_days: number; max_fine: number; max_books_student: number; max_books_staff: number }
 export interface LibraryStats { titles: number; copies: number; issued: number; overdue: number; fines_due: number }
 export interface HostelOccupant { allocation_id: string; student_id: string; name: string; class_section: string; from_date: string }
 export interface HostelRoom { id: string; number: string; floor: string | null; capacity: number; occupants: HostelOccupant[] }
@@ -1398,3 +1400,7 @@ export interface StorageFile {
   uploaded_by: string | null;
   created_at: string;
 }
+
+/** What a student still owes or holds, checked before any certificate (GET /certificates/clearance/{id}). */
+export interface Due { area: "fees" | "library" | "hostel" | "transport"; label: string; detail: string }
+export interface Clearance { student_id: string; clear: boolean; dues: Due[] }

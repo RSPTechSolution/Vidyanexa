@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.core.deps import DB, CurrentUser, require_module, require_permission
 from app.schemas.academics_extra import (
-    AbsentIn, CertificateIn, CertificateOut, ChildSyllabus, CoverageRow, EnquiryIn, EnquiryNote, EnquiryOut, EnquirySummary,
+    AbsentIn, CertificateIn, CertificateOut, ChildSyllabus, Clearance, CoverageRow, EnquiryIn, EnquiryNote, EnquiryOut, EnquirySummary,
     EnquiryUpdate, IdCardsRequest, LessonIn, LessonOut, LessonUpdate, ProgressSet, PromotionPreview, PromotionRequest,
     PromotionResult, SubstituteSet, SubstitutionDay, SubstitutionOut, SyllabusView, TopicIn, TopicsBulk, TopicUpdate,
 )
@@ -132,6 +132,20 @@ async def list_certificates(db: DB, student_id: uuid.UUID | None = None, kind: s
 async def issue(body: CertificateIn, db: DB, current: CurrentUser = require_permission("certificates.manage")):
     current.require_school()
     return ok(await certificate_service.issue(db, current.user, body))
+
+
+@certificates.get("/clearance/{student_id}", response_model=ApiResponse[Clearance])
+async def clearance(student_id: uuid.UUID, db: DB, current: CurrentUser = require_permission("certificates.manage")):
+    """What the student still owes or holds (fees, library, hostel, bus), checked before issuing any certificate."""
+    current.require_school()
+    return ok(await certificate_service.clearance(db, current.user, student_id))
+
+
+@certificates.post("/{cert_id}/mark-left", response_model=ApiResponse[CertificateOut])
+async def mark_left(cert_id: uuid.UUID, db: DB, current: CurrentUser = require_permission("certificates.manage")):
+    """After a transfer certificate: the student leaves (inactive; hostel bed and bus seat given up)."""
+    current.require_school()
+    return ok(await certificate_service.mark_left_after(db, current.user, cert_id))
 
 
 @certificates.post("/id-cards")

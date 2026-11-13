@@ -16,7 +16,9 @@ export function Field({
   const id = useId();
   const msgId = `${id}-msg`;
   return (
-    <div className={cn("space-y-1.5", className)}>
+    // Flex gap, not space-y: a dropdown renders a hidden input after its button, and space-y would give the button a
+    // bottom margin, so anything lined up beside the field (a "Save" button) sat 6px low.
+    <div className={cn("flex flex-col gap-1.5", className)}>
       <Label htmlFor={id}>
         {label}
         {required && <span className="text-destructive" aria-hidden>*</span>}
