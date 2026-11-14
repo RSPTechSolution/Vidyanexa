@@ -84,25 +84,24 @@ class HeroChip extends StatelessWidget {
   );
 }
 
-/// The classic serif for greetings and sign-in headings: navy on light screens, the normal text colour on dark ones.
+/// Greetings and screen headings: the app font (Plus Jakarta Sans) at extra-bold with tight spacing, ink navy on light
+/// screens and the normal text colour on dark ones. Kept under its old name so every caller picks up the change.
 TextStyle serifHeading(BuildContext context, {double size = 30}) {
   final theme = Theme.of(context);
   return TextStyle(
-    fontFamily: 'Cormorant Garamond',
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w800,
     fontSize: size,
-    height: 1.1,
-    color: theme.brightness == Brightness.dark ? theme.colorScheme.onSurface : Brand.navy,
+    height: 1.15,
+    letterSpacing: -size * 0.025,
+    color: theme.brightness == Brightness.dark ? theme.colorScheme.onSurface : Brand.ink,
   );
 }
 
-/// The small gold line above a greeting ("Parent · Green Valley Public School").
+/// The small line above a greeting ("Parent · Green Valley Public School"), in a quiet grey.
 TextStyle eyebrow(BuildContext context) {
-  final dark = Theme.of(context).brightness == Brightness.dark;
   return TextStyle(
-    fontSize: 11,
-    letterSpacing: 1.5,
-    fontWeight: FontWeight.w600,
-    color: dark ? const Color(0xFFE9C27A) : const Color(0xFF8A6420),
+    fontSize: 13.5,
+    fontWeight: FontWeight.w500,
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
   );
 }

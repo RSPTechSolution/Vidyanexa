@@ -142,7 +142,7 @@ void main() {
       await tapSignIn(tester);
       await tester.pumpAndSettle();
       expect(find.textContaining('Suresh'), findsOneWidget);
-      expect(find.textContaining('GREEN VALLEY PUBLIC SCHOOL'), findsOneWidget);
+      expect(find.textContaining('Green Valley Public School'), findsOneWidget);
       // Only modules the school enabled are listed.
       expect(find.text('Fees'), findsOneWidget);
       expect(find.text('Bus tracking'), findsNothing);

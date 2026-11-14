@@ -75,8 +75,22 @@ flutter:
     - assets/brand/
     - assets/hero/
 
-  # The wordmark face: Cinzel SemiBold (SIL Open Font License, assets/fonts/OFL-Cinzel.txt).
   fonts:
+    # The app's typeface since theme 3: Plus Jakarta Sans, bundled in the five weights the app uses so bold text is
+    # truly bold and nothing is downloaded on first launch (SIL Open Font License, assets/fonts/OFL-PlusJakartaSans.txt).
+    - family: Plus Jakarta Sans
+      fonts:
+        - asset: assets/fonts/PlusJakartaSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/PlusJakartaSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/PlusJakartaSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/PlusJakartaSans-ExtraBold.ttf
+          weight: 800
+    # The old wordmark face: Cinzel SemiBold (SIL Open Font License, assets/fonts/OFL-Cinzel.txt).
     - family: Cinzel
       fonts:
         - asset: assets/fonts/Cinzel-SemiBold.ttf

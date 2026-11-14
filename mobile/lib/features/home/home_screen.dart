@@ -81,16 +81,15 @@ class HomeScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
-            Text(
-              [roleLabel(me.role), if (me.school != null) me.school!.name].join(' · ').toUpperCase(),
-              style: eyebrow(context),
-              maxLines: 2,
-            ),
+            // Sample A: today's date (or why the school is closed) above a bold greeting, then who you are here.
+            Text(_todayChip(ref), style: eyebrow(context), maxLines: 2),
             const SizedBox(height: 2),
-            Text('${greeting(DateTime.now())}, ${me.firstName}', style: serifHeading(context)),
-            const SizedBox(height: 12),
-            Entrance(
-              child: HeroBanner(art: HeroArt.forRole(me.role, flavor), chip: _todayChip(ref)),
+            Text('${greeting(DateTime.now())}, ${me.firstName}', style: serifHeading(context, size: 26)),
+            const SizedBox(height: 4),
+            Text(
+              [roleLabel(me.role), if (me.school != null) me.school!.name].join(' · '),
+              style: eyebrow(context).copyWith(fontSize: 13),
+              maxLines: 2,
             ),
             const SizedBox(height: 16),
             if (loading)
@@ -178,7 +177,7 @@ class _Heading extends StatelessWidget {
     child: Row(
       children: [
         Expanded(
-          child: Text(text, style: serifHeading(context, size: 22)),
+          child: Text(text, style: serifHeading(context, size: 18)),
         ),
         if (action != null) TextButton(onPressed: onAction, child: Text(action!)),
       ],
@@ -203,20 +202,26 @@ class _FamilyCards extends ConsumerWidget {
     // Keep the home-screen widget in step with what Home shows.
     WidgetsBinding.instance.addPostFrameCallback((_) => updateTodayWidget(attendance: kids, fees: feeKids));
     final today = DateTime.now();
-    final s = statusColors(context);
-    final scheme = Theme.of(context).colorScheme;
-    return Column(
+    final panel = AppTheme.inkPanel(Theme.of(context).colorScheme);
+    // Each child's card is the deep ink panel of sample A; the dark theme inside keeps every colour readable on it.
+    return Theme(
+      data: AppTheme.onInk,
+      child: Column(
       children: [
         for (final entry in ids.entries)
           Builder(
             builder: (context) {
+              final s = statusColors(context);
+              final scheme = Theme.of(context).colorScheme;
               final a = kids.where((k) => k.studentId == entry.key).firstOrNull;
               final f = feeKids.where((k) => k.studentId == entry.key).firstOrNull;
               final mark = a?.on(today);
               return Card(
+                color: panel,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 margin: const EdgeInsets.only(bottom: 10),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(18),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -270,7 +275,7 @@ class _FamilyCards extends ConsumerWidget {
                                 color: f.overdue > 0
                                     ? s.danger
                                     : f.due > 0
-                                    ? scheme.primary
+                                    ? const Color(0xFFE9C987) // the crest's gold, light enough to read on ink
                                     : s.success,
                                 title: f.overdue > 0 ? 'Fees overdue' : 'Fees due',
                                 value: f.overdue > 0 ? inr(f.overdue) : (f.due > 0 ? inr(f.due) : 'Paid up'),
@@ -287,6 +292,7 @@ class _FamilyCards extends ConsumerWidget {
             },
           ),
       ],
+      ),
     );
   }
 }
@@ -424,29 +430,44 @@ class _AttendanceToTake extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _Heading('Attendance today', action: 'All classes', onAction: () => context.go('/attendance')),
-        Card(
+        if (pending.isNotEmpty)
+          // Classes still to mark: the ink panel with gold buttons (sample A), the one thing to do first.
+          Theme(
+            data: AppTheme.onInk,
+            child: Card(
+              color: AppTheme.inkPanel(Theme.of(context).colorScheme),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Column(
+                  children: [
+                    for (final c in pending.take(4))
+                      ListTile(
+                        leading: const Icon(Icons.fact_check_outlined, color: Color(0xFFE9C987)),
+                        title: Text(c.label, style: const TextStyle(fontWeight: FontWeight.w700)),
+                        subtitle: Text('${c.students} students${c.isClassTeacher ? ' · your class' : ''} · not taken yet'),
+                        trailing: FilledButton(
+                          onPressed: () async {
+                            await context.push('/attendance/mark/${c.sectionId}?date=$day&label=${Uri.encodeComponent(c.label)}');
+                            ref.invalidate(attendanceSectionsProvider(day));
+                          },
+                          style: FilledButton.styleFrom(minimumSize: const Size(0, 40)).merge(AppTheme.goldButton),
+                          child: const Text('Mark'),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          )
+        else
+          Card(
           child: Column(
             children: [
-              if (pending.isEmpty)
-                ListTile(
-                  leading: Icon(Icons.check_circle_rounded, color: s.success),
-                  title: const Text('All your classes are marked'),
-                )
-              else
-                for (final c in pending.take(4))
-                  ListTile(
-                    leading: Icon(Icons.fact_check_outlined, color: Theme.of(context).colorScheme.primary),
-                    title: Text(c.label, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text('${c.students} students${c.isClassTeacher ? ' · your class' : ''}'),
-                    trailing: FilledButton.tonal(
-                      onPressed: () async {
-                        await context.push('/attendance/mark/${c.sectionId}?date=$day&label=${Uri.encodeComponent(c.label)}');
-                        ref.invalidate(attendanceSectionsProvider(day));
-                      },
-                      style: FilledButton.styleFrom(minimumSize: const Size(0, 36)),
-                      child: const Text('Mark'),
-                    ),
-                  ),
+              ListTile(
+                leading: Icon(Icons.check_circle_rounded, color: s.success),
+                title: const Text('All your classes are marked'),
+              ),
             ],
           ),
         ),

@@ -65,12 +65,13 @@ void main() {
     expect(MediaQuery.textScalerOf(tester.element(find.byType(Scaffold).first)).scale(10), 13); // the rest still follows the phone
   });
 
-  testWidgets('home shows the picture for who is signed in', (tester) async {
+  testWidgets('home greets who is signed in, with their role and school (no picture since theme 3)', (tester) async {
     Finder art(String name) => find.byWidgetPredicate((w) => w is SvgPicture && (w.bytesLoader as SvgAssetLoader).assetName == 'assets/hero/$name.svg');
     final fake = FakeApi()..on('GET /auth/me', (_) => (200, FakeApi.ok(meJson())));
     await pump(tester, container(fake));
-    expect(art('parent'), findsOneWidget);
+    expect(art('parent'), findsNothing);
     expect(find.text('Good ${greeting(DateTime.now()).split(' ').last}, Suresh'), findsOneWidget);
+    expect(find.textContaining('Green Valley Public School'), findsOneWidget);
   });
 
   testWidgets('home shows an overdue fee once, and no stale coming-soon card', (tester) async {

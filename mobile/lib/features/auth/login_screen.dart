@@ -198,7 +198,7 @@ class _CrestPill extends StatelessWidget {
       const BrandMark(size: 30, onDark: false),
       const SizedBox(width: 8),
       Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-        const Text('VIDYANEXA', style: TextStyle(fontFamily: 'Cinzel', fontWeight: FontWeight.w600, fontSize: 15, letterSpacing: 2, color: Brand.navy, height: 1.1)),
+        const Text('VIDYANEXA', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, letterSpacing: 2.2, color: Brand.ink, height: 1.1)),
         Text(
           flavor.suffix ?? 'Parents and students',
           style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.8, color: Color(0xFF8A6420)),

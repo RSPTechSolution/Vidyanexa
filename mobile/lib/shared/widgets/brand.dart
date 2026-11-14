@@ -18,7 +18,7 @@ class BrandMark extends StatelessWidget {
   }
 }
 
-/// The name in Roman capitals (Cinzel), as in the logo. One word, one colour: never set "NEXA" apart.
+/// The name in widely spaced capitals in the app font (sample A). One word, one colour: never set "NEXA" apart.
 class Wordmark extends StatelessWidget {
   const Wordmark({super.key, this.fontSize = 26, this.suffix});
   final double fontSize;
@@ -27,7 +27,7 @@ class Wordmark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final base = Theme.of(context).textTheme.headlineSmall!
-        .copyWith(fontFamily: 'Cinzel', fontSize: fontSize * 0.86, fontWeight: FontWeight.w600, letterSpacing: fontSize * 0.08);
+        .copyWith(fontSize: fontSize * 0.78, fontWeight: FontWeight.w800, letterSpacing: fontSize * 0.1);
     final tag = base.copyWith(fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily, fontSize: fontSize * 0.5, letterSpacing: 0, fontWeight: FontWeight.w500,
         color: Theme.of(context).colorScheme.onSurfaceVariant);
     return Semantics(
