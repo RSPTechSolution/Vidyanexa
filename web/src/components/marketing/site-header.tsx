@@ -3,11 +3,12 @@
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BrandMark, Wordmark } from "@/components/brand/logo";
 import { buttonVariants } from "@/components/ui/button";
 import { ThemeMenu } from "@/components/shell/theme-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { SIGNED_IN_HINT } from "@/lib/auth/cookies";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
@@ -17,14 +18,20 @@ const LINKS = [
   { href: "/contact", label: "Contact" },
 ];
 
-export function SiteHeader({ signedIn }: { signedIn: boolean }) {
+export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  // Read in the browser (the page itself is the same cached copy for everyone): "Sign in" until we know otherwise.
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    setSignedIn(document.cookie.split("; ").some((c) => c === `${SIGNED_IN_HINT}=1`));
+  }, []);
   const active = (href: string) => !href.startsWith("/#") && (pathname === href || pathname.startsWith(`${href}/`));
 
   return (
-    <header className="glass sticky top-0 z-40 border-x-0 border-t-0 border-b-border/70">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-5 sm:px-8">
+    /* Theme 4: a floating glass bar with rounded corners, a little in from the edges. */
+    <header className="sticky top-0 z-40 px-3 pt-3 sm:px-6">
+      <div className="glass mx-auto flex h-16 max-w-7xl items-center gap-6 rounded-2xl px-5 shadow-[0_10px_30px_-20px_rgb(30_52_102/0.45)] sm:px-8">
         <Link href="/" className="flex items-center gap-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Vidyanexa home">
           <BrandMark size={32} />
           <Wordmark />

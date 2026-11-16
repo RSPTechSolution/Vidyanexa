@@ -9,7 +9,8 @@ const buttonClasses = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-[0_1px_3px_rgb(0_0_0/0.15),0_1px_2px_rgb(0_0_0/0.1)]",
+        // Theme 4: a blue gradient with a soft glow; white text passes 4.5:1 across the whole gradient in both modes.
+        default: "bg-[linear-gradient(135deg,var(--btn-from),var(--btn-to))] text-white shadow-[0_6px_16px_-8px_var(--btn-glow)] hover:brightness-110 hover:shadow-[0_8px_20px_-8px_var(--btn-glow)]",
         outline:
           "border-input/70 bg-transparent text-primary hover:bg-primary/8 aria-expanded:bg-primary/12",
         secondary:

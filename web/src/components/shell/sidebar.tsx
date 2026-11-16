@@ -26,10 +26,10 @@ function NavLink({ item, collapsed, onNavigate }: { item: NavItem; collapsed: bo
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group flex h-10 items-center gap-3 rounded-full px-4 text-sm font-medium transition-colors outline-none",
+        "group flex h-10 items-center gap-3 rounded-xl px-4 text-sm font-medium transition-[background-color,color,box-shadow] outline-none",
         "focus-visible:ring-2 focus-visible:ring-sidebar-ring",
         active
-          ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold"
+          ? "nav-active font-semibold"
           : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
         collapsed && "justify-center px-0",
       )}
@@ -64,7 +64,7 @@ export function SidebarNav({ collapsed = false, onNavigate }: { collapsed?: bool
           {collapsed ? (
             <div className="mx-auto mb-2 h-px w-6 bg-sidebar-border" aria-hidden />
           ) : (
-            <p className="mb-1 px-4 text-xs font-medium text-sidebar-muted">{group.label}</p>
+            <p className="mb-1.5 px-4 text-[11px] font-bold tracking-[0.07em] text-sidebar-muted uppercase">{group.label}</p>
           )}
           <ul className="space-y-0.5">
             {group.items.map((item) => (
@@ -105,9 +105,9 @@ function PlanChip({ collapsed }: { collapsed: boolean }) {
   return (
     <Link
       href="/settings/billing"
-      className="mx-3 mb-3 flex items-center gap-3 rounded-2xl bg-sidebar-accent p-3 transition-colors hover:bg-[color-mix(in_oklch,var(--sidebar-accent),var(--sidebar-foreground)_6%)] outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+      className="mx-3 mb-3 flex items-center gap-3 rounded-2xl border border-sidebar-border bg-[linear-gradient(135deg,color-mix(in_oklch,var(--btn-to)_14%,var(--sidebar)),color-mix(in_oklch,var(--brand-gold)_14%,var(--sidebar)))] p-3 transition-[filter] hover:brightness-[0.98] outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
     >
-      <span className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground"><CreditCard className="size-4" aria-hidden /></span>
+      <span className="nav-active flex size-9 items-center justify-center rounded-xl"><CreditCard className="size-4" aria-hidden /></span>
       <span className="min-w-0 leading-tight">
         <span className="block text-sm font-semibold text-sidebar-foreground">{me.school.plan.name} plan</span>
         <span className={cn("block text-xs", me.school.subscription_ended ? "font-semibold text-warning" : "text-sidebar-muted")}>
@@ -139,7 +139,7 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-expanded={!collapsed}
           className={cn(
-            "flex h-10 w-full items-center gap-3 rounded-full px-4 text-sm text-sidebar-muted transition-colors outline-none",
+            "flex h-10 w-full items-center gap-3 rounded-xl px-4 text-sm text-sidebar-muted transition-colors outline-none",
             "hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring",
             collapsed && "justify-center px-0",
           )}

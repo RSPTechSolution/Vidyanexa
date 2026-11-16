@@ -34,6 +34,13 @@ def make_engine(url: str | None = None, *, null_pool: bool = False):
         "pool_size": settings.DB_POOL_SIZE,
         "max_overflow": settings.DB_MAX_OVERFLOW,
         "pool_pre_ping": True,
+        # Recycle connections now and then, and never let one query or a forgotten open transaction hold a connection
+        # for long: under heavy traffic that is what turns one slow request into a queue for everyone.
+        "pool_recycle": 1800,
+        "connect_args": {"server_settings": {
+            "statement_timeout": str(settings.DB_STATEMENT_TIMEOUT_MS),
+            "idle_in_transaction_session_timeout": str(max(settings.DB_STATEMENT_TIMEOUT_MS, 60000)),
+        }} if settings.DB_STATEMENT_TIMEOUT_MS > 0 else {},
     }
     return create_async_engine(url or settings.DATABASE_URL, **kwargs)
 

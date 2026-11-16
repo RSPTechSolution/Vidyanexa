@@ -90,7 +90,7 @@ const STEPS = [
 function HeroChip({ className, icon, tint, title, value }: { className: string; icon: React.ReactNode; tint: string; title: string; value: string }) {
   return (
     <div aria-hidden className={cn("glass absolute z-10 hidden items-center gap-3 rounded-2xl px-4 py-3 shadow-[0_20px_40px_-12px_rgb(0_0_0/0.25)] md:flex", className)}>
-      <span className={cn("flex size-9 items-center justify-center rounded-full", tint)}>{icon}</span>
+      <span className={cn("flex size-9 items-center justify-center rounded-xl", tint)}>{icon}</span>
       <span className="text-left">
         <span className="block text-sm font-semibold">{title}</span>
         <span className="block text-xs text-muted-foreground">{value}</span>
@@ -110,11 +110,12 @@ export default async function HomePage() {
         <GlowBackdrop />
         <div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[1fr_1.2fr]">
           <div className="enter-stagger text-center lg:text-left">
-            <Link href="/pricing" className="inline-flex items-center gap-2 rounded-lg bg-secondary px-3 py-1.5 text-sm font-medium text-secondary-foreground transition-colors hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_6%)]">
+            <Link href="/pricing" className="inline-flex items-center gap-2 rounded-full border bg-card py-1 pr-3.5 pl-1 text-sm font-medium text-foreground shadow-(--card-shadow) transition-colors hover:border-primary/40">
+              <span className="rounded-full bg-[linear-gradient(135deg,var(--btn-from),var(--btn-to))] px-2.5 py-0.5 text-xs font-bold text-white">New</span>
               Build a custom plan with only the modules you need <ArrowRight className="size-3.5" aria-hidden />
             </Link>
             <p className="mt-6 text-sm font-medium text-primary">School management software for Indian schools</p>
-            <h1 className="mt-3 font-heading text-4xl leading-[1.1] font-semibold tracking-tight text-balance sm:text-5xl xl:text-6xl">
+            <h1 className="mt-3 font-heading text-4xl leading-[1.05] font-extrabold tracking-[-0.03em] text-balance sm:text-5xl xl:text-6xl">
               Run your whole school from one place
             </h1>
             <p className="mx-auto mt-6 max-w-xl text-lg text-pretty text-muted-foreground lg:mx-0">
@@ -130,15 +131,15 @@ export default async function HomePage() {
             </div>
             <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground lg:justify-start">
               {["No credit card needed", "Plans from ₹2,999/month", "Prices in INR"].map((t) => (
-                <li key={t} className="flex items-center gap-1.5"><Check className="size-4 text-success" aria-hidden />{t}</li>
+                <li key={t} className="flex items-center gap-2"><span className="flex size-4.5 items-center justify-center rounded-full bg-success text-white dark:text-background"><Check className="size-3" strokeWidth={3.5} aria-hidden /></span>{t}</li>
               ))}
             </ul>
           </div>
 
           <div className="stage-3d relative mx-auto w-full max-w-3xl lg:max-w-none">
-            <HeroChip className="float-chip -top-8 left-2 xl:-left-6" icon={<CalendarCheck className="size-4" />} tint="bg-primary-container text-primary-container-foreground" title="Attendance marked" value="Class 5-A · 38/40 present" />
-            <HeroChip className="float-chip float-chip-2 top-1/3 -right-2 xl:-right-8" icon={<Wallet className="size-4" />} tint="bg-secondary text-secondary-foreground" title="Fee received" value="₹12,500 · Receipt sent" />
-            <HeroChip className="float-chip float-chip-3 -bottom-8 left-[20%]" icon={<Bus className="size-4" />} tint="bg-primary-container text-primary-container-foreground" title="Bus 4 is 5 min away" value="Parents notified" />
+            <HeroChip className="float-chip -top-8 left-2 xl:-left-6" icon={<CalendarCheck className="size-4" />} tint="bg-[linear-gradient(135deg,#22c083,#12925f)] text-white" title="Attendance marked" value="Class 5-A · 38/40 present" />
+            <HeroChip className="float-chip float-chip-2 top-1/3 -right-2 xl:-right-8" icon={<Wallet className="size-4" />} tint="bg-[linear-gradient(135deg,#5b8def,#2f4a86)] text-white" title="Fee received" value="₹12,500 · Receipt sent" />
+            <HeroChip className="float-chip float-chip-3 -bottom-8 left-[20%]" icon={<Bus className="size-4" />} tint="bg-[linear-gradient(135deg,#f2b544,#d58a0e)] text-white" title="Bus 4 is 5 min away" value="Parents notified" />
             <div className="tilt-3d overflow-hidden rounded-2xl border bg-card shadow-[0_40px_80px_-24px_rgb(0_0_0/0.35)]">
               <Image src="/marketing/dashboard-light.png" alt="The Vidyanexa school dashboard showing today's attendance, fee collection and notices" width={1440} height={900} priority sizes="(min-width: 1280px) 720px, (min-width: 1024px) 55vw, calc(100vw - 40px)" className="block w-full dark:hidden" />
               <Image src="/marketing/dashboard-dark.png" alt="The Vidyanexa school dashboard in dark mode" width={1440} height={900} loading="lazy" sizes="(min-width: 1280px) 720px, (min-width: 1024px) 55vw, calc(100vw - 40px)" className="hidden w-full dark:block" />
@@ -148,7 +149,7 @@ export default async function HomePage() {
       </section>
 
       {/* Features */}
-      <Section id="features" className="bg-popover">
+      <Section id="features" className="bg-[linear-gradient(180deg,transparent,color-mix(in_oklch,var(--primary)_5%,transparent)_25%,color-mix(in_oklch,var(--primary)_5%,transparent)_75%,transparent)]">
         <SectionHeading
           eyebrow="Everything in one platform"
           title="Sixteen modules. One login. No spreadsheets."
@@ -156,8 +157,10 @@ export default async function HomePage() {
         />
         <div className="mt-16 grid gap-6 md:grid-cols-2">
           {FEATURE_GROUPS.map((g) => (
-            <div key={g.title} className="card-lift rounded-2xl border bg-card p-7">
-              <p className="text-sm font-medium text-muted-foreground">{g.title}</p>
+            <div key={g.title} className="card-lift relative isolate overflow-hidden rounded-3xl border bg-card p-7 shadow-(--card-shadow)">
+              {/* A soft wash of the group's colour across the top of the card (theme 4). */}
+              <span aria-hidden className={cn("glow-soft pointer-events-none absolute -top-32 -left-20 -z-10 h-72 w-[28rem]", g.color.split(" ")[0])} />
+              <p className={cn("flex items-center gap-2 text-xs font-extrabold tracking-[0.08em] uppercase", g.color, "bg-transparent")}><span className="size-2 rounded-full bg-current" aria-hidden />{g.title}</p>
               <ul className="mt-5 space-y-5">
                 {g.items.map(({ href, icon: Icon, name, text }) => (
                   <li key={name} className="flex gap-4">
@@ -248,7 +251,7 @@ export default async function HomePage() {
 
       {/* Pricing teaser */}
       {plans.length > 0 && (
-        <Section className="bg-popover">
+        <Section className="bg-[linear-gradient(180deg,transparent,color-mix(in_oklch,var(--primary)_5%,transparent)_25%,color-mix(in_oklch,var(--primary)_5%,transparent)_75%,transparent)]">
           <SectionHeading eyebrow="Pricing" title="Simple plans in rupees" description="Start on any plan free for 14 days. No card needed." />
           <div className="mt-14 grid gap-5 md:grid-cols-3">
             {plans.map((p) => (

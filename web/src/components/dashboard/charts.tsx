@@ -7,20 +7,14 @@ import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, Res
 
 const tooltipClass = "rounded-lg border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md";
 
-/** Daily sign-ins. Colours come from CSS classes so both themes work. */
+/** Daily sign-ins as rounded bars, today's bar in full colour (theme 4). Colours come from CSS classes so both themes work. */
 export function SigninsChart({ data }: { data: { date: string; count: number }[] }) {
   return (
     <div
       className="h-64 w-full text-primary [&_.recharts-cartesian-axis-tick-value]:fill-muted-foreground [&_.recharts-cartesian-grid_line]:stroke-border"
       role="img" aria-label={`Sign-ins over the last ${data.length} days`}>
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-          <defs>
-            <linearGradient id="signinFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" className="[stop-color:var(--primary)] [stop-opacity:0.28]" />
-              <stop offset="100%" className="[stop-color:var(--primary)] [stop-opacity:0]" />
-            </linearGradient>
-          </defs>
+        <BarChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
           <CartesianGrid vertical={false} strokeDasharray="3 3" />
           <XAxis
             dataKey="date"
@@ -33,7 +27,7 @@ export function SigninsChart({ data }: { data: { date: string; count: number }[]
           />
           <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
           <Tooltip
-            cursor={{ stroke: "currentColor", strokeOpacity: 0.25 }}
+            cursor={{ fill: "currentColor", fillOpacity: 0.06 }}
             content={({ active, payload }) =>
               active && payload?.length ? (
                 <div className={tooltipClass}>
@@ -43,8 +37,10 @@ export function SigninsChart({ data }: { data: { date: string; count: number }[]
               ) : null
             }
           />
-          <Area type="monotone" dataKey="count" stroke="currentColor" strokeWidth={2.5} fill="url(#signinFill)" activeDot={{ r: 5, strokeWidth: 0, fill: "currentColor" }} />
-        </AreaChart>
+          <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={28} minPointSize={3}>
+            {data.map((d, i) => <Cell key={d.date} fill="currentColor" fillOpacity={i === data.length - 1 ? 1 : d.count ? 0.45 : 0.12} />)}
+          </Bar>
+        </BarChart>
       </ResponsiveContainer>
       <table className="sr-only">
         <caption>Sign-ins per day</caption>

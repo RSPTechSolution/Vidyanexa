@@ -7,11 +7,20 @@ import { cn } from "@/lib/utils";
 type Accent = "primary" | "success" | "warning" | "info" | "danger";
 
 const ACCENTS: Record<Accent, string> = {
-  primary: "bg-primary/10 text-primary",
-  success: "bg-success/10 text-success",
-  warning: "bg-warning/10 text-warning",
-  info: "bg-info/10 text-info",
-  danger: "bg-destructive/10 text-destructive",
+  primary: "bg-primary/12 text-primary",
+  success: "bg-success/12 text-success",
+  warning: "bg-warning/12 text-warning",
+  info: "bg-info/12 text-info",
+  danger: "bg-destructive/12 text-destructive",
+};
+
+/* Theme 4: a soft wash of the card's colour behind its icon (a gradient, not a blur filter, so it's cheap to draw). */
+const GLOWS: Record<Accent, string> = {
+  primary: "text-primary",
+  success: "text-success",
+  warning: "text-warning",
+  info: "text-info",
+  danger: "text-destructive",
 };
 
 export function StatCard({
@@ -28,16 +37,17 @@ export function StatCard({
   const body = (
     <div
       className={cn(
-        "stat-card group flex h-full items-start justify-between gap-4 rounded-2xl border bg-card p-5",
+        "stat-card group relative isolate flex h-full items-start justify-between gap-4 overflow-hidden rounded-2xl border bg-card p-5 shadow-(--card-shadow)",
         href && "card-lift",
       )}
     >
+      <span aria-hidden className={cn("glow-soft pointer-events-none absolute -top-16 -right-16 -z-10 size-48", GLOWS[accent])} />
       <div className="min-w-0 space-y-1">
         <p className="text-sm font-medium text-muted-foreground">{label}</p>
         {loading ? (
           <Skeleton className="h-8 w-24" />
         ) : (
-          <p className="h-8 truncate font-heading text-2xl leading-8 font-bold tabular text-foreground">
+          <p className="h-8 truncate font-heading text-2xl leading-8 font-extrabold tracking-tight tabular text-foreground">
             {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
           </p>
         )}

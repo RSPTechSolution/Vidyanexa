@@ -35,13 +35,21 @@ import { cn } from "@/lib/utils";
 function Hero({ subtitle, children }: { subtitle: string; children?: React.ReactNode }) {
   const me = useSession();
   return (
-    <div className="aurora dash-hero relative overflow-hidden rounded-2xl bg-panel p-6 text-white shadow-lg sm:p-8">
+    <div className="aurora dash-hero hero-banner relative overflow-hidden rounded-3xl p-6 text-white shadow-[0_20px_40px_-22px_rgb(30_52_102/0.7)] sm:p-8">
       <div aria-hidden className="pointer-events-none absolute -top-24 -right-16 size-72 rounded-full bg-[radial-gradient(closest-side,rgb(217_226_255/0.25),transparent)]" />
       <div aria-hidden className="pointer-events-none absolute -bottom-32 left-1/3 size-80 rounded-full bg-[radial-gradient(closest-side,rgb(0_25_68/0.3),transparent)]" />
+      {/* A faint line drawing of a school at the right of the banner (theme 4); decorative, hidden on small screens. */}
+      <svg aria-hidden viewBox="0 0 360 190" fill="none" className="pointer-events-none absolute -right-2 -bottom-10 hidden h-52 w-auto opacity-[0.16] lg:block">
+        <path d="M40 180h300" stroke="#c9d6f5" strokeWidth="2" />
+        <path d="M80 180V92l110-56 110 56v88M60 98 190 30l130 68" stroke="#fff" strokeWidth="2" />
+        <path d="M120 180v-50h40v50M220 180v-50h40v50M170 180v-34h40v34M100 120h20M100 140h20M260 120h20M260 140h20M190 70v10l7 5" stroke="#c9d6f5" strokeWidth="2" />
+        <circle cx="190" cy="80" r="16" stroke="#fff" strokeWidth="2" />
+        <path d="M186 30V6l18 6-18 6" stroke="#e2bf76" fill="#e2bf76" strokeWidth="2" />
+      </svg>
       <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-sm text-white/75">{new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>
-          <h1 className="mt-1.5 text-2xl font-semibold tracking-tight sm:text-3xl">{greeting()}, {firstName(me.full_name)}</h1>
+          <h1 className="mt-1.5 text-2xl font-extrabold tracking-tight sm:text-3xl">{greeting()}, {firstName(me.full_name)}</h1>
           <p className="mt-1.5 text-white/80">{subtitle}</p>
         </div>
         {children && <div className="flex flex-wrap gap-2">{children}</div>}
@@ -50,7 +58,9 @@ function Hero({ subtitle, children }: { subtitle: string; children?: React.React
   );
 }
 
-const heroButton = "inline-flex h-9 items-center gap-2 rounded-full bg-white/15 px-3.5 text-sm font-medium text-white ring-1 ring-white/25 backdrop-blur transition hover:bg-white/25 outline-none focus-visible:ring-2 focus-visible:ring-white";
+const heroButton = "inline-flex h-10 items-center gap-2 rounded-xl bg-white/12 px-4 text-sm font-semibold text-white ring-1 ring-white/25 backdrop-blur transition hover:bg-white/22 outline-none focus-visible:ring-2 focus-visible:ring-white";
+/* The plan button in the crest's gold (theme 4); dark text keeps it readable. */
+const heroGold = "inline-flex h-10 items-center gap-2 rounded-xl bg-[linear-gradient(135deg,#e8c680,#c9a04e)] px-4 text-sm font-semibold text-[#1b1406] shadow-[0_8px_18px_-10px_rgb(201_160_78/0.9)] transition hover:brightness-105 outline-none focus-visible:ring-2 focus-visible:ring-white";
 
 function WelcomeBanner() {
   const params = useSearchParams();
@@ -169,7 +179,7 @@ function SchoolDashboard() {
       <Hero subtitle={`${me.school?.name} · ${roleLabel(me.role)}`}>
         {can("users.manage") && <Link href="/settings/users" className={heroButton}><UserPlus className="size-4" aria-hidden />Add user</Link>}
         {can("school.manage") && <Link href="/settings/school" className={heroButton}><Settings2 className="size-4" aria-hidden />School profile</Link>}
-        {can("billing.view") && <Link href="/settings/billing" className={heroButton}><CreditCard className="size-4" aria-hidden />{me.school?.plan.name} plan</Link>}
+        {can("billing.view") && <Link href="/settings/billing" className={heroGold}><CreditCard className="size-4" aria-hidden />{me.school?.plan.name} plan</Link>}
         <CustomiseDashboard layoutKey="school" className={heroButton} sections={SCHOOL_SECTIONS.filter((x) => x.id !== "activity" || can("audit.view"))} />
       </Hero>
 

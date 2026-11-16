@@ -18,6 +18,10 @@ RUN chmod +x docker-entrypoint.sh \
 USER eduvia
 
 EXPOSE 8000
+# API worker processes (uvicorn reads WEB_CONCURRENCY). About 2 per CPU core; set it in .env.api for a bigger server.
+# Each worker keeps up to DB_POOL_SIZE + DB_MAX_OVERFLOW (10 + 20) database connections: keep
+# WEB_CONCURRENCY x 30 below PG_MAX_CONNECTIONS (200 in docker-compose.api.yml).
+ENV WEB_CONCURRENCY=2
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s CMD curl -fsS http://localhost:8000/api/v1/health || exit 1
 ENTRYPOINT ["./docker-entrypoint.sh"]
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2", "--proxy-headers", "--forwarded-allow-ips", "*"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]

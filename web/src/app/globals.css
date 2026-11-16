@@ -9,7 +9,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-ui), system-ui, sans-serif;
   --font-heading: var(--font-ui), system-ui, sans-serif;
-  --font-brand: var(--font-cinzel), "Times New Roman", serif;
+  --font-brand: var(--font-ui), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains);
 
   --color-card: var(--card);
@@ -76,8 +76,9 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Theme version 2 ("Material"): Material 3 colour roles generated from the Vidyanexa navy.
-   The same values are in the Flutter app (mobile/lib/core/theme/app_theme.dart). Version 1 is the git tag theme-v1. */
+/* Theme version 4 ("Polished"): the version 2 navy roles with more depth: a cool page with soft blue and gold light,
+   lighter hairlines, cards that float slightly, gradient buttons and a richer welcome banner. Light and dark.
+   Earlier versions: git tags theme-v1 to theme-v2.3 (web), theme-v3 (the apps' Ink & gold). */
 :root {
   --radius: 0.75rem;
 
@@ -89,27 +90,27 @@
   --brand-green: #e2be74;
   --brand-sun: #c9963f;
 
-  --background: #faf9fd;          /* surface */
-  --foreground: #1a1b21;          /* on surface */
-  --card: #ffffff;                /* surface container lowest */
-  --card-foreground: #1a1b21;
-  --popover: #f4f3fa;             /* surface container low */
-  --popover-foreground: #1a1b21;
+  --background: #f5f7fb;
+  --foreground: #101828;
+  --card: #ffffff;
+  --card-foreground: #101828;
+  --popover: #ffffff;
+  --popover-foreground: #101828;
   --primary: #2f4a86;
   --primary-foreground: #ffffff;
-  --primary-container: #d9e2ff;
-  --primary-container-foreground: #001944;
-  --secondary: #dce2f9;           /* secondary container */
-  --secondary-foreground: #141b2c;
-  --muted: #eeedf4;               /* surface container */
-  --muted-foreground: #45464f;    /* on surface variant */
-  --accent: #e9e7ef;              /* surface container high: hover and selected rows */
-  --accent-foreground: #1a1b21;
+  --primary-container: #dfe6fa;
+  --primary-container-foreground: #0f1d3d;
+  --secondary: #e6ecfa;
+  --secondary-foreground: #14213d;
+  --muted: #eef1f6;
+  --muted-foreground: #5e6a80;
+  --accent: #eef2fa;              /* hover and selected rows */
+  --accent-foreground: #101828;
   --destructive: #ba1a1a;
   --error-container: #ffdad6;
   --error-container-foreground: #410002;
-  --border: #c5c6d0;              /* outline variant */
-  --input: #757680;               /* outline */
+  --border: #e2e7f0;              /* hairlines between and around cards */
+  --input: #7a8599;               /* form field outlines: at least 3:1 against white */
   --ring: #2f4a86;
 
   --success: #006d3d;
@@ -117,21 +118,21 @@
   --info: #00629e;
 
   --chart-1: #2f4a86;
-  --chart-2: #b8893c;
-  --chart-3: #00687a;
-  --chart-4: #8e4585;
-  --chart-5: #006d3d;
-  --chart-6: #ba1a1a;
+  --chart-2: #c9a04e;
+  --chart-3: #0e9aa7;
+  --chart-4: #9452d9;
+  --chart-5: #13a06b;
+  --chart-6: #e0475b;
 
-  /* Navigation drawer: a tonal surface with a secondary-container pill for the current page. */
-  --sidebar: #f4f3fa;
-  --sidebar-foreground: #1a1b21;
-  --sidebar-muted: #45464f;
-  --sidebar-primary: #dce2f9;
-  --sidebar-primary-foreground: #141b2c;
-  --sidebar-accent: #e9e7ef;
-  --sidebar-accent-foreground: #1a1b21;
-  --sidebar-border: #e3e2e9;
+  /* Navigation: a white drawer; the current page is a blue gradient pill (.nav-active). */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #101828;
+  --sidebar-muted: #5e6a80;
+  --sidebar-primary: #2f4a86;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f4fa;
+  --sidebar-accent-foreground: #101828;
+  --sidebar-border: #e4e8f0;
   --sidebar-ring: #2f4a86;
 
   /* A strong, solid panel for white text: sign-in side panel, call-to-action bands. */
@@ -140,61 +141,82 @@
   --panel-muted: #d9e2ff;
 
   /* Frosted glass for floating bars and cards. */
-  --glass: rgb(255 255 255 / 0.72);
-  --glass-border: rgb(255 255 255 / 0.6);
+  --glass: rgb(255 255 255 / 0.75);
+  --glass-border: rgb(228 232 240 / 0.9);
+
+  /* Theme 4 depth: gradient buttons (white text passes 4.5:1 across the gradient), soft card shadows, page light. */
+  --btn-from: #2f4a86;
+  --btn-to: #4a68b5;
+  --btn-glow: rgb(47 74 134 / 0.75);
+  --card-shadow: 0 1px 2px rgb(16 24 40 / 0.04), 0 10px 24px -18px rgb(30 52 102 / 0.35);
+  --page-light: radial-gradient(1200px 600px at 85% -10%, rgb(205 217 247 / 0.55), transparent 60%),
+    radial-gradient(900px 500px at 0% 105%, rgb(240 226 194 / 0.45), transparent 55%);
+  --hero-banner: radial-gradient(500px 220px at 85% 0%, rgb(201 160 78 / 0.45), transparent 70%),
+    radial-gradient(600px 300px at 20% 120%, rgb(97 132 214 / 0.55), transparent 65%),
+    linear-gradient(120deg, #1e3466, #2f4a86 55%, #3b5ba3);
 }
 
 .dark {
-  --background: #121318;
-  --foreground: #e3e2e9;
-  --card: #1a1b21;
-  --card-foreground: #e3e2e9;
-  --popover: #1e1f25;
-  --popover-foreground: #e3e2e9;
-  --primary: #b0c6ff;
-  --primary-foreground: #172e60;
-  --primary-container: #2f4578;
-  --primary-container-foreground: #d9e2ff;
-  --secondary: #3e4759;
-  --secondary-foreground: #dce2f9;
-  --muted: #1e1f25;
-  --muted-foreground: #c5c6d0;
-  --accent: #292a2f;
-  --accent-foreground: #e3e2e9;
+  --background: #0c1324;
+  --foreground: #e8edf7;
+  --card: #121b31;
+  --card-foreground: #e8edf7;
+  --popover: #16203a;
+  --popover-foreground: #e8edf7;
+  --primary: #9db6f2;
+  --primary-foreground: #0c1324;
+  --primary-container: #26407a;
+  --primary-container-foreground: #dfe6fa;
+  --secondary: #1e2a46;
+  --secondary-foreground: #dce4f7;
+  --muted: #16203a;
+  --muted-foreground: #9aa6bd;
+  --accent: #1b2742;
+  --accent-foreground: #e8edf7;
   --destructive: #ffb4ab;
   --error-container: #93000a;
   --error-container-foreground: #ffdad6;
-  --border: #45464f;
-  --input: #8f909a;
-  --ring: #b0c6ff;
+  --border: #233050;
+  --input: #6f7c99;
+  --ring: #9db6f2;
 
   --success: #7ddb9f;
   --warning: #ffb95c;
   --info: #9acbff;
 
-  --chart-1: #b0c6ff;
-  --chart-2: #e2be74;
-  --chart-3: #5fd4ee;
-  --chart-4: #ffa9f0;
-  --chart-5: #7ddb9f;
-  --chart-6: #ffb4ab;
+  --chart-1: #6c9bf5;
+  --chart-2: #e2bf76;
+  --chart-3: #3cc4cf;
+  --chart-4: #b98af0;
+  --chart-5: #3ccb8f;
+  --chart-6: #f27186;
 
-  --sidebar: #1a1b21;
-  --sidebar-foreground: #e3e2e9;
-  --sidebar-muted: #c5c6d0;
-  --sidebar-primary: #3e4759;
-  --sidebar-primary-foreground: #dce2f9;
-  --sidebar-accent: #292a2f;
-  --sidebar-accent-foreground: #e3e2e9;
-  --sidebar-border: #292a2f;
-  --sidebar-ring: #b0c6ff;
+  --sidebar: #0e162a;
+  --sidebar-foreground: #e8edf7;
+  --sidebar-muted: #9aa6bd;
+  --sidebar-primary: #2f4a86;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #16203a;
+  --sidebar-accent-foreground: #e8edf7;
+  --sidebar-border: #1c2742;
+  --sidebar-ring: #9db6f2;
 
-  --panel: #2f4578;
+  --panel: #26407a;
   --panel-foreground: #ffffff;
   --panel-muted: #d9e2ff;
 
-  --glass: rgb(30 31 37 / 0.62);
+  --glass: rgb(18 27 49 / 0.7);
   --glass-border: rgb(255 255 255 / 0.08);
+
+  --btn-from: #3d5da8;
+  --btn-to: #4f6ec0;
+  --btn-glow: rgb(79 110 192 / 0.8);
+  --card-shadow: inset 0 1px 0 rgb(255 255 255 / 0.03), 0 12px 28px -20px rgb(0 0 0 / 0.8);
+  --page-light: radial-gradient(1100px 600px at 85% -10%, rgb(74 104 181 / 0.28), transparent 60%),
+    radial-gradient(900px 500px at 0% 105%, rgb(201 160 78 / 0.08), transparent 55%);
+  --hero-banner: radial-gradient(500px 220px at 85% 0%, rgb(201 160 78 / 0.38), transparent 70%),
+    radial-gradient(600px 300px at 20% 120%, rgb(97 132 214 / 0.45), transparent 65%),
+    linear-gradient(120deg, #182b57, #26407a 55%, #2f4f95);
 }
 
 @layer base {
@@ -210,6 +232,17 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+  /* Soft blue and gold light across the page (theme 4). A fixed layer of its own rather than background-attachment:
+     fixed, which makes browsers repaint the whole page on every scroll (slow on phones). */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: var(--page-light);
+  }
+  @media print { body::before { display: none; } }
   html {
     @apply font-sans;
   }
@@ -220,6 +253,11 @@
 
 @layer utilities {
   .tabular { font-variant-numeric: tabular-nums; }
+  /* Theme 4: the current page in the sidebar, and the welcome banner. */
+  .nav-active { background: linear-gradient(135deg, var(--btn-from), var(--btn-to)); color: #fff; box-shadow: 0 8px 18px -10px var(--btn-glow); }
+  .hero-banner { background: var(--hero-banner); }
+  /* A soft wash of the current text colour, drawn as a gradient (no blur filter, so it costs nothing to paint). */
+  .glow-soft { background: radial-gradient(closest-side, color-mix(in oklch, currentColor 16%, transparent), transparent); }
   /* Frosted glass: floating bars, cards over imagery. Falls back to a solid surface without backdrop-filter. */
   .glass {
     background: var(--glass);
@@ -398,10 +436,12 @@ html.lenis, html.lenis body { height: auto; }
 nav a:active { scale: 0.98; }
 
 /* ---- Cards rise into place as they scroll into view ----
+   Movement only, never opacity: content further down the page is always visible, including to search engines that
+   capture the whole page at once (theme 4 fix; before, cards below the fold were transparent in such captures).
    Driven by scrolling itself (no JavaScript), so cards already on screen when the page opens are simply shown, which
    keeps the first paint fast. Uses translate and scale rather than transform, so it combines with the hover lift.
    Browsers without scroll-driven animations just show the cards. */
-@keyframes card-reveal { from { opacity: 0; translate: 0 28px; scale: 0.97; } }
+@keyframes card-reveal { from { translate: 0 24px; scale: 0.98; } }
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
     [data-slot=card], .card-lift, .stat-card, .reveal {

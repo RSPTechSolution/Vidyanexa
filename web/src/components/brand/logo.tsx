@@ -21,12 +21,12 @@ export function BrandMark({ className, size = 36, tone = "auto" }: { className?:
   /* eslint-enable @next/next/no-img-element */
 }
 
-/** The name in Roman capitals, as in the logo. One word, one colour (never set "NEXA" apart). */
+/** The name in widely spaced capitals in the app font (theme 4). One word, one colour (never set "NEXA" apart). */
 export function Wordmark({ className, tagline = false }: { className?: string; tagline?: boolean }) {
   return (
     <span className={cn("flex flex-col leading-none", className)}>
-      <span className="font-brand text-[1.05rem] font-semibold tracking-[0.08em] [font-feature-settings:normal]">VIDYANEXA</span>
-      {tagline && <span className="mt-1.5 font-brand text-[10px] tracking-[0.22em] text-brand-gold [font-feature-settings:normal]">SCHOOL MANAGEMENT</span>}
+      <span className="font-brand text-[0.95rem] font-extrabold tracking-[0.13em] [font-feature-settings:normal]">VIDYANEXA</span>
+      {tagline && <span className="mt-1.5 font-brand text-[10px] font-bold tracking-[0.22em] text-brand-gold [font-feature-settings:normal]">SCHOOL MANAGEMENT</span>}
     </span>
   );
 }

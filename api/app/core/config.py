@@ -43,6 +43,12 @@ class Settings(BaseSettings):
     LOGIN_RATE_WINDOW_SECONDS: int = 900 # ... per 15 minutes per (ip, email)
     SIGNUP_RATE_LIMIT: int = 5           # school sign-ups per hour per IP
     CONTACT_RATE_LIMIT: int = 10         # contact/quote messages per hour per IP
+    # Every API call (a floor under the per-feature limits above): per signed-in session, and per address for calls
+    # without a session. Generous for people, tight for scripts hammering the API. 0 switches a limit off.
+    API_RATE_LIMIT_PER_MINUTE: int = 600
+    API_ANON_RATE_LIMIT_PER_MINUTE: int = 300
+    # A query running longer than this is stopped, so one slow request can't hold a connection and slow everyone.
+    DB_STATEMENT_TIMEOUT_MS: int = 60000
 
     # Email: "console" logs messages instead of sending (development, tests); "brevo" sends.
     # A Brevo key starting xkeysib- uses Brevo's HTTP API; an SMTP key (xsmtpsib-) uses the SMTP relay

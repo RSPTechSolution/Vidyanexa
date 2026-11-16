@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import { GoogleAnalytics } from "@/components/marketing/analytics";
 import { SmoothScroll } from "@/components/motion/smooth-scroll";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
-import { REFRESH_COOKIE } from "@/lib/auth/cookies";
 import { DEFAULT_OG, JsonLd, ORGANIZATION, WEBSITE, graph } from "@/lib/seo";
 
 export const metadata: Metadata = {
@@ -14,11 +12,12 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image" },
 };
 
-export default async function MarketingLayout({ children }: { children: React.ReactNode }) {
-  const signedIn = Boolean((await cookies()).get(REFRESH_COOKIE)?.value);
+// No cookies are read here: that would rebuild every public page for every visitor. The header works out "signed in"
+// in the browser, so these pages are built once and served from the CDN.
+export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <SiteHeader signedIn={signedIn} />
+      <SiteHeader />
       <main id="main" className="flex-1">{children}</main>
       <SiteFooter />
       <GoogleAnalytics />

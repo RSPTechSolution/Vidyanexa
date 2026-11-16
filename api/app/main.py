@@ -2,11 +2,14 @@ import logging
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
+from app.core import ratelimit
 from app.core.config import settings
+from app.core.deps import client_ip
 from app.core.database import engine
 from app.core.errors import install_error_handlers
 from app.core.permissions import MODULES
@@ -40,6 +43,23 @@ app = FastAPI(
     docs_url=None if settings.ENVIRONMENT == "production" else "/docs",
     redoc_url=None,
 )
+
+@app.middleware("http")
+async def api_rate_limit(request: Request, call_next):
+    """A ceiling on every API call, per signed-in session or, without one, per address (settings.API_RATE_LIMIT_*).
+    Biometric devices (/iclock) and the health check are not counted. Registered before CORS, so CORS stays outermost
+    and a 429 still carries its headers."""
+    path = request.url.path
+    if path.startswith("/api/v1/") and path != "/api/v1/health" and request.method != "OPTIONS":
+        bucket = ratelimit.api_bucket(request, client_ip(request), settings.API_RATE_LIMIT_PER_MINUTE,
+                                      settings.API_ANON_RATE_LIMIT_PER_MINUTE)
+        if bucket and not await ratelimit.allow(*bucket):
+            return JSONResponse(
+                {"success": False, "error": {"code": "RATE_LIMITED", "message": "Too many requests. Please wait a minute and try again."}},
+                status_code=429, headers={"Retry-After": "60"},
+            )
+    return await call_next(request)
+
 
 app.add_middleware(
     CORSMiddleware,
