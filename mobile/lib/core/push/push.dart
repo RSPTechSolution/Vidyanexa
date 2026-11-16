@@ -4,6 +4,7 @@ import 'dart:io' show Platform;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -113,22 +114,51 @@ class Push {
     _token = null;
   }
 
-  /// Android doesn't show a push while the app is open, so show it ourselves (and refresh the bell).
+  /// Each kind's picture for a notification (android/app/src/main/res/drawable-nodpi/notif_*.png, kept by res/raw/keep.xml).
+  static String _picture(String kind) => switch (kind) {
+        'fee_receipt' || 'fee_reminder' || 'payslip' => 'notif_fees',
+        'homework' || 'online_test' || 'live_class' => 'notif_homework',
+        'absent' || 'leave' || 'staff_leave' || 'sos' => 'notif_attendance',
+        'results' => 'notif_results',
+        'transport' => 'notif_transport',
+        'substitution' => 'notif_timetable',
+        _ => 'notif_notice',
+      };
+
+  /// Android doesn't show a push while the app is open, so show it ourselves (and refresh the bell). Styled as in the
+  /// notifications screen (theme 4): the kind's picture and name, the whole message, the brand colour, and a button
+  /// such as "View receipt" when there is a screen to open. Notifications of one kind are grouped together.
   void _showWhileOpen(RemoteMessage m) {
     _ref.invalidate(unreadNotificationsProvider);
     _ref.invalidate(notificationsProvider);
     final n = m.notification;
     if (n == null) return;
+    final kind = m.data['kind'] as String? ?? '';
+    final link = m.data['link'] as String?;
+    final style = NotificationStyle.of(kind);
+    final action = appRouteFor(link) != null ? style.action : null;
     _local.show(
       id: m.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch ~/ 1000,
       title: n.title,
       body: n.body,
       notificationDetails: NotificationDetails(
-        android: AndroidNotificationDetails(_channel.id, _channel.name,
-            channelDescription: _channel.description, importance: Importance.high, priority: Priority.high, icon: 'ic_notification'),
-        iOS: const DarwinNotificationDetails(),
+        android: AndroidNotificationDetails(
+          _channel.id,
+          _channel.name,
+          channelDescription: _channel.description,
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: 'ic_notification',
+          color: const Color(0xFF2F4A86),
+          largeIcon: DrawableResourceAndroidBitmap(_picture(kind)),
+          styleInformation: BigTextStyleInformation(n.body ?? '', contentTitle: n.title, summaryText: style.label),
+          subText: style.label,
+          groupKey: 'vidyanexa.$kind',
+          actions: [if (action != null) AndroidNotificationAction('open', action, showsUserInterface: true, cancelNotification: true)],
+        ),
+        iOS: DarwinNotificationDetails(subtitle: style.label, threadIdentifier: kind),
       ),
-      payload: m.data['link'] as String?,
+      payload: link,
     );
   }
 

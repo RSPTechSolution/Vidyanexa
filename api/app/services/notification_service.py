@@ -166,7 +166,14 @@ async def _fcm_send(token: str, item: dict) -> bool:
     """Send one push. False means the token is no longer valid and should be forgotten."""
     import httpx
     access, project = await asyncio.to_thread(_fcm_access_token)
-    msg = {"message": {"token": token, "notification": {"title": item["title"], "body": item["body"]}, "data": item["data"]}}
+    kind = item["data"].get("kind", "")
+    msg = {"message": {
+        "token": token, "notification": {"title": item["title"], "body": item["body"]}, "data": item["data"],
+        # Grouped by kind on iPhones; on Android a newer bus update replaces the last one instead of piling up.
+        # (Android's icon, colour and channel come from the app's manifest.)
+        "apns": {"payload": {"aps": {"thread-id": kind or "school"}}},
+        **({"android": {"notification": {"tag": "transport"}}} if kind == "transport" else {}),
+    }}
     async with httpx.AsyncClient(timeout=10) as client:
         r = await client.post(f"https://fcm.googleapis.com/v1/projects/{project}/messages:send",
                               headers={"Authorization": f"Bearer {access}"}, json=msg)

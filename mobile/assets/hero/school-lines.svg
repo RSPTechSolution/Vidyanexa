@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 190" fill="none">
+  <!-- A line drawing of a school, laid faintly over Home's blue banners (theme 4). -->
+  <path d="M40 180h300" stroke="#C9D6F5" stroke-width="3"/>
+  <path d="M80 180V92l110-56 110 56v88M60 98 190 30l130 68" stroke="#FFFFFF" stroke-width="3"/>
+  <path d="M120 180v-50h40v50M220 180v-50h40v50M170 180v-34h40v34M100 120h20M100 140h20M260 120h20M260 140h20M190 70v10l7 5" stroke="#C9D6F5" stroke-width="3"/>
+  <circle cx="190" cy="80" r="16" stroke="#FFFFFF" stroke-width="3"/>
+  <path d="M186 30V6l18 6-18 6" stroke="#E2BF76" fill="#E2BF76" stroke-width="3"/>
+</svg>

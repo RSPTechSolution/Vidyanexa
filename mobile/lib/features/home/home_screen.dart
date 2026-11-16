@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -67,7 +68,10 @@ class HomeScreen extends ConsumerWidget {
         ),
         actions: [const NotificationBell(), const SizedBox(width: 4)],
       ),
-      body: RefreshIndicator(
+      body: Stack(
+        children: [
+          Positioned(top: 0, left: 0, right: 0, height: 520, child: AppTheme.pageLight(Theme.of(context).colorScheme)),
+          RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(myAttendanceProvider(month));
           ref.invalidate(myFeesProvider);
@@ -111,6 +115,8 @@ class HomeScreen extends ConsumerWidget {
               ].indexed.map((e) => Entrance(index: e.$1 + 1, child: e.$2)),
           ],
         ),
+      ),
+        ],
       ),
     );
   }
@@ -202,8 +208,8 @@ class _FamilyCards extends ConsumerWidget {
     // Keep the home-screen widget in step with what Home shows.
     WidgetsBinding.instance.addPostFrameCallback((_) => updateTodayWidget(attendance: kids, fees: feeKids));
     final today = DateTime.now();
-    final panel = AppTheme.inkPanel(Theme.of(context).colorScheme);
-    // Each child's card is the deep ink panel of sample A; the dark theme inside keeps every colour readable on it.
+    final outer = Theme.of(context).colorScheme;
+    // Each child's card is the blue banner (theme 4); the dark theme inside keeps every colour readable on it.
     return Theme(
       data: AppTheme.onInk,
       child: Column(
@@ -216,10 +222,9 @@ class _FamilyCards extends ConsumerWidget {
               final a = kids.where((k) => k.studentId == entry.key).firstOrNull;
               final f = feeKids.where((k) => k.studentId == entry.key).firstOrNull;
               final mark = a?.on(today);
-              return Card(
-                color: panel,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                margin: const EdgeInsets.only(bottom: 10),
+              return HeroCard(
+                scheme: outer,
+                margin: const EdgeInsets.only(bottom: 12),
                 child: Padding(
                   padding: const EdgeInsets.all(18),
                   child: Column(
@@ -227,8 +232,8 @@ class _FamilyCards extends ConsumerWidget {
                     children: [
                       Row(
                         children: [
-                          CircleAvatar(
-                            // The crest's gold behind each child's initials (sample C).
+                          _GoldAvatar(
+                            // The child's initials in a gold ring (theme 4).
                             backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF5A4520) : const Color(0xFFFCE9B8),
                             child: Text(
                               entry.value.split(' ').map((p) => p[0]).take(2).join(),
@@ -260,6 +265,7 @@ class _FamilyCards extends ConsumerWidget {
                           if (a != null)
                             Expanded(
                               child: _MiniStat(
+                                onHero: true,
                                 icon: mark == null ? Icons.hourglass_empty_rounded : Icons.event_available_rounded,
                                 color: mark == null ? scheme.onSurfaceVariant : statusColor(context, mark.status),
                                 title: 'Today',
@@ -271,6 +277,7 @@ class _FamilyCards extends ConsumerWidget {
                           if (f != null)
                             Expanded(
                               child: _MiniStat(
+                                onHero: true,
                                 icon: Icons.account_balance_wallet_outlined,
                                 color: f.overdue > 0
                                     ? s.danger
@@ -298,12 +305,15 @@ class _FamilyCards extends ConsumerWidget {
 }
 
 class _MiniStat extends StatelessWidget {
-  const _MiniStat({required this.icon, required this.color, required this.title, required this.value, required this.onTap});
+  const _MiniStat({required this.icon, required this.color, required this.title, required this.value, required this.onTap, this.onHero = false});
   final IconData icon;
   final Color color;
   final String title;
   final String value;
   final VoidCallback onTap;
+
+  /// On a blue banner: a frosted glass tile instead of a tint of [color].
+  final bool onHero;
 
   @override
   Widget build(BuildContext context) => Pressable(
@@ -313,7 +323,13 @@ class _MiniStat extends StatelessWidget {
       // Ink, not Container, so the ripple shows on top of the tinted background.
       child: Ink(
         padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
+        decoration: onHero
+            ? BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+              )
+            : BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
         child: Row(
           children: [
             Icon(icon, color: color, size: 20),
@@ -364,8 +380,8 @@ class _HomeworkDue extends ConsumerWidget {
                     for (final h in todo.take(4))
                       ListTile(
                         dense: true,
-                        leading: Icon(Icons.circle, size: 10, color: h.overdue ? s.danger : Theme.of(context).colorScheme.primary),
-                        title: Text('${h.subject}: ${h.title}', maxLines: 1, overflow: TextOverflow.ellipsis),
+                        leading: _SubjectTile(color: subjectColors[h.color] ?? Theme.of(context).colorScheme.primary),
+                        title: Text('${h.subject}: ${h.title}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700)),
                         subtitle: Text(
                           [h.overdue ? 'Overdue' : dueText(h.dueDate), if (many) h.studentName!.split(' ').first].join(' · '),
                           style: TextStyle(color: h.overdue ? s.danger : null),
@@ -434,9 +450,8 @@ class _AttendanceToTake extends ConsumerWidget {
           // Classes still to mark: the ink panel with gold buttons (sample A), the one thing to do first.
           Theme(
             data: AppTheme.onInk,
-            child: Card(
-              color: AppTheme.inkPanel(Theme.of(context).colorScheme),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            child: HeroCard(
+              scheme: Theme.of(context).colorScheme,
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Column(
@@ -517,4 +532,79 @@ class _FeeTiles extends ConsumerWidget {
       ],
     );
   }
+}
+
+/// Home's summary card (theme 4): the website's blue gradient banner with its two soft lights and a faint drawing of a
+/// school. [scheme] is the screen's own colours (the card's contents are usually drawn in the dark theme).
+class HeroCard extends StatelessWidget {
+  const HeroCard({super.key, required this.scheme, required this.child, this.margin = EdgeInsets.zero});
+  final ColorScheme scheme;
+  final Widget child;
+  final EdgeInsets margin;
+
+  @override
+  Widget build(BuildContext context) {
+    final deco = AppTheme.heroDecoration(scheme);
+    return Padding(
+      padding: margin,
+      child: DecoratedBox(
+        decoration: BoxDecoration(borderRadius: deco.borderRadius, boxShadow: deco.boxShadow),
+        child: ClipRRect(
+          borderRadius: deco.borderRadius!,
+          child: Material(
+            type: MaterialType.transparency,
+            child: Ink(
+              decoration: BoxDecoration(gradient: deco.gradient),
+              child: Stack(
+                children: [
+                  Positioned.fill(child: AppTheme.heroLights()),
+                  Positioned(
+                    right: -40,
+                    bottom: -52,
+                    child: ExcludeSemantics(child: Opacity(opacity: 0.08, child: SvgPicture.asset('assets/hero/school-lines.svg', width: 170))),
+                  ),
+                  child,
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A child's initials in a ring of the crest's gold, on the blue banner.
+class _GoldAvatar extends StatelessWidget {
+  // ignore: unused_element_parameter
+  const _GoldAvatar({this.backgroundColor, required this.child});
+  final Color? backgroundColor;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 46,
+        height: 46,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withValues(alpha: 0.12),
+          border: Border.all(color: Brand.goldButton, width: 2),
+        ),
+        child: child,
+      );
+}
+
+/// A rounded tile in the subject's colour, for a homework row.
+class _SubjectTile extends StatelessWidget {
+  const _SubjectTile({required this.color});
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(12)),
+        child: Icon(Icons.menu_book_rounded, size: 20, color: color),
+      );
 }

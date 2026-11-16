@@ -51,13 +51,31 @@ class HomeShell extends ConsumerWidget {
           // tab labels stay at normal size, everything else on screen still follows the phone's setting.
           MediaQuery.withClampedTextScaling(
             maxScaleFactor: 1.0,
-            child: NavigationBar(
-              selectedIndex: selected < 0 ? 0 : selected,
-              onDestinationSelected: (i) {
-                final branch = tabs[i].index;
-                shell.goBranch(branch, initialLocation: branch == shell.currentIndex);
-              },
-              destinations: [for (final t in tabs) _destinations[t]!],
+            // Theme 4: a floating rounded bar a little in from the edges, with a soft shadow.
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(26),
+                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                    boxShadow: const [BoxShadow(color: Color(0x381E3466), blurRadius: 30, spreadRadius: -14, offset: Offset(0, 14))],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(26),
+                    child: NavigationBar(
+                      height: 70,
+                      selectedIndex: selected < 0 ? 0 : selected,
+                      onDestinationSelected: (i) {
+                        final branch = tabs[i].index;
+                        shell.goBranch(branch, initialLocation: branch == shell.currentIndex);
+                      },
+                      destinations: [for (final t in tabs) _destinations[t]!],
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
