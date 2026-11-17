@@ -4,7 +4,7 @@ import 'dart:io' show Platform;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/painting.dart' show Color;
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,6 +12,7 @@ import '../../features/notifications/notifications_screen.dart';
 import '../auth/auth_controller.dart';
 import '../router/app_router.dart';
 import 'firebase_ios.dart';
+import 'push_picture.dart';
 
 /// Push notifications through Firebase Cloud Messaging. After sign-in the phone's token is sent to the API
 /// (POST /notifications/devices), which pushes every in-app notification to it; sign-out removes it again.
@@ -114,30 +115,33 @@ class Push {
     _token = null;
   }
 
-  /// Each kind's picture for a notification (android/app/src/main/res/drawable-nodpi/notif_*.png, kept by res/raw/keep.xml).
-  static String _picture(String kind) => switch (kind) {
-        'fee_receipt' || 'fee_reminder' || 'payslip' => 'notif_fees',
-        'homework' || 'online_test' || 'live_class' => 'notif_homework',
-        'absent' || 'leave' || 'staff_leave' || 'sos' => 'notif_attendance',
-        'results' => 'notif_results',
-        'transport' => 'notif_transport',
-        'substitution' => 'notif_timetable',
-        _ => 'notif_notice',
-      };
-
-  /// Android doesn't show a push while the app is open, so show it ourselves (and refresh the bell). Styled as in the
-  /// notifications screen (theme 4): the kind's picture and name, the whole message, the brand colour, and a button
-  /// such as "View receipt" when there is a screen to open. Notifications of one kind are grouped together.
-  void _showWhileOpen(RemoteMessage m) {
+  /// Android doesn't show a push while the app is open, so show it ourselves (and refresh the bell). Style 2, "School
+  /// first": the school's name after the app name, its logo (or initials on its colour) as the picture with a badge in
+  /// the kind's colours, the whole message, the school's colour, and a button such as "View receipt" when there is a
+  /// screen to open. Notifications of one kind are grouped together.
+  Future<void> _showWhileOpen(RemoteMessage m) async {
     _ref.invalidate(unreadNotificationsProvider);
     _ref.invalidate(notificationsProvider);
     final n = m.notification;
     if (n == null) return;
     final kind = m.data['kind'] as String? ?? '';
     final link = m.data['link'] as String?;
+    final school = m.data['school_name'] as String?;
+    final color = schoolColorFrom(m.data['school_color'] as String?);
     final style = NotificationStyle.of(kind);
     final action = appRouteFor(link) != null ? style.action : null;
-    _local.show(
+    AndroidBitmap<Object>? picture;
+    try {
+      picture = ByteArrayAndroidBitmap(await schoolPushPicture(
+        kind: kind,
+        schoolName: school ?? 'Vidyanexa',
+        schoolColor: color,
+        logoUrl: m.data['school_logo'] as String?,
+      ));
+    } catch (e) {
+      debugPrint('Push picture failed: $e'); // shown without a picture rather than not at all
+    }
+    await _local.show(
       id: m.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch ~/ 1000,
       title: n.title,
       body: n.body,
@@ -149,14 +153,14 @@ class Push {
           importance: Importance.high,
           priority: Priority.high,
           icon: 'ic_notification',
-          color: const Color(0xFF3D63DD),
-          largeIcon: DrawableResourceAndroidBitmap(_picture(kind)),
-          styleInformation: BigTextStyleInformation(n.body ?? '', contentTitle: n.title, summaryText: style.label),
-          subText: style.label,
+          color: color,
+          largeIcon: picture,
+          styleInformation: BigTextStyleInformation(n.body ?? '', contentTitle: n.title, summaryText: school ?? style.label),
+          subText: school ?? style.label,
           groupKey: 'vidyanexa.$kind',
           actions: [if (action != null) AndroidNotificationAction('open', action, showsUserInterface: true, cancelNotification: true)],
         ),
-        iOS: DarwinNotificationDetails(subtitle: style.label, threadIdentifier: kind),
+        iOS: DarwinNotificationDetails(subtitle: school ?? style.label, threadIdentifier: kind),
       ),
       payload: link,
     );

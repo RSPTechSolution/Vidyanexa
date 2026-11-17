@@ -16,12 +16,23 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import elevated, system_session
 from app.core.errors import NotFound
-from app.models import DeviceToken, Notification, Student, StudentGuardian, User
+from app.models import DeviceToken, Notification, School, Student, StudentGuardian, User
 from app.schemas.common import PageMeta, PageParams
 
 log = logging.getLogger("eduvia.push")
 
 CONSOLE_PUSHES: list[dict] = []  # console mode keeps the last pushes here, for tests
+
+DEFAULT_COLOR = "#15233F"  # a school that hasn't chosen a colour (Settings > School): the same navy as its emails
+
+
+async def _school_push_data(db: AsyncSession, school_id: uuid.UUID | None) -> dict[str, str]:
+    """The school's name, colour and logo, sent with every push so the phone can show the school first (style 2)."""
+    school = await db.get(School, school_id) if school_id else None
+    if not school:
+        return {}
+    color = (school.settings or {}).get("brand_color") or DEFAULT_COLOR
+    return {"school_name": school.name, "school_color": color, **({"school_logo": school.logo_url} if school.logo_url else {})}
 
 
 async def notify(db: AsyncSession, user_ids, *, school_id: uuid.UUID | None, kind: str, title: str,
@@ -34,8 +45,8 @@ async def notify(db: AsyncSession, user_ids, *, school_id: uuid.UUID | None, kin
     for uid in ids:
         db.add(Notification(school_id=school_id, user_id=uid, kind=kind, title=title[:200], body=body, link=link, data=data))
     # FCM data values must be strings.
-    db.info.setdefault("push_outbox", []).append({"user_ids": ids, "title": title[:200], "body": body or "",
-                                                   "data": {"kind": kind, "link": link or "", **{k: str(v) for k, v in data.items()}}})
+    db.info.setdefault("push_outbox", []).append({"user_ids": ids, "title": title[:200], "body": body or "", "data": {
+        "kind": kind, "link": link or "", **await _school_push_data(db, school_id), **{k: str(v) for k, v in data.items()}}})
     return len(ids)
 
 
@@ -167,12 +178,13 @@ async def _fcm_send(token: str, item: dict) -> bool:
     import httpx
     access, project = await asyncio.to_thread(_fcm_access_token)
     kind = item["data"].get("kind", "")
+    # Android, when the app is closed: tinted in the school's colour; a newer bus update replaces the last one instead of
+    # piling up. (The icon and channel come from the app's manifest.) iPhones group them by kind.
+    android = {k: v for k, v in (("color", item["data"].get("school_color")), ("tag", "transport" if kind == "transport" else None)) if v}
     msg = {"message": {
         "token": token, "notification": {"title": item["title"], "body": item["body"]}, "data": item["data"],
-        # Grouped by kind on iPhones; on Android a newer bus update replaces the last one instead of piling up.
-        # (Android's icon, colour and channel come from the app's manifest.)
         "apns": {"payload": {"aps": {"thread-id": kind or "school"}}},
-        **({"android": {"notification": {"tag": "transport"}}} if kind == "transport" else {}),
+        **({"android": {"notification": android}} if android else {}),
     }}
     async with httpx.AsyncClient(timeout=10) as client:
         r = await client.post(f"https://fcm.googleapis.com/v1/projects/{project}/messages:send",

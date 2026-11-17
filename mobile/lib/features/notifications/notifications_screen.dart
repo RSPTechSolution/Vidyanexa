@@ -25,7 +25,11 @@ class AppNotification {
   final bool read;
   final DateTime createdAt;
 
-  IconData get icon => switch (kind) {
+  IconData get icon => notificationIcon(kind);
+}
+
+/// The icon for each kind of notification (the list, and the badge on pushes).
+IconData notificationIcon(String kind) => switch (kind) {
     'notice' => Icons.campaign_outlined,
     'homework' => Icons.menu_book_outlined,
     'absent' => Icons.event_busy_outlined,
@@ -47,7 +51,6 @@ class AppNotification {
     'enquiry' => Icons.person_add_alt_outlined,
     _ => Icons.notifications_outlined,
   };
-}
 
 /// The web paths the API puts in notifications, mapped to screens in this app.
 String? appRouteFor(String? link) => link != null && link.startsWith('/messages')

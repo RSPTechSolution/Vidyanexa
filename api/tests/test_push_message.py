@@ -2,6 +2,7 @@
 import httpx
 
 from app.services import notification_service
+from tests import factories
 
 
 class _Response:
@@ -37,3 +38,22 @@ async def test_a_bus_update_replaces_the_last_one(monkeypatch):
     item = {"title": "Bus 4 is 5 min away", "body": "", "data": {"kind": "transport", "link": "/my-transport"}}
     await notification_service._fcm_send("device", item)
     assert sent[0]["message"]["android"]["notification"]["tag"] == "transport"
+
+
+async def test_a_push_is_tinted_in_the_school_colour(monkeypatch):
+    sent = _capture(monkeypatch)
+    item = {"title": "New homework", "body": "Ex 6.2", "data": {"kind": "homework", "link": "", "school_name": "Green Valley", "school_color": "#1F6B4F"}}
+    await notification_service._fcm_send("device", item)
+    assert sent[0]["message"]["android"]["notification"] == {"color": "#1F6B4F"}
+
+
+async def test_every_push_carries_the_school_name_colour_and_logo(db, school):
+    school.settings = {**(school.settings or {}), "brand_color": "#1F6B4F"}
+    school.logo_url = "https://apis.vidyanexa.com/api/v1/files/public/logo-1"
+    await db.flush()
+    user = await factories.user(db, school, "pushme@t.com", "teacher")
+    notification_service.CONSOLE_PUSHES.clear()
+    await notification_service.notify(db, [user.id], school_id=school.id, kind="notice", title="Sports day")
+    data = db.info["push_outbox"][-1]["data"]
+    assert data["school_name"] == school.name and data["school_color"] == "#1F6B4F"
+    assert data["school_logo"].endswith("/logo-1") and data["kind"] == "notice"
