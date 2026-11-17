@@ -19,10 +19,26 @@ IVORY = "#F7F2E8"
 FONT = "'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
 SERIF = "Georgia,'Times New Roman',serif"
 
+# The small line above each email's big title (design "Bold header"), by kind of email.
+KICKERS = {
+    "fee_receipt": "Fee receipt", "fee_reminder": "Fee reminder", "welcome": "Welcome", "password_set": "Your account",
+    "password_changed": "Security", "password_reset": "Password reset", "login_code": "Sign-in code", "signup_code": "Confirm your school",
+    "school_ready": "Your school is ready", "account_closure": "Your account", "test": "Test email",
+}
+
+
+def _lighter(color: str, amount: float = 0.18) -> str:
+    """A colour mixed with white, for the second stop of the header's gradient. Unreadable input comes back unchanged."""
+    m = re.fullmatch(r"#?([0-9a-fA-F]{6})", color or "")
+    if not m:
+        return color
+    r_, g, b = (int(m.group(1)[i:i + 2], 16) for i in (0, 2, 4))
+    return "#" + "".join(f"{round(c + (255 - c) * amount):02x}" for c in (r_, g, b))
+
 
 @dataclass
 class Brand:
-    """How a school's emails look: its name, logo, colour and contact details at the top (design "Colour band")."""
+    """How a school's emails look: its name, logo and colour at the top (design "Bold header"), its contact details at the bottom."""
     name: str
     color: str = NAVY
     logo_url: str | None = None
@@ -43,68 +59,73 @@ def brand_for(school) -> Brand:
                  address=place or None, phone=school.phone, email=school.email)
 
 
-def _header(brand: Brand | None) -> str:
-    if not brand:  # platform emails (no school): Vidyanexa's own letterhead
+def _mark(brand: Brand | None) -> str:
+    """The school's logo on a light tile, or its initials in a ringed square; Vidyanexa's crest for platform emails."""
+    if not brand:
         crest = f"{settings.APP_URL.rstrip('/')}/brand/crest-reverse.png"
-        return (f'<tr><td style="background:{NAVY};padding:18px 28px;color:{IVORY};border-bottom:3px solid {GOLD}">'
-                f'<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="padding-right:14px;vertical-align:middle">'
-                f'<img src="{crest}" width="34" height="38" alt="" style="display:block;border:0"></td>'
-                f'<td style="vertical-align:middle"><div style="font:600 19px {SERIF};letter-spacing:3px">VIDYANEXA</div>'
-                f'<div style="font:12px {FONT};color:#D9C9A6;margin-top:3px">School management</div></td></tr></table></td></tr>')
-    c = escape(brand.color)
+        return f'<img src="{crest}" width="34" height="38" alt="Vidyanexa" style="display:block;border:0">'
     if brand.logo_url:
-        mark = f'<img src="{escape(brand.logo_url)}" width="38" height="38" alt="{escape(brand.name)}" style="display:block;border:0;width:38px;height:38px;object-fit:contain">'
-    else:  # no logo: the school's initials in its colour
-        mark = (f'<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:38px;height:38px;border-radius:9px;background:{c};'
-                f'color:#ffffff;font:700 15px {SERIF};text-align:center;vertical-align:middle">{escape(brand.initials)}</td></tr></table>')
-    band = (f'<tr><td style="background:{c};padding:22px 28px">'
-            f'<table role="presentation" cellpadding="0" cellspacing="0"><tr>'
-            f'<td style="padding-right:14px;vertical-align:middle"><div style="background:#ffffff;border-radius:12px;padding:7px">{mark}</div></td>'
-            f'<td style="vertical-align:middle"><div style="font:600 19px/1.25 {SERIF};color:#ffffff">{escape(brand.name)}</div>'
-            + (f'<div style="font:12px/1.45 {FONT};color:rgba(255,255,255,0.85);margin-top:3px">{escape(brand.address)}</div>' if brand.address else "")
-            + '</td></tr></table></td></tr>')
-    contact = " · ".join(escape(x) for x in (brand.phone, brand.email) if x)
-    if contact:
-        band += (f'<tr><td style="padding:10px 28px;background:#f8fafc;border-bottom:1px solid #eef0f3;font:12px {FONT};color:#6b7280">'
-                 f'{contact}</td></tr>')
-    return band
+        return (f'<div style="background:#ffffff;border-radius:12px;padding:6px;display:inline-block">'
+                f'<img src="{escape(brand.logo_url)}" width="40" height="40" alt="{escape(brand.name)}" '
+                f'style="display:block;border:0;width:40px;height:40px;object-fit:contain"></div>')
+    return (f'<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:46px;height:46px;border-radius:12px;'
+            f'background:rgba(255,255,255,0.14);border:2px solid rgba(255,255,255,0.45);color:#ffffff;font:800 16px {FONT};'
+            f'text-align:center;vertical-align:middle">{escape(brand.initials)}</td></tr></table>')
+
+
+def _header(brand: Brand | None, *, kicker: str, title: str) -> str:
+    """Design "Bold header": the school's colour fills the top, with its logo and name, and the email's title in big
+    white letters (Vidyanexa's navy and crest for platform emails)."""
+    c = escape(brand.color if brand else NAVY)
+    name = escape(brand.name) if brand else "VIDYANEXA"
+    return (f'<tr><td style="background-color:{c};background-image:linear-gradient(135deg,{c},{escape(_lighter(brand.color if brand else NAVY))});'
+            f'border-radius:20px 20px 0 0;padding:26px 32px 32px;color:#ffffff">'
+            f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:middle">{_mark(brand)}</td>'
+            f'<td align="right" style="vertical-align:middle;font:700 14px/1.3 {FONT};color:rgba(255,255,255,0.92)">{name}</td></tr></table>'
+            f'<div style="font:700 12.5px {FONT};color:rgba(255,255,255,0.85);margin-top:24px;text-transform:uppercase;letter-spacing:1px">{escape(kicker)}</div>'
+            f'<h1 style="margin:6px 0 0;font:800 30px/1.2 {FONT};color:#ffffff">{escape(title)}</h1></td></tr>')
 
 
 def _footer(brand: Brand | None) -> str:
+    """The school's name and contact details, why the email came, and a small "Powered by Vidyanexa"."""
     crest = f"{settings.APP_URL.rstrip('/')}/brand/email-crest.png"
-    who = (f"You're receiving this because you have an account at {escape(brand.name)}. If you weren't expecting it, you can ignore it."
-           if brand else "This email was sent by Vidyanexa. If you weren't expecting it, you can ignore it.")
-    return (f'<tr><td style="padding:16px 28px 18px;border-top:1px solid #eef0f3;font:12px/1.55 {FONT};color:#6b7280">{who}<br>'
-            f'<span style="display:inline-block;margin-top:8px;color:#8a909c">'
-            f'<img src="{crest}" width="14" height="16" alt="" style="display:inline-block;border:0;vertical-align:-3px">&nbsp; Sent using '
-            f'<a href="https://www.vidyanexa.com" style="color:{NAVY};font-weight:600;text-decoration:none">Vidyanexa</a> · school management software'
-            f'</span></td></tr>')
+    powered = (f'<div style="margin-top:12px;font:11.5px {FONT};color:#9aa0ab">Powered by&nbsp;'
+               f'<img src="{crest}" width="11" height="13" alt="" style="display:inline-block;border:0;vertical-align:-2px">&nbsp;'
+               f'<a href="https://www.vidyanexa.com" style="color:#6b7280;font-weight:700;letter-spacing:1px;text-decoration:none">VIDYANEXA</a></div>')
+    if brand:
+        contact = "<br>".join(escape(x) for x in (brand.address, " · ".join(y for y in (brand.phone, brand.email) if y)) if x)
+        who = (f'<b style="color:#374151">{escape(brand.name)}</b>' + (f"<br>{contact}" if contact else "")
+               + f'<div style="font:11.5px/1.5 {FONT};color:#9aa0ab;margin-top:10px">You\'re receiving this because you have an account at '
+               f'{escape(brand.name)}. If you weren\'t expecting it, you can ignore it.</div>' + powered)
+    else:
+        who = ("This email was sent by Vidyanexa. If you weren't expecting it, you can ignore it.<br>"
+               '<a href="https://www.vidyanexa.com" style="color:#6b7280;text-decoration:none">www.vidyanexa.com</a> · school management software')
+    return (f'<tr><td style="padding:20px 32px 22px;background:#f7f8fa;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 20px 20px;'
+            f'text-align:center;font:12.5px/1.6 {FONT};color:#6b7280">{who}</td></tr>')
 
 
 def _layout(*, title: str, brand: Brand | None, intro: list[str], rows: list[tuple[str, str]] | None = None,
-            button: tuple[str, str] | None = None, outro: list[str] | None = None) -> str:
-    accent = brand.color if brand else NAVY
-    p = lambda t: f'<p style="margin:0 0 14px;font:15px/1.55 {FONT};color:#1f2937">{t}</p>'  # noqa: E731
-    small = lambda t: f'<p style="margin:0 0 12px;font:13px/1.55 {FONT};color:#6b7280">{t}</p>'  # noqa: E731
+            button: tuple[str, str] | None = None, outro: list[str] | None = None, kicker: str = "") -> str:
+    p = lambda t: f'<p style="margin:0 0 14px;font:15px/1.6 {FONT};color:#374151">{t}</p>'  # noqa: E731
+    small = lambda t: f'<p style="margin:0 0 12px;font:13px/1.6 {FONT};color:#6b7280">{t}</p>'  # noqa: E731
     table = ""
     if rows:
         cells = "".join(
-            f'<tr><td style="padding:9px 12px;color:#6b7280;font:13px {FONT};border-bottom:1px solid #eef0f3;width:42%">{escape(k)}</td>'
-            f'<td style="padding:9px 12px;font:600 14px {FONT};color:#111827;border-bottom:1px solid #eef0f3">{escape(v)}</td></tr>'
+            f'<tr><td style="padding:11px 0;color:#6b7280;font:13.5px {FONT};border-bottom:1px solid #eef0f3">{escape(k)}</td>'
+            f'<td align="right" style="padding:11px 0;font:600 14px {FONT};color:#111827;border-bottom:1px solid #eef0f3">{escape(v)}</td></tr>'
             for k, v in rows)
-        table = (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#f8fafc;'
-                 f'border-radius:10px;margin:4px 0 18px">{cells}</table>')
+        table = f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:4px 0 20px">{cells}</table>'
     btn = ""
     if button:
         label, url = button
-        btn = (f'<p style="margin:6px 0 22px"><a href="{escape(url)}" style="display:inline-block;background:{escape(accent)};color:#ffffff;'
-               f'text-decoration:none;font:600 15px {FONT};padding:12px 22px;border-radius:10px">{escape(label)}</a></p>')
-    return f"""<!doctype html><html><body style="margin:0;background:#eef0f4;font-family:{FONT}">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef0f4;padding:24px 12px"><tr><td align="center">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb">
-{_header(brand)}
-<tr><td style="padding:24px 28px 8px">
-<h1 style="margin:0 0 14px;font:600 21px/1.3 {SERIF};color:#111827">{escape(title)}</h1>
+        btn = (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 20px"><tr>'
+               f'<td align="center" style="background:#111827;border-radius:12px"><a href="{escape(url)}" style="display:block;color:#ffffff;'
+               f'text-decoration:none;font:700 15px {FONT};padding:14px 22px">{escape(label)}</a></td></tr></table>')
+    return f"""<!doctype html><html><body style="margin:0;background:#eef1f4;font-family:{FONT}">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f4;padding:24px 12px"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px">
+{_header(brand, kicker=kicker, title=title)}
+<tr><td style="background:#ffffff;padding:26px 32px 8px;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb">
 {"".join(p(x) for x in intro)}{table}{btn}{"".join(small(x) for x in (outro or []))}
 </td></tr>
 {_footer(brand)}
@@ -124,7 +145,7 @@ def _text(title: str, intro: list[str], rows: list[tuple[str, str]] | None = Non
     if outro:
         parts += ["", *outro]
     parts += ["", "—", (f"You're receiving this because you have an account at {brand.name}." if brand else "Sent by Vidyanexa."),
-              "Sent using Vidyanexa · https://www.vidyanexa.com"]
+              "Powered by Vidyanexa · https://www.vidyanexa.com"]
     return "\n".join(parts)
 
 
@@ -152,7 +173,8 @@ def _build(*, to: str, to_name: str | None, subject: str, kind: str, title: str,
 
 def _render(msg: Email, brand: Brand | None) -> None:
     c = msg.content
-    msg.html = _layout(title=c["title"], brand=brand, intro=c["intro"], rows=c["rows"], button=c["button"], outro=c["outro"])
+    msg.html = _layout(title=c["title"], brand=brand, intro=c["intro"], rows=c["rows"], button=c["button"], outro=c["outro"],
+                       kicker=KICKERS.get(msg.kind, brand.name if brand else "Vidyanexa"))
     msg.text = _text(c["title"], [_plain(x) for x in c["intro"]], c["rows"], c["button"], [_plain(x) for x in c["outro"]], brand)
 
 
@@ -271,7 +293,7 @@ def fee_receipt(*, to: str, name: str, school_name: str, student: str, class_sec
               ("Amount", inr(amount)), ("Paid by", method), ("Date", paid_at.strftime("%d %b %Y, %I:%M %p")),
               ("Balance on this invoice", inr(balance))],
         button=("View receipt", f"{settings.APP_URL}/fees/receipts/{payment_id}"),
-        outro=["Keep this email for your records. The receipt can also be printed from the Vidyanexa app or website."])
+        outro=["Keep this email for your records. The receipt can also be printed from the app or website."])
 
 
 def fee_reminder(*, to: str, name: str, school_name: str, student: str, class_section: str, term: str, due_date: date,

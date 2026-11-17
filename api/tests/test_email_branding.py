@@ -32,16 +32,17 @@ async def test_a_school_email_carries_the_school_branding(db, school):
     sent = CONSOLE_OUTBOX[-1]
     assert sent.from_name == "Green Valley Public School via Vidyanexa" and sent.reply_to == "office@greenvalley.edu.in"
     html = sent.html
-    assert "background:#15803d;padding:22px 28px" in html  # the colour band in the school's colour
+    assert "background-color:#15803d;background-image:linear-gradient(135deg,#15803d," in html  # the header in the school's colour
+    assert ">Welcome</div>" in html and ">Welcome, Priya</h1>" in html  # the kicker and the big title
     assert "https://apis.vidyanexa.com/api/v1/files/public/logo-1" in html  # its logo
     assert "Sector 21-C, Chandigarh, Punjab" in html and "+91 172 270 1234 · office@greenvalley.edu.in" in html
-    assert "background:#15803d;color:#ffffff" in html  # the button in the school colour
-    assert "VIDYANEXA" not in html  # no Vidyanexa letterhead...
-    assert "Sent using" in html and "email-crest.png" in html  # ...only the footer line
+    assert "background:#111827;border-radius:12px" in html  # one wide dark button
+    assert "crest-reverse.png" not in html and html.count("VIDYANEXA") == 1  # no Vidyanexa letterhead...
+    assert "Powered by" in html and "email-crest.png" in html  # ...only a small "Powered by" at the bottom
     assert "you have an account at Green Valley Public School" in html
     # The plain-text version says the same.
     assert sent.text.startswith("Green Valley Public School\nSector 21-C, Chandigarh, Punjab")
-    assert "Temporary password: Kx7-mQ2p" in sent.text and sent.text.rstrip().endswith("Sent using Vidyanexa · https://www.vidyanexa.com")
+    assert "Temporary password: Kx7-mQ2p" in sent.text and sent.text.rstrip().endswith("Powered by Vidyanexa · https://www.vidyanexa.com")
 
 
 async def test_without_a_logo_the_school_initials_stand_in(db, school):
@@ -51,14 +52,15 @@ async def test_without_a_logo_the_school_initials_stand_in(db, school):
     msg = t.login_code(to="parent@example.com", name="Suresh Patel", school_name=school.name, code="482915", minutes=10)
     await email_service.queue(db, msg, school_id=school.id)
     html = CONSOLE_OUTBOX[-1].html
-    assert ">GV</td>" in html and f"background:{t.NAVY};padding:22px 28px" in html
+    assert ">GV</td>" in html and f"background-color:{t.NAVY}" in html
 
 
 async def test_platform_emails_keep_the_vidyanexa_letterhead(db):
     msg = t.password_reset(to="root@example.com", name="Platform Admin", school_name=None, token="tok", minutes=30)
     await email_service.queue(db, msg, school_id=None)
     sent = CONSOLE_OUTBOX[-1]
-    assert "VIDYANEXA" in sent.html and sent.from_name is None and sent.reply_to is None
+    assert "crest-reverse.png" in sent.html and ">VIDYANEXA</td>" in sent.html and "Powered by" not in sent.html
+    assert sent.from_name is None and sent.reply_to is None
 
 
 async def test_brevo_gets_the_school_as_sender_name_and_reply_to(monkeypatch):
