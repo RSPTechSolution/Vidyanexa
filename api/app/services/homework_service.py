@@ -13,7 +13,7 @@ from app.schemas.common import PageMeta, PageParams
 from app.schemas.communication import (
     AssignTarget, CheckSave, FamilyDone, HomeworkDetail, HomeworkIn, HomeworkOut, HomeworkStudent, HomeworkUpdate, MyHomework,
 )
-from app.services import audit_service, notification_service, storage_service
+from app.services import audit_service, notification_service, sms_service, storage_service
 from app.services.academics_service import field_error, get_section
 from app.services.family_service import own_students, school_today
 
@@ -101,6 +101,9 @@ async def create(db: AsyncSession, user: User, data: HomeworkIn) -> HomeworkOut:
     await notification_service.notify(
         db, await notification_service.family_of_sections(db, [h.section_id]), school_id=user.school_id, kind="homework",
         title=f"New homework: {subject.name}", body=f"{h.title} · due {h.due_date:%d %b}", link="/my-homework", data={"homework_id": h.id})
+    if await sms_service.channels_for(db, user.school_id, "homework"):
+        await sms_service.queue(db, school_id=user.school_id, event_name="homework", phones=await sms_service.section_family_phones(db, [h.section_id]),
+                                body=f"New homework ({subject.name}): {h.title[:200]}. Due {h.due_date:%d %b}.")
     return (await list_homework(db, user, PageParams(page=1, page_size=1), homework_id=h.id))[0][0]
 
 

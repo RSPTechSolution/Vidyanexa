@@ -25,6 +25,11 @@ EVENTS = {
     "fee_reminder": "Fee reminders",
     "fee_receipt": "Fee received",
     "notice": "Urgent notices",
+    # Every notice, not only urgent ones (a separate choice: texting every notice costs more). An urgent notice goes on
+    # the channels of either choice, once.
+    "notices": "Every notice",
+    "homework": "New homework",
+    "results": "Exam results published",
     "leave": "Leave approved or declined",
     "transport": "Child boarded or left the bus",
     "gate": "Child left school early with a gate pass",
@@ -138,6 +143,13 @@ async def counts_today(db: AsyncSession, school_id: uuid.UUID) -> dict[str, int]
 
 
 
+
+
+async def section_family_phones(db: AsyncSession, section_ids) -> list[str]:
+    """Phones of the families of every active student in these sections."""
+    from app.models import Student
+    students = (await db.scalars(select(Student.id).where(Student.section_id.in_(list(section_ids)), Student.status == "active"))).all()
+    return await family_phones(db, students)
 
 
 async def family_phones(db: AsyncSession, student_ids) -> list[str]:

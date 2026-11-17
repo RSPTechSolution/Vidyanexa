@@ -17,7 +17,7 @@ from app.schemas.exams import (
     ChildResults, ClassPapers, ClassPapersSet, ExamDetail, ExamIn, ExamOut, ExamUpdate, FromTimetable, MarkRow, MarksSave,
     MarksSheet, MarksSheetRef, MyExam, PaperOut, ReportCard, SectionResults, StudentResult, SubjectResult, SubjectStat,
 )
-from app.services import audit_service, co_live_service, notification_service
+from app.services import audit_service, co_live_service, notification_service, sms_service
 from app.services.academics_service import field_error, get_section
 from app.services.attendance_service import _counts, academic_year_start
 from app.services.family_service import own_students, school_today, student_label
@@ -199,6 +199,9 @@ async def publish(db: AsyncSession, school_id: uuid.UUID, exam_id: uuid.UUID, pu
         await notification_service.notify(db, await notification_service.family_of(db, kids), school_id=school_id, kind="results",
                                           title=f"{e.name} results are out", body="Open the report card to see marks and grades.",
                                           link="/my-results", data={"exam_id": e.id})
+        if await sms_service.channels_for(db, school_id, "results"):
+            await sms_service.queue(db, school_id=school_id, event_name="results", phones=await sms_service.family_phones(db, kids),
+                                    body=f"{e.name} results are out. Open the Vidyanexa app to see the report card.")
     await audit_service.record(db, "exam.publish" if publish else "exam.unpublish", school_id=school_id, user_id=actor_id,
                                entity_type="exam", entity_id=e.id, meta={"name": e.name})
 

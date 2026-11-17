@@ -1,3 +1,5 @@
+from sqlalchemy import select
+from app.models import MessageLog
 from tests import factories
 from tests.factories import API, PASSWORD, student_body
 
@@ -76,7 +78,10 @@ async def test_results_grades_ranks_and_publishing(client, db, school, admin_hea
     assert mine[0]["exams"] == [] and len(mine[0]["upcoming"]) == 2
 
     await client.put(f"{API}/exams/{exam['id']}/remarks/{ids[0]}", headers=admin_headers, json={"remark": "Excellent work."})
+    await client.put(f"{API}/messaging/settings", headers=admin_headers, json={"events": {"results": ["sms"]}})
     assert (await client.post(f"{API}/exams/{exam['id']}/publish", headers=admin_headers)).status_code == 200
+    texts = (await db.scalars(select(MessageLog).where(MessageLog.kind == "results"))).all()
+    assert [(m.channel, m.to) for m in texts] == [("sms", "+919000000011")] and "results are out" in texts[0].body  # Asha's mother
     card = (await client.get(f"{API}/exams/{exam['id']}/report/{ids[0]}", headers=p)).json()["data"]
     assert card["result"]["percent"] == 93.0 and card["result"]["remark"] == "Excellent work." and card["class_size"] == 3
     assert (await client.get(f"{API}/exams/{exam['id']}/report/{ids[1]}", headers=p)).status_code == 404  # not their child

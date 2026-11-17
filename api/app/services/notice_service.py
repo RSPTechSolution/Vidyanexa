@@ -153,9 +153,16 @@ async def create(db: AsyncSession, user: User, data: NoticeIn) -> NoticeOut:
     await notification_service.notify(db, [u for u in await _recipient_ids(db, user.school_id, n) if u != user.id],
                                       school_id=user.school_id, kind="notice", title=n.title, body=n.body[:180],
                                       link="/notices", data={"notice_id": n.id, "priority": n.priority})
+    # By SMS/WhatsApp on the channels the school chose: "Every notice" for all of them, "Urgent notices" (or either) for
+    # an urgent one, each phone once.
+    chans = set(await sms_service.channels_for(db, user.school_id, "notices"))
     if n.priority == "urgent":
+        chans |= set(await sms_service.channels_for(db, user.school_id, "notice"))
+    if chans:
         phones = (await db.scalars(select(User.phone).where(User.id.in_(await _recipient_ids(db, user.school_id, n)), User.phone.is_not(None)))).all()
-        await sms_service.queue(db, school_id=user.school_id, event_name="notice", phones=phones, body=f"Urgent from school: {n.title}. {n.body[:300]}")
+        prefix = "Urgent from school" if n.priority == "urgent" else "Notice from school"
+        await sms_service.queue(db, school_id=user.school_id, event_name="notice" if n.priority == "urgent" else "notices",
+                                phones=list(dict.fromkeys(phones)), force=sorted(chans), body=f"{prefix}: {n.title}. {n.body[:300]}")
     await db.refresh(n)
     return await _out(db, user, n, True, user.full_name, await _audience_labeller(db, user.school_id))
 
