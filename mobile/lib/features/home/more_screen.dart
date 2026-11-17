@@ -7,22 +7,21 @@ import '../../core/auth/session.dart';
 import '../attendance/my_class_screen.dart' show myClassesProvider;
 import '../notices/notices_screen.dart';
 
-/// Everything that doesn't fit in the bottom bar.
-class MoreScreen extends ConsumerWidget {
-  const MoreScreen({super.key});
+/// A link on the More screen: icon, title, what it's for, the screen it opens, and an optional badge.
+typedef MoreLink = (IconData, String, String, String, Widget?);
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
+/// Everything this person can open beyond the bottom bar, for their role, permissions and the school's modules. The
+/// More screen lists it all; Home's shortcuts show the most used of it.
+List<MoreLink> moreLinks(WidgetRef ref) {
     final me = ref.watch(meProvider);
-    if (me == null) return const SizedBox.shrink();
+    if (me == null) return const [];
     final unread = ref.watch(unreadNoticesProvider).value ?? 0;
-    final scheme = Theme.of(context).colorScheme;
     // A teacher's class-teacher (incharge) pages: My class, leave requests and early pickups are only for their own class,
     // so a teacher without one doesn't see them (they would open empty).
     final teacher = me.role == 'teacher';
     final incharge = teacher && me.hasModule('attendance') && (ref.watch(myClassesProvider).value?.isNotEmpty ?? false);
     final classDuties = !teacher || incharge;
-    final items = <(IconData, String, String, String, Widget?)>[
+    return <MoreLink>[
       if (incharge) (Icons.groups_outlined, 'My class', 'Your class: attendance, leave, fees and parents', '/my-class', null),
       if (me.hasModule('communication')) (Icons.campaign_outlined, 'Notices', 'Announcements from the school', '/notices',
           unread > 0 ? Badge(label: Text('$unread')) : null),
@@ -47,6 +46,18 @@ class MoreScreen extends ConsumerWidget {
       if (me.hasModule('exams') && me.can('exams.marks')) (Icons.edit_note_rounded, 'Marks entry', 'Enter marks for your subjects', '/marks', null),
       (Icons.person_outline, 'Profile & settings', 'Password, theme and sign out', '/profile', null),
     ];
+}
+
+/// Everything that doesn't fit in the bottom bar.
+class MoreScreen extends ConsumerWidget {
+  const MoreScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final me = ref.watch(meProvider);
+    if (me == null) return const SizedBox.shrink();
+    final scheme = Theme.of(context).colorScheme;
+    final items = moreLinks(ref);
     return Scaffold(
       appBar: AppBar(title: const Text('More')),
       body: ListView(padding: const EdgeInsets.all(12), children: [

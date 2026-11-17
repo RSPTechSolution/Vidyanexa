@@ -122,8 +122,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           showSelectedIcon: false,
                           // The chosen one in the theme's blue, like the tab bar.
                           style: SegmentedButton.styleFrom(
-                            selectedBackgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF3D5DA8) : const Color(0xFF2F4A86),
-                            selectedForegroundColor: Colors.white,
+                            selectedBackgroundColor: theme.brightness == Brightness.dark ? const Color(0xFFF4F1EB) : const Color(0xFF1E2033),
+                            selectedForegroundColor: theme.brightness == Brightness.dark ? const Color(0xFF1E2033) : Colors.white,
                             side: BorderSide(color: scheme.outlineVariant),
                           ),
                           onSelectionChanged: (v) => _setStudent(v.first),
@@ -230,7 +230,7 @@ class _SignInBanner extends StatelessWidget {
                               const SizedBox(height: 3),
                               Text(
                                 flavor.suffix ?? 'Parents and students',
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.6, color: Color(0xFFF1D394)),
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.6, color: Color(0xE6FFFFFF)),
                               ),
                             ]),
                           ),
@@ -250,7 +250,7 @@ class _SignInBanner extends StatelessWidget {
                   const SizedBox(height: 18),
                   Text(title, style: const TextStyle(fontSize: 27, fontWeight: FontWeight.w800, letterSpacing: -0.7, height: 1.15, color: Colors.white)),
                   const SizedBox(height: 6),
-                  Text(subtitle, style: const TextStyle(fontSize: 14.5, height: 1.4, color: Color(0xFFD6DEF2))),
+                  Text(subtitle, style: const TextStyle(fontSize: 14.5, height: 1.4, color: Color(0xF2FFFFFF))),
                 ],
               ),
             ),

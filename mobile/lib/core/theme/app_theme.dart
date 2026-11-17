@@ -2,10 +2,10 @@ import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
-/// Theme version 4 ("Polished", the same as the website, web/src/app/globals.css): a cool page with soft blue and gold
-/// light, Home's summary cards as blue gradient banners ([AppTheme.heroDecoration]), gentle card depth, a floating tab
-/// bar, gold for the one main action on a screen. Light and dark. Plus Jakarta Sans throughout.
-/// Earlier: git tag theme-v3 ("Ink & gold").
+/// Theme version 5 ("Pastel bento", approved sample): a warm off-white page (near-black in dark mode) with soft peach
+/// and blue light, Home's day as soft-coloured tiles ([PastelTone]), colourful shortcut tiles, a coral gradient for the
+/// one thing to do first ([AppTheme.heroDecoration]), an ink pill on the floating tab bar. Light and dark.
+/// Earlier: git tags theme-v4-app ("Polished"), theme-v3 ("Ink & gold").
 class Brand {
   static const navy = Color(0xFF15233F); // the crest's Ink Navy
   static const gold = Color(0xFFB8893C); // the crest's Antique Gold
@@ -45,77 +45,95 @@ TextTheme _fontTheme(TextTheme base) {
 
 const _light = ColorScheme(
   brightness: Brightness.light,
-  primary: Color(0xFF2F4A86),
+  primary: Color(0xFF3D63DD),
   onPrimary: Color(0xFFFFFFFF),
-  primaryContainer: Color(0xFFDFE6FA),
-  onPrimaryContainer: Color(0xFF0F1D3D),
-  secondary: Color(0xFF575E71),
+  primaryContainer: Color(0xFFE3E9FF),
+  onPrimaryContainer: Color(0xFF1B2A6B),
+  secondary: Color(0xFF5E5F78),
   onSecondary: Color(0xFFFFFFFF),
-  secondaryContainer: Color(0xFFE6ECFA),
-  onSecondaryContainer: Color(0xFF14213D),
-  tertiary: Color(0xFF785A00),
+  secondaryContainer: Color(0xFFEDEAFF),
+  onSecondaryContainer: Color(0xFF2A2350),
+  tertiary: Color(0xFF9A4A1E),
   onTertiary: Color(0xFFFFFFFF),
-  tertiaryContainer: Color(0xFFFFDEA6),
-  onTertiaryContainer: Color(0xFF261900),
+  tertiaryContainer: Color(0xFFFFE8D6),
+  onTertiaryContainer: Color(0xFF3A1A05),
   error: Color(0xFFBA1A1A),
   onError: Color(0xFFFFFFFF),
   errorContainer: Color(0xFFFFDAD6),
   onErrorContainer: Color(0xFF410002),
-  surface: Color(0xFFF5F7FB), // the website's cool page
-  onSurface: Color(0xFF101828),
-  onSurfaceVariant: Color(0xFF5E6A80),
-  outline: Color(0xFF7A8599),
-  outlineVariant: Color(0xFFE2E7F0),
+  surface: Color(0xFFFBFAF7), // warm off-white
+  onSurface: Color(0xFF1E2033),
+  onSurfaceVariant: Color(0xFF63657C),
+  outline: Color(0xFF85879B),
+  outlineVariant: Color(0xFFEDE9E1),
   surfaceContainerLowest: Color(0xFFFFFFFF),
-  surfaceContainerLow: Color(0xFFF8F9FC),
-  surfaceContainer: Color(0xFFEEF1F6),
-  surfaceContainerHigh: Color(0xFFE8ECF3),
-  surfaceContainerHighest: Color(0xFFE2E6EE),
-  surfaceDim: Color(0xFFD9DEE8),
-  surfaceBright: Color(0xFFF5F7FB),
+  surfaceContainerLow: Color(0xFFF8F6F1),
+  surfaceContainer: Color(0xFFF4F1EB),
+  surfaceContainerHigh: Color(0xFFEEEAE3),
+  surfaceContainerHighest: Color(0xFFE8E4DC),
+  surfaceDim: Color(0xFFE2DED6),
+  surfaceBright: Color(0xFFFBFAF7),
   inverseSurface: Color(0xFF2F3036),
   onInverseSurface: Color(0xFFF1F0F7),
-  inversePrimary: Color(0xFFB0C6FF),
+  inversePrimary: Color(0xFFB9C8FF),
   shadow: Color(0xFF000000),
   scrim: Color(0xFF000000),
 );
 
 const _dark = ColorScheme(
   brightness: Brightness.dark,
-  primary: Color(0xFF9DB6F2),
-  onPrimary: Color(0xFF0C1324),
-  primaryContainer: Color(0xFF26407A),
-  onPrimaryContainer: Color(0xFFDFE6FA),
-  secondary: Color(0xFFC0C6DC),
-  onSecondary: Color(0xFF2A3042),
-  secondaryContainer: Color(0xFF1E2A46),
-  onSecondaryContainer: Color(0xFFDCE4F7),
-  tertiary: Color(0xFFE2BE74),
-  onTertiary: Color(0xFF3F2E00),
-  tertiaryContainer: Color(0xFF5D4200),
-  onTertiaryContainer: Color(0xFFFFDEA6),
+  primary: Color(0xFF9DB4FF),
+  onPrimary: Color(0xFF13121A),
+  primaryContainer: Color(0xFF2A3157),
+  onPrimaryContainer: Color(0xFFDCE3FF),
+  secondary: Color(0xFFC4C2DA),
+  onSecondary: Color(0xFF2A2938),
+  secondaryContainer: Color(0xFF28224A),
+  onSecondaryContainer: Color(0xFFD9D2FF),
+  tertiary: Color(0xFFFFC9A0),
+  onTertiary: Color(0xFF3A1A05),
+  tertiaryContainer: Color(0xFF3B261A),
+  onTertiaryContainer: Color(0xFFFFD3B5),
   error: Color(0xFFFFB4AB),
   onError: Color(0xFF690005),
   errorContainer: Color(0xFF93000A),
   onErrorContainer: Color(0xFFFFDAD6),
-  surface: Color(0xFF0C1324), // the website's navy-black
-  onSurface: Color(0xFFE8EDF7),
-  onSurfaceVariant: Color(0xFF9AA6BD),
-  outline: Color(0xFF6F7C99),
-  outlineVariant: Color(0xFF233050),
-  surfaceContainerLowest: Color(0xFF080E1C),
-  surfaceContainerLow: Color(0xFF121B31),
-  surfaceContainer: Color(0xFF16203A),
-  surfaceContainerHigh: Color(0xFF1B2742),
-  surfaceContainerHighest: Color(0xFF22304F),
-  surfaceDim: Color(0xFF0C1324),
-  surfaceBright: Color(0xFF2A3656),
+  surface: Color(0xFF13121A), // warm near-black
+  onSurface: Color(0xFFECEAF2),
+  onSurfaceVariant: Color(0xFFA3A1B5),
+  outline: Color(0xFF6F6D84),
+  outlineVariant: Color(0xFF2A2936),
+  surfaceContainerLowest: Color(0xFF0E0D14),
+  surfaceContainerLow: Color(0xFF1F1E29),
+  surfaceContainer: Color(0xFF232230),
+  surfaceContainerHigh: Color(0xFF2A2937),
+  surfaceContainerHighest: Color(0xFF31303F),
+  surfaceDim: Color(0xFF13121A),
+  surfaceBright: Color(0xFF34333F),
   inverseSurface: Color(0xFFE3E2E9),
   onInverseSurface: Color(0xFF2F3036),
-  inversePrimary: Color(0xFF2F4A86),
+  inversePrimary: Color(0xFF3D63DD),
   shadow: Color(0xFF000000),
   scrim: Color(0xFF000000),
 );
+
+/// The soft colours of Home's tiles (theme 5): a pastel background with deep text in light mode, a deep background with
+/// pastel text in dark mode, so each kind keeps its colour in both.
+enum PastelTone {
+  mint(Color(0xFFD9F5E6), Color(0xFF0F5E3A), Color(0xFFB4E8CD), Color(0xFF16382A), Color(0xFFBDF0D5), Color(0xFF245A42)),
+  peach(Color(0xFFFFE8D6), Color(0xFF7A3A10), Color(0xFFFFC9A0), Color(0xFF3B261A), Color(0xFFFFD3B5), Color(0xFF5A3622)),
+  lavender(Color(0xFFE7E3FF), Color(0xFF3B2B8F), Color(0xFFCFC6FF), Color(0xFF28224A), Color(0xFFD9D2FF), Color(0xFF3A3170)),
+  sky(Color(0xFFDCEEFF), Color(0xFF164B85), Color(0xFFB9DAFF), Color(0xFF142E4A), Color(0xFFC4DEFF), Color(0xFF1E4470));
+
+  const PastelTone(this._bg, this._fg, this._tile, this._bgDark, this._fgDark, this._tileDark);
+  final Color _bg, _fg, _tile, _bgDark, _fgDark, _tileDark;
+
+  Color bg(Brightness b) => b == Brightness.dark ? _bgDark : _bg;
+  Color fg(Brightness b) => b == Brightness.dark ? _fgDark : _fg;
+
+  /// The small rounded square behind a tile's icon.
+  Color tile(Brightness b) => b == Brightness.dark ? _tileDark : _tile;
+}
 
 /// Status colours that adapt to the theme.
 @immutable
@@ -154,7 +172,7 @@ class AppTheme {
   /// keeps the hand-tuned scheme above.
   static ColorScheme? _scheme(String? accent, Brightness b) {
     final hex = accent?.replaceFirst('#', '').toLowerCase();
-    if (hex == null || hex.length != 6 || hex == '15233f' || hex == '2f4a86' || hex == '0b1b33' || hex == '13284a') return null;
+    if (hex == null || hex.length != 6 || const {'15233f', '2f4a86', '0b1b33', '13284a', '3d63dd'}.contains(hex)) return null;
     final v = int.tryParse(hex, radix: 16);
     if (v == null) return null;
     return ColorScheme.fromSeed(seedColor: Color(0xFF000000 | v), brightness: b, dynamicSchemeVariant: DynamicSchemeVariant.tonalSpot);
@@ -170,7 +188,7 @@ class AppTheme {
   /// One solid colour for Home's summary cards (the middle of [heroDecoration]'s gradient), where a single colour is needed.
   static Color inkPanel(ColorScheme s) => s.brightness == Brightness.dark ? const Color(0xFF26407A) : const Color(0xFF2F4A86);
 
-  /// Home's summary cards (theme 4): the website's blue gradient banner. White text stays readable across all of it.
+  /// The one thing to do first, and the big totals (theme 5): a coral gradient. White text stays readable across it.
   static BoxDecoration heroDecoration(ColorScheme s, {double radius = 26}) {
     final dark = s.brightness == Brightness.dark;
     return BoxDecoration(
@@ -178,28 +196,22 @@ class AppTheme {
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: dark ? const [Color(0xFF182B57), Color(0xFF26407A), Color(0xFF2F4F95)] : const [Color(0xFF1E3466), Color(0xFF2F4A86), Color(0xFF3B5BA3)],
-        stops: const [0, 0.55, 1],
+        colors: dark ? const [Color(0xFFE8704A), Color(0xFFE04A7A)] : const [Color(0xFFF2784B), Color(0xFFEC4F82)],
       ),
-      boxShadow: [BoxShadow(color: dark ? const Color(0xE6000000) : const Color(0xCC1E3466), blurRadius: 34, spreadRadius: -18, offset: const Offset(0, 18))],
+      boxShadow: [BoxShadow(color: dark ? const Color(0x8C000000) : const Color(0x80FF5F8F), blurRadius: 30, spreadRadius: -16, offset: const Offset(0, 16))],
     );
   }
 
-  /// The two soft lights laid over [heroDecoration]: gold at the top right, blue at the bottom left.
+  /// A soft white highlight in the top corner of [heroDecoration].
   static Widget heroLights() => const IgnorePointer(
         child: DecoratedBox(
           decoration: BoxDecoration(
-            gradient: RadialGradient(center: Alignment(1.15, -1.25), radius: 0.7, colors: [Color(0x40D9AE5C), Color(0x00D9AE5C)]),
-          ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(center: Alignment(-1.2, 1.4), radius: 1.0, colors: [Color(0x806184D6), Color(0x006184D6)]),
-            ),
+            gradient: RadialGradient(center: Alignment(1.1, -1.2), radius: 0.8, colors: [Color(0x38FFFFFF), Color(0x00FFFFFF)]),
           ),
         ),
       );
 
-  /// A soft blue and gold light across the top of a screen, as on the website (light and dark).
+  /// A soft peach and blue light across the top of a screen (light and dark).
   static Widget pageLight(ColorScheme s) {
     final dark = s.brightness == Brightness.dark;
     return IgnorePointer(
@@ -208,7 +220,7 @@ class AppTheme {
           gradient: RadialGradient(
             center: const Alignment(1.0, -1.0),
             radius: 0.75,
-            colors: [dark ? const Color(0x404A68B5) : const Color(0x338CA6EB), const Color(0x00000000)],
+            colors: [dark ? const Color(0x29FF9664) : const Color(0x47FFD6B4), const Color(0x00000000)],
           ),
         ),
         child: DecoratedBox(
@@ -216,7 +228,7 @@ class AppTheme {
             gradient: RadialGradient(
               center: const Alignment(-1.0, -1.0),
               radius: 0.6,
-              colors: [dark ? const Color(0x14C9A04E) : const Color(0x2EECD4A0), const Color(0x00000000)],
+              colors: [dark ? const Color(0x247896FF) : const Color(0x40CEE2FF), const Color(0x00000000)],
             ),
           ),
         ),
@@ -266,15 +278,15 @@ class AppTheme {
         centerTitle: false,
         titleTextStyle: textTheme.titleLarge?.copyWith(fontSize: 21, fontWeight: FontWeight.w700),
       ),
-      // White cards with a hairline border and a soft shadow on the cool page (theme 4); no shadow in dark mode.
+      // White cards with a hairline border and a soft warm shadow (theme 5); no shadow in dark mode.
       cardTheme: CardThemeData(
         color: cardColor,
         surfaceTintColor: Colors.transparent,
         elevation: isDark ? 0 : 1,
-        shadowColor: isDark ? Colors.transparent : const Color(0x1A1E3466),
+        shadowColor: isDark ? Colors.transparent : const Color(0x1A3C2814),
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(22),
           side: BorderSide(color: scheme.outlineVariant),
         ),
       ),
@@ -289,7 +301,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           // Dark mode: the website's solid blue with white text, rather than the pale primary (theme 4).
-          backgroundColor: isDark ? const Color(0xFF3D5DA8) : null,
+          backgroundColor: isDark ? const Color(0xFF4A69E2) : null,
           foregroundColor: isDark ? Colors.white : null,
           minimumSize: const Size.fromHeight(50),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -318,20 +330,22 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        // Theme 4: a floating rounded bar (home_shell.dart); the selected tab is a blue pill with a white icon.
-        backgroundColor: isDark ? const Color(0xFF121B31) : Colors.white,
+        // A floating rounded bar (home_shell.dart); the selected tab is an ink pill (a cream one in dark mode).
+        backgroundColor: isDark ? const Color(0xFF1F1E29) : Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        indicatorColor: isDark ? const Color(0xFF3D5DA8) : const Color(0xFF2F4A86),
+        indicatorColor: isDark ? const Color(0xFFF4F1EB) : const Color(0xFF1E2033),
         iconTheme: WidgetStateProperty.resolveWith(
-          (states) => IconThemeData(color: states.contains(WidgetState.selected) ? Colors.white : scheme.onSurfaceVariant),
+          (states) => IconThemeData(
+            color: states.contains(WidgetState.selected) ? (isDark ? const Color(0xFF1E2033) : Colors.white) : scheme.onSurfaceVariant,
+          ),
         ),
         // Small enough that five labels ("Attendance", "Homework") fit side by side on a phone.
         labelTextStyle: WidgetStateProperty.resolveWith((states) => textTheme.labelMedium?.copyWith(
               fontSize: 11,
               letterSpacing: -0.1,
               fontWeight: FontWeight.w700,
-              color: states.contains(WidgetState.selected) ? (isDark ? scheme.onSurface : const Color(0xFF2F4A86)) : scheme.onSurfaceVariant,
+              color: states.contains(WidgetState.selected) ? scheme.onSurface : scheme.onSurfaceVariant,
             )),
       ),
       dialogTheme: DialogThemeData(backgroundColor: scheme.surfaceContainerHigh, surfaceTintColor: Colors.transparent),

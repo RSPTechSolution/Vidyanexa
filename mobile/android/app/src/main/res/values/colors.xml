@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#2F4A86</color>
-    <!-- Tint of the notification icon and app name (theme 4 blue, as in the app and website). -->
-    <color name="notification">#2F4A86</color>
+    <!-- Tint of the notification icon and app name (the app's blue, theme 5). -->
+    <color name="notification">#3D63DD</color>
 </resources>

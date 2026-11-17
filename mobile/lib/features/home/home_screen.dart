@@ -21,6 +21,7 @@ import '../academics/syllabus_screens.dart';
 import '../transport/transport_screens.dart';
 import '../notifications/notifications_screen.dart';
 import '../timetable/timetable_screen.dart';
+import 'more_screen.dart' show moreLinks;
 import 'today_widget.dart';
 
 /// The note on the Home picture: the date, or why the school is closed today.
@@ -85,11 +86,24 @@ class HomeScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
-            // Sample A: today's date (or why the school is closed) above a bold greeting, then who you are here.
-            Text(_todayChip(ref), style: eyebrow(context), maxLines: 2),
-            const SizedBox(height: 2),
-            Text('${greeting(DateTime.now())}, ${me.firstName}', style: serifHeading(context, size: 26)),
-            const SizedBox(height: 4),
+            // Theme 5: your initials on a peach tile, today's date (or why the school is closed), a bold greeting, and
+            // who you are here.
+            Row(
+              children: [
+                _Initials(me.initials),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_todayChip(ref), style: eyebrow(context), maxLines: 2),
+                      Text('${greeting(DateTime.now())}, ${me.firstName}', style: serifHeading(context, size: 23)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
             Text(
               [roleLabel(me.role), if (me.school != null) me.school!.name].join(' · '),
               style: eyebrow(context).copyWith(fontSize: 13),
@@ -104,10 +118,12 @@ class HomeScreen extends ConsumerWidget {
                 if (me.role == 'driver' && me.hasModule('transport')) const DriverCard(),
                 if (me.isFamily) ...[
                   if (me.hasModule('attendance') || me.hasModule('fees')) const _FamilyCards(),
+                  const _Shortcuts(),
                   if (me.hasModule('academics')) const _HomeworkDue(),
                   if (me.hasModule('academics')) const _TodayLessons(),
                 ] else ...[
                   if (me.hasModule('attendance') && me.can('attendance.mark')) const _AttendanceToTake(),
+                  if (me.role != 'driver') const _Shortcuts(),
                   if (me.hasModule('fees') && me.can('fees.view')) const _FeeTiles(),
                   if (me.hasModule('academics') && me.teaches) const CoversCard(),
                   if (me.hasModule('academics') && me.teaches) const _TodayLessons(),
@@ -191,7 +207,8 @@ class _Heading extends StatelessWidget {
   );
 }
 
-/// Parents and students: today's attendance and fees, per child.
+/// Parents and students: each child's day as soft-coloured tiles (theme 5): attendance in mint with this month's ring,
+/// fees in peach, homework in lavender. Each tile opens its tab.
 class _FamilyCards extends ConsumerWidget {
   const _FamilyCards();
 
@@ -200,6 +217,7 @@ class _FamilyCards extends ConsumerWidget {
     final me = ref.watch(meProvider)!;
     final att = me.hasModule('attendance') ? ref.watch(myAttendanceProvider(isoMonth(DateTime.now()))) : null;
     final fees = me.hasModule('fees') ? ref.watch(myFeesProvider) : null;
+    final homework = me.hasModule('academics') ? ref.watch(myHomeworkProvider).value : null;
     final kids = att?.value ?? const <StudentAttendance>[];
     final feeKids = fees?.value?.children ?? const <ChildFees>[];
     if ((att?.isLoading ?? false) || (fees?.isLoading ?? false)) return const SkeletonList(count: 1, height: 120, padding: EdgeInsets.only(bottom: 10));
@@ -208,112 +226,330 @@ class _FamilyCards extends ConsumerWidget {
     // Keep the home-screen widget in step with what Home shows.
     WidgetsBinding.instance.addPostFrameCallback((_) => updateTodayWidget(attendance: kids, fees: feeKids));
     final today = DateTime.now();
-    final outer = Theme.of(context).colorScheme;
-    // Each child's card is the blue banner (theme 4); the dark theme inside keeps every colour readable on it.
-    return Theme(
-      data: AppTheme.onInk,
-      child: Column(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final entry in ids.entries)
           Builder(
             builder: (context) {
               final s = statusColors(context);
-              final scheme = Theme.of(context).colorScheme;
               final a = kids.where((k) => k.studentId == entry.key).firstOrNull;
               final f = feeKids.where((k) => k.studentId == entry.key).firstOrNull;
               final mark = a?.on(today);
-              return HeroCard(
-                scheme: outer,
-                margin: const EdgeInsets.only(bottom: 12),
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          _GoldAvatar(
-                            // The child's initials in a gold ring (theme 4).
-                            backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF5A4520) : const Color(0xFFFCE9B8),
-                            child: Text(
-                              entry.value.split(' ').map((p) => p[0]).take(2).join(),
-                              style: TextStyle(
-                                color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFFF6DFA6) : Brand.navy,
-                                fontWeight: FontWeight.w700,
+              final todo = homework?.where((h) => h.studentId == entry.key && h.status == 'pending').toList();
+              final dueToday = todo?.where((h) => DateUtils.isSameDay(h.dueDate, today)).length ?? 0;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _ChildRow(name: entry.value, section: a?.classSection ?? f?.classSection ?? ''),
+                    const SizedBox(height: 10),
+                    if (a != null)
+                      _BentoTile(
+                        tone: PastelTone.mint,
+                        onTap: () => context.go('/attendance'),
+                        child: Row(
+                          children: [
+                            PercentRing(value: a.monthPercent, size: 64, label: 'month'),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const _TileLabel('Today'),
+                                  _TileValue(
+                                    mark == null
+                                        ? (today.weekday == 7 || ref.watch(schoolClosedTodayProvider).value != null ? 'Holiday' : 'Not marked yet')
+                                        : statusMeta[mark.status]!.label,
+                                    color: mark == null ? null : statusColor(context, mark.status),
+                                  ),
+                                  const _TileHint('Attendance this month'),
+                                ],
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(entry.value, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                                Text(a?.classSection ?? f?.classSection ?? '', style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
-                              ],
-                            ),
-                          ),
-                          if (a != null) PercentRing(value: a.monthPercent, size: 54, label: 'month'),
-                        ],
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      // Both tiles the same height, whatever wraps in either (big phone fonts).
-                      IntrinsicHeight(
-                        child: Row(
+                    if (a != null && (f != null || todo != null)) const SizedBox(height: 10),
+                    // Both tiles the same height, whatever wraps in either (big phone fonts).
+                    IntrinsicHeight(
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          if (a != null)
-                            Expanded(
-                              child: _MiniStat(
-                                onHero: true,
-                                icon: mark == null ? Icons.hourglass_empty_rounded : Icons.event_available_rounded,
-                                color: mark == null ? scheme.onSurfaceVariant : statusColor(context, mark.status),
-                                title: 'Today',
-                                value: mark == null ? (today.weekday == 7 || ref.watch(schoolClosedTodayProvider).value != null ? 'Holiday' : 'Not marked yet') : statusMeta[mark.status]!.label,
-                                onTap: () => context.go('/attendance'),
-                              ),
-                            ),
-                          if (a != null && f != null) const SizedBox(width: 8),
                           if (f != null)
                             Expanded(
-                              child: _MiniStat(
-                                onHero: true,
+                              child: _BentoTile(
+                                tone: PastelTone.peach,
                                 icon: Icons.account_balance_wallet_outlined,
-                                color: f.overdue > 0
-                                    ? s.danger
-                                    : f.due > 0
-                                    ? const Color(0xFFE9C987) // the crest's gold, light enough to read on ink
-                                    : s.success,
-                                title: f.overdue > 0 ? 'Fees overdue' : 'Fees due',
-                                value: f.overdue > 0 ? inr(f.overdue) : (f.due > 0 ? inr(f.due) : 'Paid up'),
                                 onTap: () => context.go('/fees'),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _TileLabel(f.overdue > 0 ? 'Fees overdue' : 'Fees due'),
+                                    _TileValue(f.overdue > 0 ? inr(f.overdue) : (f.due > 0 ? inr(f.due) : 'Paid up'), color: f.overdue > 0 ? s.danger : null),
+                                    _TileHint(f.overdue > 0 ? 'Please pay soon' : (f.due > 0 ? 'Pay at the office' : 'Thank you')),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          if (f != null && todo != null) const SizedBox(width: 10),
+                          if (todo != null)
+                            Expanded(
+                              child: _BentoTile(
+                                tone: PastelTone.lavender,
+                                icon: Icons.menu_book_outlined,
+                                onTap: () => context.go('/homework'),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const _TileLabel('Homework'),
+                                    _TileValue(todo.isEmpty ? 'All done' : '${todo.length} to do'),
+                                    _TileHint(dueToday > 0 ? '$dueToday due today' : (todo.isEmpty ? 'Nothing pending' : 'Nothing due today')),
+                                  ],
+                                ),
                               ),
                             ),
                         ],
                       ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               );
             },
           ),
       ],
+    );
+  }
+}
+
+/// A child's initials and name above their tiles.
+class _ChildRow extends StatelessWidget {
+  const _ChildRow({required this.name, required this.section});
+  final String name;
+  final String section;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final b = Theme.of(context).brightness;
+    return Row(
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(color: PastelTone.sky.bg(b), borderRadius: BorderRadius.circular(12)),
+          child: Text(
+            name.split(' ').where((p) => p.isNotEmpty).map((p) => p[0]).take(2).join(),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: PastelTone.sky.fg(b)),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+              if (section.isNotEmpty) Text(section, style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// One soft-coloured tile of Home's bento (theme 5), with an optional icon square above its words.
+class _BentoTile extends StatelessWidget {
+  const _BentoTile({required this.tone, required this.child, required this.onTap, this.icon});
+  final PastelTone tone;
+  final Widget child;
+  final VoidCallback onTap;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
+    return Pressable(
+      child: Material(
+        color: tone.bg(b),
+        borderRadius: BorderRadius.circular(22),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: onTap,
+          child: DefaultTextStyle.merge(
+            style: TextStyle(color: tone.fg(b)),
+            child: IconTheme.merge(
+              data: IconThemeData(color: tone.fg(b)),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (icon != null) ...[
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(color: tone.tile(b), borderRadius: BorderRadius.circular(12)),
+                        child: Icon(icon, size: 19),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    child,
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
 }
 
+class _TileLabel extends StatelessWidget {
+  const _TileLabel(this.text);
+  final String text;
+  @override
+  Widget build(BuildContext context) => Opacity(opacity: 0.85, child: Text(text, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)));
+}
+
+class _TileValue extends StatelessWidget {
+  const _TileValue(this.text, {this.color});
+  final String text;
+  final Color? color;
+  @override
+  Widget build(BuildContext context) => Text(
+        text,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.4, height: 1.2, color: color),
+      );
+}
+
+class _TileHint extends StatelessWidget {
+  const _TileHint(this.text);
+  final String text;
+  @override
+  Widget build(BuildContext context) => Opacity(opacity: 0.8, child: Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)));
+}
+
+/// Your initials on a peach tile, beside the greeting.
+class _Initials extends StatelessWidget {
+  const _Initials(this.text);
+  final String text;
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 48,
+        height: 48,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFFFFD9B8), Color(0xFFFFB98A)]),
+        ),
+        child: Text(text, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF7A3A10))),
+      );
+}
+
+/// The most used screens beyond the tab bar as colourful tiles (theme 5): picked from what this person can open on
+/// the More screen (their role, permissions and the school's modules), so a shortcut is never one they can't use.
+class _Shortcuts extends ConsumerWidget {
+  const _Shortcuts();
+
+  // route -> short name and its two gradient colours, in the order they are offered.
+  static const _style = <String, (String, Color, Color)>{
+    '/my-class': ('My class', Color(0xFFFF9A62), Color(0xFFF2643A)),
+    '/timetable': ('Timetable', Color(0xFF9B7BFF), Color(0xFF6D3FE0)),
+    '/results': ('Results', Color(0xFFFFC94D), Color(0xFFF09A0E)),
+    '/marks': ('Marks', Color(0xFFFFC94D), Color(0xFFF09A0E)),
+    '/bus': ('Bus', Color(0xFFFF9A62), Color(0xFFF2643A)),
+    '/notices': ('Notices', Color(0xFF3DD9C9), Color(0xFF13A7B5)),
+    '/leave': ('Leave', Color(0xFFFF7A9A), Color(0xFFE8456B)),
+    '/messages': ('Messages', Color(0xFF5AA2FF), Color(0xFF3366F0)),
+    '/my-hr': ('Leave & pay', Color(0xFF4BDB95), Color(0xFF17A865)),
+    '/calendar': ('Calendar', Color(0xFF7BE3C2), Color(0xFF25B48A)),
+    '/tests': ('Tests', Color(0xFF8C8CF8), Color(0xFF4F46E5)),
+    '/live': ('Live classes', Color(0xFFFF7A9A), Color(0xFFE8456B)),
+    '/ptm': ('Meetings', Color(0xFF3DD9C9), Color(0xFF13A7B5)),
+    '/my-library': ('Library', Color(0xFFFFC94D), Color(0xFFF09A0E)),
+    '/gate-pass': ('Gate pass', Color(0xFFFF9A62), Color(0xFFF2643A)),
+    '/syllabus': ('Syllabus', Color(0xFF4BDB95), Color(0xFF17A865)),
+    '/surveys': ('Surveys', Color(0xFF5AA2FF), Color(0xFF3366F0)),
+    '/gate': ('Gate desk', Color(0xFFFF9A62), Color(0xFFF2643A)),
+  };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final links = {for (final l in moreLinks(ref)) l.$4: l};
+    final picked = [for (final route in _style.keys) ?links[route]].take(8).toList();
+    if (picked.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _Heading('Shortcuts'),
+        LayoutBuilder(
+          builder: (context, c) {
+            final w = (c.maxWidth - 3 * 6) / 4;
+            return Wrap(
+              spacing: 6,
+              runSpacing: 14,
+              children: [
+                for (final (icon, _, _, route, _) in picked)
+                  SizedBox(
+                    width: w,
+                    child: Pressable(
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(18),
+                        onTap: () => context.push(route),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 54,
+                                height: 54,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [_style[route]!.$2, _style[route]!.$3],
+                                  ),
+                                  boxShadow: [BoxShadow(color: _style[route]!.$3.withValues(alpha: 0.35), blurRadius: 14, spreadRadius: -6, offset: const Offset(0, 8))],
+                                ),
+                                child: Icon(icon, color: Colors.white, size: 24),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                _style[route]!.$1,
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, height: 1.2),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
 class _MiniStat extends StatelessWidget {
-  const _MiniStat({required this.icon, required this.color, required this.title, required this.value, required this.onTap, this.onHero = false});
+  const _MiniStat({required this.icon, required this.color, required this.title, required this.value, required this.onTap});
   final IconData icon;
   final Color color;
   final String title;
   final String value;
   final VoidCallback onTap;
-
-  /// On a blue banner: a frosted glass tile instead of a tint of [color].
-  final bool onHero;
 
   @override
   Widget build(BuildContext context) => Pressable(
@@ -323,13 +559,7 @@ class _MiniStat extends StatelessWidget {
       // Ink, not Container, so the ripple shows on top of the tinted background.
       child: Ink(
         padding: const EdgeInsets.all(10),
-        decoration: onHero
-            ? BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
-              )
-            : BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
         child: Row(
           children: [
             Icon(icon, color: color, size: 20),
@@ -447,7 +677,7 @@ class _AttendanceToTake extends ConsumerWidget {
       children: [
         _Heading('Attendance today', action: 'All classes', onAction: () => context.go('/attendance')),
         if (pending.isNotEmpty)
-          // Classes still to mark: the ink panel with gold buttons (sample A), the one thing to do first.
+          // Classes still to mark: the coral card with white Mark buttons (theme 5), the one thing to do first.
           Theme(
             data: AppTheme.onInk,
             child: HeroCard(
@@ -458,15 +688,15 @@ class _AttendanceToTake extends ConsumerWidget {
                   children: [
                     for (final c in pending.take(4))
                       ListTile(
-                        leading: const Icon(Icons.fact_check_outlined, color: Color(0xFFE9C987)),
+                        leading: const Icon(Icons.fact_check_outlined, color: Colors.white),
                         title: Text(c.label, style: const TextStyle(fontWeight: FontWeight.w700)),
-                        subtitle: Text('${c.students} students${c.isClassTeacher ? ' · your class' : ''} · not taken yet'),
+                        subtitle: Text('${c.students} students${c.isClassTeacher ? ' · your class' : ''} · not taken yet', style: const TextStyle(color: Color(0xE6FFFFFF))),
                         trailing: FilledButton(
                           onPressed: () async {
                             await context.push('/attendance/mark/${c.sectionId}?date=$day&label=${Uri.encodeComponent(c.label)}');
                             ref.invalidate(attendanceSectionsProvider(day));
                           },
-                          style: FilledButton.styleFrom(minimumSize: const Size(0, 40)).merge(AppTheme.goldButton),
+                          style: FilledButton.styleFrom(minimumSize: const Size(0, 40), backgroundColor: Colors.white, foregroundColor: const Color(0xFFD63B6A)),
                           child: const Text('Mark'),
                         ),
                       ),
@@ -572,27 +802,6 @@ class HeroCard extends StatelessWidget {
       ),
     );
   }
-}
-
-/// A child's initials in a ring of the crest's gold, on the blue banner.
-class _GoldAvatar extends StatelessWidget {
-  // ignore: unused_element_parameter
-  const _GoldAvatar({this.backgroundColor, required this.child});
-  final Color? backgroundColor;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        width: 46,
-        height: 46,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: 0.12),
-          border: Border.all(color: Brand.goldButton, width: 2),
-        ),
-        child: child,
-      );
 }
 
 /// A rounded tile in the subject's colour, for a homework row.

@@ -156,7 +156,7 @@ class _DueHero extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: AppTheme.heroPanel(Theme.of(context).colorScheme)),
+      decoration: AppTheme.heroDecoration(Theme.of(context).colorScheme, radius: 24), // theme 5: the coral gradient
       child: Stack(
         children: [
           const Positioned(right: -10, bottom: -18, child: Icon(Icons.account_balance_wallet_rounded, size: 110, color: Colors.white10)),

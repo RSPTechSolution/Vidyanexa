@@ -149,7 +149,7 @@ class Push {
           importance: Importance.high,
           priority: Priority.high,
           icon: 'ic_notification',
-          color: const Color(0xFF2F4A86),
+          color: const Color(0xFF3D63DD),
           largeIcon: DrawableResourceAndroidBitmap(_picture(kind)),
           styleInformation: BigTextStyleInformation(n.body ?? '', contentTitle: n.title, summaryText: style.label),
           subText: style.label,
