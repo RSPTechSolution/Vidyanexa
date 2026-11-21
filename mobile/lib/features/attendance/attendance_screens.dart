@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../shared/selected_child.dart';
 import '../../core/api/api_client.dart';
 import '../../core/auth/auth_controller.dart';
 import '../../core/auth/session.dart';
@@ -43,7 +44,6 @@ class FamilyAttendanceView extends ConsumerStatefulWidget {
 
 class _FamilyAttendanceViewState extends ConsumerState<FamilyAttendanceView> {
   DateTime month = DateTime(DateTime.now().year, DateTime.now().month);
-  int child = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +70,9 @@ class _FamilyAttendanceViewState extends ConsumerState<FamilyAttendanceView> {
                 ],
               );
             }
-            final a = list[child.clamp(0, list.length - 1)];
+            final ids = [for (final x in list) x.studentId];
+            final child = childIndex(ref, ids);
+            final a = list[child];
             final away = a.days.where((d) => d.status != 'present').toList();
             return ListView(
               padding: const EdgeInsets.only(bottom: 24),
@@ -80,7 +82,7 @@ class _FamilyAttendanceViewState extends ConsumerState<FamilyAttendanceView> {
                   names: [for (final x in list) x.name],
                   subtitles: [for (final x in list) x.classSection],
                   index: child,
-                  onChanged: (i) => setState(() => child = i),
+                  onChanged: (i) => selectChild(ref, ids, i),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),

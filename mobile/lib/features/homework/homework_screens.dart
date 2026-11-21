@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../shared/selected_child.dart';
 import '../../shared/paging.dart';
 import '../../core/api/api_client.dart';
 import '../../core/auth/auth_controller.dart';
@@ -134,7 +135,6 @@ class FamilyHomeworkView extends ConsumerStatefulWidget {
 }
 
 class _FamilyHomeworkViewState extends ConsumerState<FamilyHomeworkView> {
-  int child = 0;
 
   /// Ticks shown before the server confirms them, by homework and child.
   final _shown = <String, String>{};
@@ -175,7 +175,9 @@ class _FamilyHomeworkViewState extends ConsumerState<FamilyHomeworkView> {
                 children: const [EmptyPanel(icon: Icons.menu_book_outlined, title: 'No homework', message: 'Nothing set in the last three weeks.')],
               );
             }
-            final id = kids[child.clamp(0, kids.length - 1)].key;
+            final ids = [for (final k in kids) k.key];
+            final child = childIndex(ref, ids);
+            final id = ids[child];
             final mine = all.where((h) => h.studentId == id).toList();
             final today = DateUtils.dateOnly(DateTime.now());
             final todo = mine.where((h) => h.status == 'pending' && !h.dueDate.isBefore(today)).toList();
@@ -189,7 +191,7 @@ class _FamilyHomeworkViewState extends ConsumerState<FamilyHomeworkView> {
                   names: [for (final k in kids) k.value],
                   subtitles: [for (final k in kids) '${all.where((h) => h.studentId == k.key && h.status == 'pending').length} to do'],
                   index: child,
-                  onChanged: (i) => setState(() => child = i),
+                  onChanged: (i) => selectChild(ref, ids, i),
                 ),
                 for (final (label, list) in [('To do', todo), ('Overdue', overdue), ('Done', done)])
                   if (list.isNotEmpty) ...[

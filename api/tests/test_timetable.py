@@ -139,6 +139,8 @@ async def test_my_timetable_per_role(client, db, school, admin_headers):
     p_headers = await factories.login_headers(client, "p1@t.com", pw, school.slug)
     kids = (await client.get(f"{API}/timetable/my", headers=p_headers)).json()["data"]
     assert kids[0]["title"] == "Riya Sharma" and kids[0]["subtitle"] == "Class 5 – A" and len(kids[0]["entries"]) == 1
+    riya = await db.scalar(select(Student.id).where(Student.first_name == "Riya"))
+    assert kids[0]["student_id"] == str(riya)  # which child, for the app's child switcher
     assert (await client.get(f"{API}/timetable/sections/{sec_a}", headers=p_headers)).status_code == 403
     assert await db.scalar(select(StudentGuardian.id).join(Student, Student.id == StudentGuardian.student_id))
 

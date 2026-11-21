@@ -130,6 +130,7 @@ class TimetableView(BaseModel):
     subtitle: str | None = None
     kind: Literal["section", "teacher"]
     owner_id: uuid.UUID
+    student_id: uuid.UUID | None = None  # a parent's view of one child's week: which child (for the app's child switcher)
     periods: list[PeriodOut]
     entries: list[EntryOut]
 

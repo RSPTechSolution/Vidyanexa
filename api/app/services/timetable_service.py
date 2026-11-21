@@ -368,7 +368,7 @@ async def my_timetables(db: AsyncSession, user: User) -> list[TimetableView]:
         views = []
         for c in children:
             v = await section_timetable(db, school_id, c.section_id)
-            v.subtitle, v.title = v.title, f"{c.first_name} {c.last_name}"
+            v.subtitle, v.title, v.student_id = v.title, f"{c.first_name} {c.last_name}", c.id
             views.append(v)
         return views
     if user.role == Role.STUDENT:

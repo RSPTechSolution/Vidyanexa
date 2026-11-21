@@ -21,6 +21,7 @@ import '../academics/syllabus_screens.dart';
 import '../transport/transport_screens.dart';
 import '../notifications/notifications_screen.dart';
 import '../timetable/timetable_screen.dart';
+import '../../shared/selected_child.dart';
 import 'more_screen.dart' show moreLinks;
 import 'today_widget.dart';
 
@@ -207,6 +208,24 @@ class _Heading extends StatelessWidget {
   );
 }
 
+/// A family's children (id, name) in the order Home shows them, from attendance and fees.
+List<(String, String)> _familyChildren(WidgetRef ref) {
+  final me = ref.watch(meProvider);
+  if (me == null || !me.isFamily) return const [];
+  final kids = me.hasModule('attendance') ? ref.watch(myAttendanceProvider(isoMonth(DateTime.now()))).value ?? const <StudentAttendance>[] : const <StudentAttendance>[];
+  final feeKids = me.hasModule('fees') ? ref.watch(myFeesProvider).value?.children ?? const <ChildFees>[] : const <ChildFees>[];
+  final ids = {for (final k in kids) k.studentId: k.name, for (final f in feeKids) f.studentId: f.name};
+  return [for (final e in ids.entries) (e.key, e.value)];
+}
+
+/// The child Home shows when a family has more than one (null with one child or none).
+String? _shownChild(WidgetRef ref) {
+  final kids = _familyChildren(ref);
+  if (kids.length < 2) return null;
+  final ids = [for (final k in kids) k.$1];
+  return ids[childIndex(ref, ids)];
+}
+
 /// Parents and students: each child's day as soft-coloured tiles (theme 5): attendance in mint with this month's ring,
 /// fees in peach, homework in lavender. Each tile opens its tab.
 class _FamilyCards extends ConsumerWidget {
@@ -221,14 +240,29 @@ class _FamilyCards extends ConsumerWidget {
     final kids = att?.value ?? const <StudentAttendance>[];
     final feeKids = fees?.value?.children ?? const <ChildFees>[];
     if ((att?.isLoading ?? false) || (fees?.isLoading ?? false)) return const SkeletonList(count: 1, height: 120, padding: EdgeInsets.only(bottom: 10));
-    final ids = {for (final k in kids) k.studentId: k.name, for (final f in feeKids) f.studentId: f.name};
-    if (ids.isEmpty) return const SizedBox.shrink();
-    // Keep the home-screen widget in step with what Home shows.
-    WidgetsBinding.instance.addPostFrameCallback((_) => updateTodayWidget(attendance: kids, fees: feeKids));
+    final all = _familyChildren(ref);
+    if (all.isEmpty) return const SizedBox.shrink();
+    final allIds = [for (final k in all) k.$1];
+    // With more than one child: a row of the children to choose from, and the chosen child's day below it. The same
+    // child is then shown on the Attendance, Homework, Fees and Results tabs.
+    final chosen = all.length > 1 ? allIds[childIndex(ref, allIds)] : null;
+    final ids = {for (final (id, name) in all) if (chosen == null || id == chosen) id: name};
+    // Keep the home-screen widget in step with what Home shows (the chosen child first).
+    WidgetsBinding.instance.addPostFrameCallback((_) => updateTodayWidget(
+          attendance: [...kids.where((k) => k.studentId == chosen), ...kids.where((k) => k.studentId != chosen)],
+          fees: [...feeKids.where((k) => k.studentId == chosen), ...feeKids.where((k) => k.studentId != chosen)],
+        ));
     final today = DateTime.now();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (chosen != null)
+          _ChildChips(
+            children: all,
+            chosen: chosen,
+            onChosen: (id) => selectChild(ref, allIds, allIds.indexOf(id)),
+            subtitle: (id) => (kids.where((k) => k.studentId == id).firstOrNull?.classSection ?? feeKids.where((f) => f.studentId == id).firstOrNull?.classSection) ?? '',
+          ),
         for (final entry in ids.entries)
           Builder(
             builder: (context) {
@@ -243,8 +277,10 @@ class _FamilyCards extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _ChildRow(name: entry.value, section: a?.classSection ?? f?.classSection ?? ''),
-                    const SizedBox(height: 10),
+                    if (chosen == null) ...[
+                      _ChildRow(name: entry.value, section: a?.classSection ?? f?.classSection ?? ''),
+                      const SizedBox(height: 10),
+                    ],
                     if (a != null)
                       _BentoTile(
                         tone: PastelTone.mint,
@@ -319,6 +355,94 @@ class _FamilyCards extends ConsumerWidget {
             },
           ),
       ],
+    );
+  }
+}
+
+/// A family's children to choose from on Home: initials on a soft tile, first name and class. The chosen one is filled.
+class _ChildChips extends StatelessWidget {
+  const _ChildChips({required this.children, required this.chosen, required this.onChosen, required this.subtitle});
+  final List<(String, String)> children;
+  final String chosen;
+  final ValueChanged<String> onChosen;
+  final String Function(String id) subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final b = Theme.of(context).brightness;
+    final dark = b == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (final (id, name) in children)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Semantics(
+                  selected: id == chosen,
+                  button: true,
+                  label: '$name, ${subtitle(id)}',
+                  excludeSemantics: true,
+                  child: Material(
+                    color: id == chosen ? (dark ? const Color(0xFFF4F1EB) : const Color(0xFF1E2033)) : scheme.surfaceContainerLowest,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      side: id == chosen ? BorderSide.none : BorderSide(color: scheme.outlineVariant),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: () => onChosen(id),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(8, 8, 14, 8),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 34,
+                              height: 34,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(color: PastelTone.sky.bg(b), borderRadius: BorderRadius.circular(11)),
+                              child: Text(
+                                name.split(' ').where((p) => p.isNotEmpty).map((p) => p[0]).take(2).join(),
+                                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: PastelTone.sky.fg(b)),
+                              ),
+                            ),
+                            const SizedBox(width: 9),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  name.split(' ').first,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14.5,
+                                    color: id == chosen ? (dark ? const Color(0xFF1E2033) : Colors.white) : scheme.onSurface,
+                                  ),
+                                ),
+                                if (subtitle(id).isNotEmpty)
+                                  Text(
+                                    subtitle(id),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: id == chosen ? (dark ? const Color(0xFF55576A) : const Color(0xCCFFFFFF)) : scheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -592,8 +716,9 @@ class _HomeworkDue extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final list = ref.watch(myHomeworkProvider).value;
     if (list == null) return const SizedBox.shrink();
-    final todo = list.where((h) => h.status == 'pending').toList()..sort((a, b) => a.dueDate.compareTo(b.dueDate));
-    final many = {for (final h in list) h.studentId}.length > 1;
+    final chosen = _shownChild(ref);
+    final todo = list.where((h) => h.status == 'pending' && (chosen == null || h.studentId == chosen)).toList()..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    final many = chosen == null && {for (final h in list) h.studentId}.length > 1;
     final s = statusColors(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -635,13 +760,14 @@ class _TodayLessons extends ConsumerWidget {
     final async = ref.watch(myTimetablesProvider);
     final views = async.value;
     if (views == null || views.isEmpty) return const SizedBox.shrink();
-    final v = views.first;
+    final chosen = _shownChild(ref);
+    final v = views.where((x) => x.studentId != null && x.studentId == chosen).firstOrNull ?? views.first;
     final closed = ref.watch(schoolClosedTodayProvider).value;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _Heading(
-          views.length > 1 ? "Today · ${v.title}" : (v.kind == 'teacher' ? "Today's classes" : "Today's lessons"),
+          views.length > 1 && chosen == null ? "Today · ${v.title}" : (v.kind == 'teacher' ? "Today's classes" : "Today's lessons"),
           action: 'Week',
           onAction: () => context.push('/timetable'),
         ),

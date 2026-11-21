@@ -45,11 +45,15 @@ class TimetableView {
       : title = j['title'] as String,
         subtitle = j['subtitle'] as String?,
         kind = j['kind'] as String,
+        studentId = j['student_id'] as String?,
         periods = [for (final p in (j['periods'] as List).cast<Map>()) Period.fromJson(p.cast())],
         lessons = [for (final e in (j['entries'] as List).cast<Map>()) Lesson.fromJson(e.cast())];
   final String title;
   final String? subtitle;
   final String kind;
+
+  /// A parent's view of one child's week: which child.
+  final String? studentId;
   final List<Period> periods;
   final List<Lesson> lessons;
 

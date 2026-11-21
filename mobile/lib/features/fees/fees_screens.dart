@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../shared/selected_child.dart';
 import '../../shared/paging.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/api/api_client.dart';
@@ -51,7 +52,6 @@ class FamilyFeesView extends ConsumerStatefulWidget {
 }
 
 class _FamilyFeesViewState extends ConsumerState<FamilyFeesView> {
-  int child = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +72,9 @@ class _FamilyFeesViewState extends ConsumerState<FamilyFeesView> {
                 ],
               );
             }
-            final c = data.children[child.clamp(0, data.children.length - 1)];
+            final ids = [for (final x in data.children) x.studentId];
+            final child = childIndex(ref, ids);
+            final c = data.children[child];
             final overdue = data.children.fold<double>(0, (n, x) => n + x.overdue);
             return ListView(
               padding: const EdgeInsets.only(bottom: 24),
@@ -83,7 +85,7 @@ class _FamilyFeesViewState extends ConsumerState<FamilyFeesView> {
                   names: [for (final x in data.children) x.name],
                   subtitles: [for (final x in data.children) x.due > 0 ? '${inr(x.due)} due' : 'Paid up'],
                   index: child,
-                  onChanged: (i) => setState(() => child = i),
+                  onChanged: (i) => selectChild(ref, ids, i),
                 ),
                 for (final inv in c.invoices) _InvoiceCard(inv: inv),
                 if (c.invoices.isEmpty) const EmptyPanel(icon: Icons.receipt_long_outlined, title: 'No invoices yet'),

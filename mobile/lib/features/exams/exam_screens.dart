@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../shared/selected_child.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/api/api_client.dart';
 import '../../core/auth/auth_controller.dart';
@@ -60,7 +61,6 @@ class ResultsScreen extends ConsumerStatefulWidget {
 }
 
 class _ResultsScreenState extends ConsumerState<ResultsScreen> {
-  int child = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +80,9 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
                 children: const [EmptyPanel(icon: Icons.emoji_events_outlined, title: 'Nothing to show yet')],
               );
             }
-            final c = kids[child.clamp(0, kids.length - 1)];
+            final ids = [for (final k in kids) k['student_id'] as String];
+            final child = childIndex(ref, ids);
+            final c = kids[child];
             final exams = (c['exams'] as List).cast<Map>();
             final upcoming = (c['upcoming'] as List).cast<Map>();
             return ListView(
@@ -91,7 +93,7 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
                   names: [for (final k in kids) k['name'] as String],
                   subtitles: [for (final k in kids) k['class_section'] as String],
                   index: child,
-                  onChanged: (i) => setState(() => child = i),
+                  onChanged: (i) => selectChild(ref, ids, i),
                 ),
                 if (exams.isEmpty) const EmptyPanel(icon: Icons.emoji_events_outlined, title: 'No results published yet'),
                 for (final e in exams)

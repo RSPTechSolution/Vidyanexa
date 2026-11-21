@@ -90,6 +90,37 @@ void main() {
     expect(find.text('Coming soon'), findsNothing); // results, bus and messages are already in the app
   });
 
+  testWidgets('a parent with two children switches between them on Home, and the tabs follow', (tester) async {
+    Map<String, dynamic> kid(String id, String name, double due, String term) => {
+          'student_id': id, 'name': name, 'class_section': id == 's1' ? 'Class 5 – A' : 'Class 2 – B', 'due': due, 'overdue': 0,
+          'next_due_date': '2099-07-15', 'invoices': [invoice(balance: due, overdue: false)..['term'] = term..['student_id'] = id],
+        };
+    final me = meJson()..['modules'] = ['fees'];
+    final fake = FakeApi()
+      ..on('GET /auth/me', (_) => (200, FakeApi.ok(me)))
+      ..on('GET /fees/my', (_) => (200, FakeApi.ok({
+            'children': [kid('s1', 'Aarav Patel', 3000, 'Quarter 2'), kid('s2', 'Diya Patel', 5000, 'Term 1')],
+            'total_due': 8000,
+          })));
+    await pump(tester, container(fake));
+    // Both children to choose from; the first one's day is shown.
+    expect(find.text('Aarav'), findsOneWidget);
+    expect(find.text('Diya'), findsOneWidget);
+    expect(find.text('₹3,000'), findsOneWidget);
+    expect(find.text('₹5,000'), findsNothing);
+
+    await tester.tap(find.text('Diya'));
+    await tester.pumpAndSettle();
+    expect(find.text('₹5,000'), findsOneWidget);
+    expect(find.text('₹3,000'), findsNothing);
+
+    // The Fees tab shows the same child: Diya's invoice, not Aarav's.
+    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Fees')));
+    await tester.pumpAndSettle();
+    expect(find.text('Term 1'), findsOneWidget);
+    expect(find.text('Quarter 2'), findsNothing);
+  });
+
   testWidgets("after the school's trial ends, the app says so instead of showing errors", (tester) async {
     final me = meJson();
     (me['school'] as Map)['subscription_ended'] = 'trial';
